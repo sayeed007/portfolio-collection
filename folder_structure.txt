@@ -1,0 +1,124 @@
+portfolio-collection/
+├── public/
+│   ├── icons/
+│   └── images/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   ├── register/
+│   │   │   │   └── page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── (dashboard)/
+│   │   │   ├── dashboard/
+│   │   │   │   └── page.tsx
+│   │   │   ├── portfolio/
+│   │   │   │   ├── create/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── edit/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── [id]/
+│   │   │   │       └── page.tsx
+│   │   │   ├── directory/
+│   │   │   │   └── page.tsx
+│   │   │   ├── admin/
+│   │   │   │   ├── categories/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── requests/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── api/
+│   │   │   ├── auth/
+│   │   │   ├── portfolio/
+│   │   │   └── categories/
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── loading.tsx
+│   │   └── not-found.tsx
+│   ├── components/
+│   │   ├── ui/
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── modal.tsx
+│   │   │   ├── toast.tsx
+│   │   │   └── index.ts
+│   │   ├── auth/
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── RegisterForm.tsx
+│   │   │   ├── PasswordReset.tsx
+│   │   │   └── AuthProvider.tsx
+│   │   ├── portfolio/
+│   │   │   ├── MultiStepForm/
+│   │   │   │   ├── Step1PersonalInfo.tsx
+│   │   │   │   ├── Step2Education.tsx
+│   │   │   │   ├── Step3SkillsExperience.tsx
+│   │   │   │   ├── Step4Projects.tsx
+│   │   │   │   ├── FormNavigation.tsx
+│   │   │   │   └── index.tsx
+│   │   │   ├── PortfolioCard.tsx
+│   │   │   ├── PortfolioView.tsx
+│   │   │   ├── PortfolioDirectory.tsx
+│   │   │   ├── SkillCategorySelector.tsx
+│   │   │   └── PDFExport.tsx
+│   │   ├── admin/
+│   │   │   ├── CategoryManagement.tsx
+│   │   │   ├── RequestApproval.tsx
+│   │   │   └── AdminPanel.tsx
+│   │   ├── layout/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   └── Navigation.tsx
+│   │   └── common/
+│   │       ├── LoadingSpinner.tsx
+│   │       ├── ErrorBoundary.tsx
+│   │       ├── ProtectedRoute.tsx
+│   │       └── SEO.tsx
+│   ├── lib/
+│   │   ├── firebase/
+│   │   │   ├── config.ts                       # DONE
+│   │   │   ├── auth.ts                         # DONE
+│   │   │   ├── firestore.ts                    # DONE
+│   │   │   └── storage.ts
+│   │   ├── redux/
+│   │   │   ├── store.ts                        # DONE
+│   │   │   ├── slices/
+│   │   │   │   ├── authSlice.ts                # DONE
+│   │   │   │   ├── portfolioSlice.ts           # DONE
+│   │   │   │   ├── skillCategoriesSlice.ts     # DONE
+│   │   │   │   ├── categoryRequestsSlice.ts    # DONE
+│   │   │   │   └── uiSlice.ts                  # DONE
+│   │   │   └── providers.tsx                   # DONE
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts                      # DONE
+│   │   │   ├── useDebounce.ts                  # DONE
+│   │   │   ├── usePortfolio.ts                 # DONE
+│   │   │   ├── useSkillCategories.ts           # DONE
+│   │   │   ├── useCategoryRequests.ts          # DONE
+│   │   │   └── useLocalStorage.ts              # DONE
+│   │   ├── utils/
+│   │   │   ├── validation.ts                   # DONE
+│   │   │   ├── formatters.ts                   # DONE
+│   │   │   ├── constants.ts                    # DONE
+│   │   │   ├── pdf-generator.ts                # DONE
+│   │   │   └── helpers.ts                      # DONE
+│   │   └── types/
+│   │       ├── auth.ts                         # DONE
+│   │       ├── portfolio.ts                    # DONE
+│   │       ├── skillCategories.ts              # DONE
+│   │       └── index.ts                        # DONE
+│   │       └── ui.ts                           # DONE
+│   └── styles/
+│       └── components.css
+├── .env.local
+├── .env.example
+├── .gitignore
+├── next.config.js
+├── tailwind.config.js
+├── tsconfig.json
+├── package.json
+└── README.md

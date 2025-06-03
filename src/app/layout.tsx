@@ -1,6 +1,9 @@
+import { cn } from "@/lib/utils/helpers"; // Import cn from helpers
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClientProvider } from "./ClientProvider";
 import "./globals.css";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,9 +28,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={cn(geistSans.variable, geistMono.variable, "antialiased")}
       >
-        {children}
+        <ClientProvider>
+          {children}
+
+
+          {/* Portal target - optional, will be created automatically */}
+          <div id="modal-root"></div>
+        </ClientProvider>
       </body>
     </html>
   );
