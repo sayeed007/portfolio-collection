@@ -4,6 +4,7 @@
 import { useAuth } from '@/lib/hooks/useAuth';
 import { usePortfolio } from '@/lib/hooks/usePortfolio';
 import {
+    fetchUserPortfolio,
     resetForm,
     savePortfolioDraft,
     setCurrentStep,
@@ -34,9 +35,9 @@ import {
     User
 } from 'lucide-react';
 import { FormNavigation } from './FormNavigation';
-import { Step3SkillsExperience } from './Step3SkillsExperience';
 import { Step1PersonalInfo } from './Step1PersonalInfo';
 import { Step2Education } from './Step2Education';
+import { Step3SkillsExperience } from './Step3SkillsExperience';
 import { Step4Projects } from './Step4Projects';
 
 interface MultiStepFormProps {
@@ -60,6 +61,8 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         isEditing,
         stepValidation
     } = useSelector((state: RootState) => state.portfolio);
+    console.log('formData from index', formData);
+
 
     const [isLoading, setIsLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -102,10 +105,14 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
             if (mode === 'edit' && portfolioId && user?.uid) {
                 setIsLoading(true);
                 try {
-                    const portfolio = await getPortfolio(portfolioId);
-                    if (portfolio) {
+                    // Use thunk for consistency
+                    const result = await dispatch(getPortfolio(portfolioId));
+
+                    if (getPortfolio.fulfilled.match(result)) {
+                        const portfolio = result.payload;
                         dispatch(setFormData(portfolio));
                         dispatch(setIsEditing(true));
+
                         // Validate all steps for existing data
                         for (let step = 1; step <= 4; step++) {
                             const validation = validatePortfolioStep(step, portfolio);
@@ -126,19 +133,23 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 } finally {
                     setIsLoading(false);
                 }
+            } else if (user?.uid) {
+                // For create mode, load user's existing portfolio if any
+                const result = await dispatch(fetchUserPortfolio(user.uid));
+
+                if (fetchUserPortfolio.fulfilled.match(result)) {
+                    console.log('User portfolio loaded:', result.payload);
+                    // Optionally set as form data if you want to pre-populate
+                    dispatch(setFormData(result.payload));
+                } else if (fetchUserPortfolio.rejected.match(result)) {
+                    console.log('No existing portfolio found or error:', result.payload);
+                    // This might be expected for new users
+                }
             }
         };
 
         loadPortfolioData();
-    }, [mode, portfolioId, dispatch, getPortfolio, router, toast, user?.uid]);
-
-    // Initialize form for create mode
-    useEffect(() => {
-        if (mode === 'create' && !isEditing) {
-            dispatch(resetForm());
-            dispatch(setCurrentStep(1));
-        }
-    }, [mode, isEditing, dispatch]);
+    }, [mode, portfolioId, dispatch, router, user?.uid]); // Removed getPortfolio and toast
 
     // Track unsaved changes - Fixed to check for meaningful data
     useEffect(() => {
@@ -247,7 +258,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
     };
 
     const renderCurrentStep = () => {
-        return <Step4Projects />;
+        // return <Step3SkillsExperience />;
         switch (currentStep) {
             case 1:
                 return <Step1PersonalInfo />;

@@ -1,7 +1,7 @@
 // src\components\portfolio\MultiStepForm\Step4Projects.tsx
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,10 +25,14 @@ const step4Schema = z.object({
 
 type Step4FormData = z.infer<typeof step4Schema>;
 
+// Helper function for robust deep copying of JSON-serializable data
+const deepCopyJSON = (data) => JSON.parse(JSON.stringify(data));
+
 export function Step4Projects() {
     const dispatch = useDispatch();
     const { formData } = useSelector((state: RootState) => state.portfolio);
-    const debounceRef = useRef<NodeJS.Timeout>();
+    const [isInitialized, setIsInitialized] = useState(false);
+    const isResettingRef = useRef(false);
 
     const {
         register,
@@ -37,12 +41,13 @@ export function Step4Projects() {
         setValue,
         getValues,
         formState: { errors, isValid },
+        reset,
         trigger,
     } = useForm<Step4FormData>({
         resolver: zodResolver(step4Schema),
         mode: 'onChange',
         defaultValues: {
-            projects: formData.projects || [{
+            projects: [{
                 name: '',
                 description: '',
                 contribution: '',
@@ -51,37 +56,49 @@ export function Step4Projects() {
         },
     });
 
+    // Initialize form data from Redux only once
+    useEffect(() => {
+        if (formData && !isInitialized) {
+            isResettingRef.current = true;
+            reset({
+                projects: formData.projects && formData.projects.length > 0
+                    ? deepCopyJSON(formData.projects)
+                    : [{
+                        name: '',
+                        description: '',
+                        contribution: '',
+                        technologies: ['']
+                    }],
+            });
+            setIsInitialized(true);
+            // Small delay to ensure reset is complete before allowing watch to trigger
+            setTimeout(() => {
+                isResettingRef.current = false;
+            }, 0);
+        }
+    }, [formData, reset, isInitialized]);
+
     const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
         control,
         name: 'projects',
     });
 
-    // Debounced update function
-    const debouncedUpdate = useCallback((data: Step4FormData) => {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-        debounceRef.current = setTimeout(() => {
-            dispatch(updateFormData(data));
-        }, 300); // 300ms debounce
-    }, [dispatch]);
-
-    // Watch for changes and update Redux store with debouncing
+    // Subscribe to form value changes and dispatch to Redux (only after initialization)
     useEffect(() => {
-        const subscription = watch((data) => {
-            // Only update if data is valid and not empty
-            if (data.projects && data.projects.length > 0) {
-                debouncedUpdate(data as Step4FormData);
+        if (!isInitialized) return;
+
+        const subscription = watch((value) => {
+            // Prevent dispatching during form reset
+            if (isResettingRef.current) return;
+
+            // Only dispatch if we have actual form data
+            if (value && value.projects) {
+                dispatch(updateFormData(deepCopyJSON(value as Step4FormData)));
             }
         });
 
-        return () => {
-            subscription.unsubscribe();
-            if (debounceRef.current) {
-                clearTimeout(debounceRef.current);
-            }
-        };
-    }, [watch, debouncedUpdate]);
+        return () => subscription.unsubscribe();
+    }, [watch, dispatch, isInitialized]);
 
     const addProject = () => {
         if (projectFields.length < 10) {
@@ -97,8 +114,7 @@ export function Step4Projects() {
     const addTechnology = (projectIndex: number) => {
         const currentTechnologies = getValues(`projects.${projectIndex}.technologies`);
         if (currentTechnologies.length < 20) { // Limit technologies per project
-            setValue(`projects.${projectIndex}.technologies`, [...currentTechnologies, '']);
-            trigger(`projects.${projectIndex}.technologies`);
+            setValue(`projects.${projectIndex}.technologies`, [...currentTechnologies, ''], { shouldValidate: true });
         }
     };
 
@@ -106,17 +122,8 @@ export function Step4Projects() {
         const currentTechnologies = getValues(`projects.${projectIndex}.technologies`);
         if (currentTechnologies.length > 1) {
             const newTechnologies = currentTechnologies.filter((_, index) => index !== techIndex);
-            setValue(`projects.${projectIndex}.technologies`, newTechnologies);
-            trigger(`projects.${projectIndex}.technologies`);
+            setValue(`projects.${projectIndex}.technologies`, newTechnologies, { shouldValidate: true });
         }
-    };
-
-    const updateTechnology = (projectIndex: number, techIndex: number, value: string) => {
-        const currentTechnologies = getValues(`projects.${projectIndex}.technologies`);
-        const newTechnologies = [...currentTechnologies];
-        newTechnologies[techIndex] = value;
-        setValue(`projects.${projectIndex}.technologies`, newTechnologies);
-        trigger(`projects.${projectIndex}.technologies`);
     };
 
     // Suggested technologies for autocomplete/suggestions
@@ -187,169 +194,171 @@ export function Step4Projects() {
                 )}
 
                 <div className="space-y-8">
-                    {projectFields.map((field, projectIndex) => (
-                        <div key={field.id} className="p-6 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <div className="space-y-6">
-                                {/* Project Header */}
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center">
-                                        <Star className="w-5 h-5 text-yellow-500 mr-2" />
-                                        <h4 className="text-lg font-medium text-gray-900">
-                                            Project #{projectIndex + 1}
-                                        </h4>
+                    {projectFields.map((field, projectIndex) => {
+                        const currentTechnologies = watch(`projects.${projectIndex}.technologies`) || [''];
+
+                        return (
+                            <div key={field.id} className="p-6 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <div className="space-y-6">
+                                    {/* Project Header */}
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center">
+                                            <Star className="w-5 h-5 text-yellow-500 mr-2" />
+                                            <h4 className="text-lg font-medium text-gray-900">
+                                                Project #{projectIndex + 1}
+                                            </h4>
+                                        </div>
+                                        {projectFields.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeProject(projectIndex)}
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Remove
+                                            </Button>
+                                        )}
                                     </div>
-                                    {projectFields.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => removeProject(projectIndex)}
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                        >
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Remove
-                                        </Button>
-                                    )}
-                                </div>
 
-                                {/* Project Name */}
-                                <Input
-                                    {...register(`projects.${projectIndex}.name`)}
-                                    label="Project Name"
-                                    placeholder="e.g., E-commerce Web Application, Mobile Banking App"
-                                    error={errors.projects?.[projectIndex]?.name?.message}
-                                    required
-                                    maxLength={100}
-                                />
-
-                                {/* Project Description */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Project Description <span className="text-red-500">*</span>
-                                    </label>
-                                    <textarea
-                                        {...register(`projects.${projectIndex}.description`)}
-                                        rows={4}
-                                        maxLength={1000}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
-                                        placeholder="Provide a detailed description of the project, including its purpose, target audience, and key features. Mention the problem it solves and the value it provides. Include project scope, challenges faced, and outcomes achieved..."
+                                    {/* Project Name */}
+                                    <Input
+                                        {...register(`projects.${projectIndex}.name`)}
+                                        label="Project Name"
+                                        placeholder="e.g., E-commerce Web Application, Mobile Banking App"
+                                        error={errors.projects?.[projectIndex]?.name?.message}
+                                        required
+                                        maxLength={100}
                                     />
-                                    {errors.projects?.[projectIndex]?.description && (
-                                        <p className="text-red-500 text-sm mt-1">
-                                            {errors.projects[projectIndex]?.description?.message}
-                                        </p>
-                                    )}
-                                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                                        <span>Minimum 20 characters. Be specific about goals, features, and impact.</span>
-                                        <span>{watch(`projects.${projectIndex}.description`)?.length || 0}/1000</span>
-                                    </div>
-                                </div>
 
-                                {/* Your Contribution */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Your Contribution & Role <span className="text-red-500">*</span>
-                                    </label>
-                                    <textarea
-                                        {...register(`projects.${projectIndex}.contribution`)}
-                                        rows={3}
-                                        maxLength={500}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
-                                        placeholder="Describe your specific role, responsibilities, and contributions to this project. What did you personally develop, design, or implement? Include leadership roles, key decisions, and measurable impact..."
-                                    />
-                                    {errors.projects?.[projectIndex]?.contribution && (
-                                        <p className="text-red-500 text-sm mt-1">
-                                            {errors.projects[projectIndex]?.contribution?.message}
-                                        </p>
-                                    )}
-                                    <div className="flex justify-between text-sm text-gray-500 mt-1">
-                                        <span>Highlight your personal contributions and achievements.</span>
-                                        <span>{watch(`projects.${projectIndex}.contribution`)?.length || 0}/500</span>
+                                    {/* Project Description */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Project Description <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            {...register(`projects.${projectIndex}.description`)}
+                                            rows={4}
+                                            maxLength={1000}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
+                                            placeholder="Provide a detailed description of the project, including its purpose, target audience, and key features. Mention the problem it solves and the value it provides. Include project scope, challenges faced, and outcomes achieved..."
+                                        />
+                                        {errors.projects?.[projectIndex]?.description && (
+                                            <p className="text-red-500 text-sm mt-1">
+                                                {errors.projects[projectIndex]?.description?.message}
+                                            </p>
+                                        )}
+                                        <div className="flex justify-between text-sm text-gray-500 mt-1">
+                                            <span>Minimum 20 characters. Be specific about goals, features, and impact.</span>
+                                            <span>{watch(`projects.${projectIndex}.description`)?.length || 0}/1000</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Technologies Used */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                                        Technologies Used <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="space-y-3">
-                                        {watch(`projects.${projectIndex}.technologies`)?.map((_, techIndex) => (
-                                            <div key={techIndex} className="flex items-center space-x-3">
-                                                <div className="flex-1">
+                                    {/* Your Contribution */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Your Contribution & Role <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            {...register(`projects.${projectIndex}.contribution`)}
+                                            rows={3}
+                                            maxLength={500}
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
+                                            placeholder="Describe your specific role, responsibilities, and contributions to this project. What did you personally develop, design, or implement? Include leadership roles, key decisions, and measurable impact..."
+                                        />
+                                        {errors.projects?.[projectIndex]?.contribution && (
+                                            <p className="text-red-500 text-sm mt-1">
+                                                {errors.projects[projectIndex]?.contribution?.message}
+                                            </p>
+                                        )}
+                                        <div className="flex justify-between text-sm text-gray-500 mt-1">
+                                            <span>Highlight your personal contributions and achievements.</span>
+                                            <span>{watch(`projects.${projectIndex}.contribution`)?.length || 0}/500</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Technologies Used */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Technologies Used <span className="text-red-500">*</span>
+                                            </label>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => addTechnology(projectIndex)}
+                                                disabled={currentTechnologies.length >= 20}
+                                            >
+                                                <Plus className="w-3 h-3 mr-1" />
+                                                Add Technology
+                                            </Button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {currentTechnologies.map((_, techIndex) => (
+                                                <div key={techIndex} className="flex gap-2 items-center">
                                                     <input
                                                         {...register(`projects.${projectIndex}.technologies.${techIndex}`)}
                                                         list={`technologies-${projectIndex}-${techIndex}`}
-                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                                                         placeholder="e.g., React.js, Node.js, MongoDB"
-                                                        onChange={(e) => updateTechnology(projectIndex, techIndex, e.target.value)}
                                                     />
                                                     <datalist id={`technologies-${projectIndex}-${techIndex}`}>
                                                         {suggestedTechnologies.map((tech) => (
                                                             <option key={tech} value={tech} />
                                                         ))}
                                                     </datalist>
-                                                </div>
-                                                <div className="flex space-x-2">
-                                                    {watch(`projects.${projectIndex}.technologies`)?.length < 20 && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => addTechnology(projectIndex)}
-                                                            className="flex items-center"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                    {watch(`projects.${projectIndex}.technologies`)?.length > 1 && (
+                                                    {currentTechnologies.length > 1 && (
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => removeTechnology(projectIndex, techIndex)}
-                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            className="my-auto h-12 cursor-pointer hover:bg-red-400"
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-3 h-3" />
                                                         </Button>
                                                     )}
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {errors.projects?.[projectIndex]?.technologies && (
-                                        <p className="text-red-500 text-sm mt-2">
-                                            {errors.projects[projectIndex]?.technologies?.message}
-                                        </p>
-                                    )}
-                                    <p className="text-sm text-gray-500 mt-2 flex items-center">
-                                        <Code className="w-4 h-4 mr-1" />
-                                        List all programming languages, frameworks, tools, and platforms used.
-                                    </p>
-                                </div>
-
-                                {/* Technology Preview */}
-                                {watch(`projects.${projectIndex}.technologies`)?.filter(tech => tech.trim()).length > 0 && (
-                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                        <h5 className="text-sm font-medium text-blue-900 mb-2">Technology Stack Preview:</h5>
-                                        <div className="flex flex-wrap gap-2">
-                                            {watch(`projects.${projectIndex}.technologies`)
-                                                ?.filter(tech => tech.trim())
-                                                .map((tech, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                                                    >
-                                                        {tech}
-                                                    </span>
-                                                ))
-                                            }
+                                            ))}
                                         </div>
+
+                                        {errors.projects?.[projectIndex]?.technologies && (
+                                            <p className="text-red-500 text-sm mt-2">
+                                                {errors.projects[projectIndex]?.technologies?.message}
+                                            </p>
+                                        )}
+                                        <p className="text-sm text-gray-500 mt-2 flex items-center">
+                                            <Code className="w-4 h-4 mr-1" />
+                                            List all programming languages, frameworks, tools, and platforms used.
+                                        </p>
                                     </div>
-                                )}
+
+                                    {/* Technology Preview */}
+                                    {currentTechnologies?.filter(tech => tech.trim()).length > 0 && (
+                                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <h5 className="text-sm font-medium text-blue-900 mb-2">Technology Stack Preview:</h5>
+                                            <div className="flex flex-wrap gap-2">
+                                                {currentTechnologies
+                                                    ?.filter(tech => tech.trim())
+                                                    .map((tech, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                                                        >
+                                                            {tech}
+                                                        </span>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Add Project Button (Alternative placement) */}

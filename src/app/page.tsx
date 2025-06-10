@@ -231,7 +231,7 @@ export default function HomePage() {
                       <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1">
                         {item.step}
                       </div>
-                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mx-auto -mt-16 mb-4 shadow-lg border-4 border-gray-50">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mx-auto -mt-20 shadow-lg border-4 border-gray-50">
                         <Icon className="w-6 h-6 text-gray-600" />
                       </div>
                     </div>

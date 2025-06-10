@@ -1,18 +1,19 @@
 // src/components/portfolio/MultiStepForm/Step1PersonalInfo.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useDispatch, useSelector } from 'react-redux';
-import { z } from 'zod';
-import { RootState } from '@/lib/redux/store';
-import { updateFormData, validateStep } from '@/lib/redux/slices/portfolioSlice';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DeleteButton } from '@/components/ui/DeleteButton';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { User, Phone, Mail, FileText, Users, Plus, Trash2, Upload, X } from 'lucide-react';
+import { updateFormData, validateStep } from '@/lib/redux/slices/portfolioSlice';
+import { RootState } from '@/lib/redux/store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { FileText, Mail, Phone, Plus, Trash2, Upload, User, Users, X } from 'lucide-react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { z } from 'zod';
 
 const step1Schema = z.object({
     employeeCode: z.string().min(1, 'Employee code is required'),
@@ -31,7 +32,6 @@ const step1Schema = z.object({
             relationship: z.string().min(1, 'Relationship is required'),
         })
     ).optional(),
-    // .min(1, 'At least one reference is required'),
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
@@ -41,6 +41,49 @@ export function Step1PersonalInfo() {
     const toast = useToast();
     const { formData } = useSelector((state: RootState) => state.portfolio);
     const [profileImagePreview, setProfileImagePreview] = useState<string>('');
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // Ref to track all input elements in the form
+    const formRef = useRef<HTMLFormElement>(null);
+
+    console.log('formData from step 1', formData);
+
+    // Helper function to trigger input component logic for all inputs
+    const triggerInputComponentLogic = useCallback(() => {
+        if (!formRef.current) return;
+
+        // Get all input elements in the form
+        const inputs = formRef.current.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], textarea');
+
+        inputs.forEach((input) => {
+            if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+                // Dispatch events to trigger Input component's internal state updates
+                const inputEvent = new Event('input', { bubbles: true });
+                const changeEvent = new Event('change', { bubbles: true });
+
+                input.dispatchEvent(inputEvent);
+                input.dispatchEvent(changeEvent);
+            }
+        });
+    }, []);
+    const normalizeFormData = useCallback((data: any): Step1FormData => {
+        return {
+            employeeCode: data.employeeCode || '',
+            designation: data.designation || '',
+            yearsOfExperience: Number(data.yearsOfExperience) || 0,
+            nationality: data.nationality || '',
+            languageProficiency: Array.isArray(data.languageProficiency)
+                ? [...data.languageProficiency]
+                : [''],
+            email: data.email || '',
+            mobileNo: data.mobileNo || '',
+            profileImage: data.profileImage || '',
+            summary: data.summary || '',
+            references: Array.isArray(data.references)
+                ? data.references.map(ref => ({ ...ref }))
+                : [{ name: '', contactInfo: '', relationship: '' }],
+        };
+    }, []);
 
     const {
         register,
@@ -48,32 +91,11 @@ export function Step1PersonalInfo() {
         handleSubmit,
         watch,
         setValue,
+        reset,
         formState: { errors },
     } = useForm<Step1FormData>({
         resolver: zodResolver(step1Schema),
-        defaultValues: {
-            employeeCode: '200054',
-            designation: 'Sr. Engineer',
-            yearsOfExperience: 4,
-            nationality: 'Bangladeshi',
-            languageProficiency: ['Bangla', 'English'],
-            email: 'sayeed.bappy@neural-semiconductor.com',
-            mobileNo: '+8801934939844',
-            profileImage: '',
-            summary: 'Mobile App Developer with 4+ years of experience delivering cross-platform apps for enterprise and consumer use. Skilled in React Native, Angular, Bluetooth integration, and offline-first design. Adept at collaborating with UI/UX teams and ensuring performance and scalability in mobile applications.',
-            references: [{ name: 'Md. X', contactInfo: '+8801626443576', relationship: 'Teacher' }],
-            // Remove upper part in production
-            // employeeCode: formData.employeeCode || '',
-            // designation: formData.designation || '',
-            // yearsOfExperience: formData.yearsOfExperience || 0,
-            // nationality: formData.nationality || '',
-            // languageProficiency: formData.languageProficiency || [''],
-            // email: formData.email || '',
-            // mobileNo: formData.mobileNo || '',
-            // profileImage: formData.profileImage || '',
-            // summary: formData.summary || '',
-            // references: formData.references || [{ name: '', contactInfo: '', relationship: '' }],
-        },
+        defaultValues: normalizeFormData(formData),
     });
 
     const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
@@ -86,80 +108,57 @@ export function Step1PersonalInfo() {
         name: 'references',
     });
 
-    // Use specific field watches instead of watching all data
-    const employeeCode = watch('employeeCode');
-    const designation = watch('designation');
-    const yearsOfExperience = watch('yearsOfExperience');
-    const nationality = watch('nationality');
-    const languageProficiency = watch('languageProficiency');
-    const email = watch('email');
-    const mobileNo = watch('mobileNo');
-    const profileImage = watch('profileImage');
-    const summary = watch('summary');
-    const references = watch('references');
-
-    // Memoize the form data object to prevent unnecessary re-renders
-    const currentFormData = useCallback(() => ({
-        employeeCode,
-        designation,
-        yearsOfExperience,
-        nationality,
-        languageProficiency,
-        email,
-        mobileNo,
-        profileImage,
-        summary,
-        references,
-    }), [
-        employeeCode,
-        designation,
-        yearsOfExperience,
-        nationality,
-        languageProficiency,
-        email,
-        mobileNo,
-        profileImage,
-        summary,
-        references,
-    ]);
-
-    // Update form data and validation with proper dependencies
+    // Initialize form with Redux data on mount
     useEffect(() => {
-        const formData = currentFormData();
-        dispatch(updateFormData(formData));
+        if (formData) {
+            const normalizedData = normalizeFormData(formData);
+            console.log('Syncing form with updated formData:', normalizedData);
 
-        const errorsArray = Object.values(errors).flatMap((err) =>
-            err ? [err.message] : []
-        );
+            reset(normalizedData);
 
-        dispatch(validateStep({
-            step: 1,
-            isValid: errorsArray.length === 0,
-            errors: errorsArray,
-        }));
-    }, [
-        employeeCode,
-        designation,
-        yearsOfExperience,
-        nationality,
-        languageProficiency,
-        email,
-        mobileNo,
-        profileImage,
-        summary,
-        references,
-        errors,
-        dispatch,
-        currentFormData,
-    ]);
+            if (normalizedData.profileImage) {
+                setProfileImagePreview(normalizedData.profileImage);
+            }
 
-    useEffect(() => {
-        if (formData.profileImage) {
-            setProfileImagePreview(formData.profileImage);
+            // Trigger logic for all inputs after reset
+            setTimeout(() => {
+                // Trigger Input component logic for all inputs
+                triggerInputComponentLogic();
+            }, 0);
+
+            // Move isInitialized inside this check if you really want to avoid re-inits
+            if (!isInitialized) {
+                setIsInitialized(true);
+            }
         }
-    }, [formData.profileImage]);
+    }, [formData, normalizeFormData, reset, triggerInputComponentLogic]);
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Watch form changes and update Redux (only after initialization)
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        const subscription = watch((value) => {
+            const normalizedValue = normalizeFormData(value);
+            console.log('Form changed, updating Redux:', normalizedValue);
+
+            dispatch(updateFormData(normalizedValue));
+
+            // Validate current form state
+            const errorsArray = Object.values(errors).flatMap((err) =>
+                err ? [err.message] : []
+            );
+
+            dispatch(validateStep({
+                step: 1,
+                isValid: errorsArray.length === 0,
+                errors: errorsArray,
+            }));
+        });
+
+        return () => subscription.unsubscribe();
+    }, [watch, errors, dispatch, normalizeFormData, isInitialized]);
+
+    const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -191,13 +190,26 @@ export function Step1PersonalInfo() {
     };
 
     const onSubmit = (data: Step1FormData) => {
-        dispatch(updateFormData(data));
+        const normalizedData = normalizeFormData(data);
+        dispatch(updateFormData(normalizedData));
         dispatch(validateStep({ step: 1, isValid: true, errors: [] }));
         toast.success('Personal information saved');
     };
 
+    // Show loading state during initialization
+    if (!isInitialized) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading form data...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Personal Information */}
                 <Card className="p-6">
@@ -332,9 +344,9 @@ export function Step1PersonalInfo() {
                         Add Language
                     </Button>
                 </div>
-                <div className="flex flex-wrap gap-10 space-y-3">
+                <div className="flex flex-wrap">
                     {languageFields.map((field, index) => (
-                        <div key={field.id} className="flex w-1/3 gap-2">
+                        <div key={`language-${index}`} className="flex w-1/3 gap-2 space-y-3">
                             <Input
                                 {...register(`languageProficiency.${index}`)}
                                 placeholder="e.g., English, Bengali"
@@ -342,14 +354,10 @@ export function Step1PersonalInfo() {
                                 className="flex-1"
                             />
                             {languageFields.length > 1 && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeLanguage(index)}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <DeleteButton
+                                    alignWith="input"
+                                    onDelete={() => removeLanguage(index)}
+                                />
                             )}
                         </div>
                     ))}
@@ -398,7 +406,7 @@ export function Step1PersonalInfo() {
                 </div>
                 <div className="space-y-4">
                     {referenceFields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                        <div key={`reference-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                             <Input
                                 {...register(`references.${index}.name`)}
                                 label="Name"
@@ -423,15 +431,10 @@ export function Step1PersonalInfo() {
                                     className="flex-1"
                                 />
                                 {referenceFields.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => removeReference(index)}
-                                        className="my-auto cursor-pointer hover:bg-red-400"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeReference(index)}
+                                    />
                                 )}
                             </div>
                         </div>

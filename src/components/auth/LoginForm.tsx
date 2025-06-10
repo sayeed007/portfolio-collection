@@ -78,6 +78,7 @@ export const LoginForm: React.FC = () => {
             success('Welcome back! You have been signed in successfully.');
         } catch (error) {
             // Error is handled by useAuth hook and useEffect above
+            console.error('Log in failed because', error);
         }
     };
 
@@ -88,6 +89,7 @@ export const LoginForm: React.FC = () => {
             success('Successfully signed in with Google!');
         } catch (error) {
             // Error is handled by useAuth hook and useEffect above
+            console.error('Google Log in failed because', error);
         }
     };
 
@@ -118,7 +120,7 @@ export const LoginForm: React.FC = () => {
                             Email Address *
                         </label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Mail className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('email')}
                                 type="email"
@@ -158,7 +160,7 @@ export const LoginForm: React.FC = () => {
                             </button>
                         </div>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Lock className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('password')}
                                 type={showPassword ? 'text' : 'password'}
@@ -174,7 +176,7 @@ export const LoginForm: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                                className="absolute right-4 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
                                 disabled={isSubmitting || loading}
                                 aria-label={showPassword ? "Hide password" : "Show password"}
                             >
@@ -278,7 +280,7 @@ export const LoginForm: React.FC = () => {
 
                 {/* Sign Up Link */}
                 <div className="text-center text-sm pt-2">
-                    <span className="text-gray-600">Don't have an account? </span>
+                    <span className="text-gray-600">{"Don't have an account?"}</span>
                     <a
                         href="/register"
                         className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded px-1"

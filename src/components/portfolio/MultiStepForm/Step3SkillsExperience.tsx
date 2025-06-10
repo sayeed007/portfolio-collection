@@ -9,13 +9,13 @@ import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Briefcase, Code, Plus, Settings, Trash2 } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
 import { SkillCategorySelector } from '../SkillCategorySelector';
 
-// Define the Zod schema for your form data
+// Zod schema remains unchanged
 const step3Schema = z.object({
     technicalSkills: z
         .array(
@@ -39,19 +39,16 @@ const step3Schema = z.object({
                 responsibilities: z
                     .array(z.string().min(1, 'Responsibility cannot be empty'))
                     .min(1, 'At least one responsibility is required'),
-                // Technologies array can be optional, but if present, each string must not be empty.
                 technologies: z
                     .array(z.string().min(1, 'Technology cannot be empty'))
-                    .optional(), // Make the array itself optional
+                    .optional(),
             })
         )
         .min(1, 'At least one work experience is required'),
 });
 
-// Infer the TypeScript type from the Zod schema
 type Step3FormData = z.infer<typeof step3Schema>;
 
-// Helper function for robust deep copying of JSON-serializable data
 const deepCopyJSON = (data) => JSON.parse(JSON.stringify(data));
 
 export function Step3SkillsExperience() {
@@ -60,8 +57,9 @@ export function Step3SkillsExperience() {
     const { categories, loading: categoriesLoading } = useSkillCategories();
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [selectedSkillIndex, setSelectedSkillIndex] = useState<number>(-1);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const isResettingRef = useRef(false);
+    const previousDataRef = useRef<string>('');
+
+    console.log(formData);
 
     const {
         register,
@@ -70,34 +68,14 @@ export function Step3SkillsExperience() {
         setValue,
         getValues,
         formState: { errors },
-        reset,
     } = useForm<Step3FormData>({
         resolver: zodResolver(step3Schema),
-        defaultValues: {
-            technicalSkills: [
-                { category: 'Programming Languages', skills: ['JavaScript(ES6)', 'TypeScript', 'Python', 'Node'], proficiency: '' }
-            ],
-            workExperience: [{
-                company: 'Neural Semiconductor Limited',
-                position: 'Sr. Engineer',
-                startDate: '2024-07-01',
-                endDate: '',
-                isCurrentRole: true,
-                responsibilities: ['Delivered cross-platform apps using Angular, Ionic, and React Native; built secure APIs.'],
-                technologies: ['React-Native', 'Expo'],
-            }],
-        },
-    });
-
-    // Initialize form data from Redux only once
-    useEffect(() => {
-        if (formData && !isInitialized) {
-            isResettingRef.current = true;
-            reset({
-                technicalSkills: formData.technicalSkills && formData.technicalSkills.length > 0
+        defaultValues: formData && (formData.technicalSkills || formData.workExperience)
+            ? {
+                technicalSkills: formData.technicalSkills?.length
                     ? deepCopyJSON(formData.technicalSkills)
                     : [{ category: '', skills: [''], proficiency: '' }],
-                workExperience: formData.workExperience && formData.workExperience.length > 0
+                workExperience: formData.workExperience?.length
                     ? deepCopyJSON(formData.workExperience)
                     : [{
                         company: '',
@@ -108,16 +86,21 @@ export function Step3SkillsExperience() {
                         responsibilities: [''],
                         technologies: [''],
                     }],
-            });
-            setIsInitialized(true);
-            // Small delay to ensure reset is complete before allowing watch to trigger
-            setTimeout(() => {
-                isResettingRef.current = false;
-            }, 0);
-        }
-    }, [formData, reset, isInitialized]);
+            }
+            : {
+                technicalSkills: [{ category: '', skills: [''], proficiency: '' }],
+                workExperience: [{
+                    company: '',
+                    position: '',
+                    startDate: '',
+                    endDate: '',
+                    isCurrentRole: false,
+                    responsibilities: [''],
+                    technologies: [''],
+                }],
+            },
+    });
 
-    // Field array for technical skills
     const {
         fields: skillFields,
         append: appendSkill,
@@ -127,7 +110,6 @@ export function Step3SkillsExperience() {
         name: 'technicalSkills',
     });
 
-    // Field array for work experience
     const {
         fields: experienceFields,
         append: appendExperience,
@@ -137,24 +119,18 @@ export function Step3SkillsExperience() {
         name: 'workExperience',
     });
 
-    // Subscribe to form value changes and dispatch to Redux (only after initialization)
+    const watchedData = watch();
+
+    // Update Redux store on form changes
     useEffect(() => {
-        if (!isInitialized) return;
+        const currentDataString = JSON.stringify(watchedData);
+        if (currentDataString !== previousDataRef.current) {
+            dispatch(updateFormData(deepCopyJSON(watchedData)));
+            previousDataRef.current = currentDataString;
+        }
+    }, [watchedData, dispatch]);
 
-        const subscription = watch((value) => {
-            // Prevent dispatching during form reset
-            if (isResettingRef.current) return;
-
-            // Only dispatch if we have actual form data
-            if (value && (value.technicalSkills || value.workExperience)) {
-                dispatch(updateFormData(deepCopyJSON(value as Step3FormData)));
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, [watch, dispatch, isInitialized]);
-
-    // Handler for selecting a category from the modal
+    // Handlers remain unchanged
     const handleCategorySelect = (category: string) => {
         if (selectedSkillIndex >= 0) {
             setValue(`technicalSkills.${selectedSkillIndex}.category`, category, { shouldValidate: true });
@@ -163,19 +139,16 @@ export function Step3SkillsExperience() {
         setSelectedSkillIndex(-1);
     };
 
-    // Handler to open the category selection modal
     const openCategoryModal = (index: number) => {
         setSelectedSkillIndex(index);
         setShowCategoryModal(true);
     };
 
-    // Handler to add a new skill input to a specific category
     const addSkillToCategory = (categoryIndex: number) => {
         const currentSkills = getValues(`technicalSkills.${categoryIndex}.skills`);
         setValue(`technicalSkills.${categoryIndex}.skills`, [...currentSkills, ''], { shouldValidate: true });
     };
 
-    // Handler to remove a skill input from a specific category
     const removeSkillFromCategory = (categoryIndex: number, skillIndex: number) => {
         const currentSkills = getValues(`technicalSkills.${categoryIndex}.skills`);
         if (currentSkills.length > 1) {
@@ -184,13 +157,11 @@ export function Step3SkillsExperience() {
         }
     };
 
-    // Handler to add a new responsibility input to an experience entry
     const addResponsibility = (experienceIndex: number) => {
         const currentResponsibilities = getValues(`workExperience.${experienceIndex}.responsibilities`);
         setValue(`workExperience.${experienceIndex}.responsibilities`, [...currentResponsibilities, ''], { shouldValidate: true });
     };
 
-    // Handler to remove a responsibility input from an experience entry
     const removeResponsibility = (experienceIndex: number, responsibilityIndex: number) => {
         const currentResponsibilities = getValues(`workExperience.${experienceIndex}.responsibilities`);
         if (currentResponsibilities.length > 1) {
@@ -199,13 +170,11 @@ export function Step3SkillsExperience() {
         }
     };
 
-    // Handler to add a new technology input to an experience entry
     const addTechnology = (experienceIndex: number) => {
         const currentTechnologies = getValues(`workExperience.${experienceIndex}.technologies`) || [];
         setValue(`workExperience.${experienceIndex}.technologies`, [...currentTechnologies, ''], { shouldValidate: true });
     };
 
-    // Handler to remove a technology input from an experience entry
     const removeTechnology = (experienceIndex: number, techIndex: number) => {
         const currentTechnologies = getValues(`workExperience.${experienceIndex}.technologies`) || [];
         if (currentTechnologies.length > 1) {

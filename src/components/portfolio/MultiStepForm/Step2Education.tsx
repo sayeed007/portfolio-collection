@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GraduationCap, Award, BookOpen, Plus, Trash2 } from 'lucide-react';
+import { DeleteButton } from '@/components/ui/DeleteButton';
 
 // Validation schema for Step2Education.tsx
 const step2Schema = z.object({
@@ -50,21 +51,9 @@ export function Step2Education() {
     } = useForm<Step2FormData>({
         resolver: zodResolver(step2Schema),
         defaultValues: {
-            education: [
-                { degree: 'B.Sc. in CSE', institution: 'Rajshahi University of Engineering & Technology', passingYear: 2021, grade: '2.89' },
-                { degree: 'H.S.C- Science', institution: 'Akij Collegiate School, Jessore', passingYear: 2014, grade: '5.00' },
-                { degree: 'S.S.C- Science', institution: 'Sheikh Akijuddin High School, Jessore', passingYear: 2012, grade: '5.00' },
-            ],
-            certifications: [
-                { name: 'Reactive Accilator', issuingOrganization: 'Learn With Sumit', year: 2024, expiryDate: '', credentialId: '' }
-            ],
-            courses: [
-                { name: 'Master React', provider: 'Learn With Sumit', completionDate: '2024-06-12' }
-            ],
-            // Remove upper part in production
-            // education: formData.education || [{ degree: '', institution: '', year: new Date().getFullYear() }],
-            // certifications: formData.certifications || [],
-            // courses: formData.courses || [],
+            education: formData.education || [{ degree: '', institution: '', year: new Date().getFullYear() }],
+            certifications: formData.certifications || [],
+            courses: formData.courses || [],
         },
     });
 
@@ -137,7 +126,7 @@ export function Step2Education() {
 
                 <div className="space-y-4">
                     {educationFields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                        <div key={`education-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                             <Input
                                 {...register(`education.${index}.degree`)}
                                 label="Degree"
@@ -165,15 +154,10 @@ export function Step2Education() {
                                     className="flex-1"
                                 />
                                 {educationFields.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => removeEducation(index)}
-                                        className="my-auto cursor-pointer hover:bg-red-400"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeEducation(index)}
+                                    />
                                 )}
                             </div>
                         </div>
@@ -202,12 +186,12 @@ export function Step2Education() {
 
                 {certificationFields.length === 0 ? (
                     <p className="text-gray-500 text-center py-4">
-                        No certifications added yet. Click "Add Certification" to get started.
+                        {'No certifications added yet. Click "Add Certification" to get started.'}
                     </p>
                 ) : (
                     <div className="space-y-4">
                         {certificationFields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                            <div key={`certificate-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                                 <Input
                                     {...register(`certifications.${index}.name`)}
                                     label="Certification Name"
@@ -233,15 +217,10 @@ export function Step2Education() {
                                         required
                                         className="flex-1"
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => removeCertification(index)}
-                                        className="my-auto cursor-pointer hover:bg-red-400"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeCertification(index)}
+                                    />
                                 </div>
                             </div>
                         ))}
@@ -269,12 +248,12 @@ export function Step2Education() {
 
                 {courseFields.length === 0 ? (
                     <p className="text-gray-500 text-center py-4">
-                        No courses added yet. Click "Add Course" to get started.
+                        {'No courses added yet. Click "Add Course" to get started.'}
                     </p>
                 ) : (
                     <div className="space-y-4">
                         {courseFields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                            <div key={`course-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                                 <Input
                                     {...register(`courses.${index}.name`)}
                                     label="Course Name"
@@ -300,15 +279,10 @@ export function Step2Education() {
                                         required
                                         className="flex-1"
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => removeCourse(index)}
-                                        className="mt-6"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeCourse(index)}
+                                    />
                                 </div>
                             </div>
                         ))}

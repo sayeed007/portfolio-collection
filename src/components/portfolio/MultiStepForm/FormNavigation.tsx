@@ -13,14 +13,8 @@ interface FormNavigationProps {
     onSave?: () => void;
     isSubmitting?: boolean;
     isSaving?: boolean;
-}
+};
 
-const STEP_TITLES = [
-    { title: 'Personal Information', subtitle: 'Basic details and references' },
-    { title: 'Education & Certifications', subtitle: 'Academic background and achievements' },
-    { title: 'Skills & Experience', subtitle: 'Technical skills and work history' },
-    { title: 'Projects Portfolio', subtitle: 'Your key projects and contributions' },
-];
 
 export function FormNavigation({
     onSubmit,
@@ -45,11 +39,6 @@ export function FormNavigation({
         if (currentStep > 1) {
             dispatch(setCurrentStep(currentStep - 1));
         }
-    };
-
-    const handleStepClick = (step: number) => {
-        // Allow navigation to any step (removed restriction)
-        dispatch(setCurrentStep(step));
     };
 
     const isCurrentStepValid = stepValidation[currentStep]?.isValid ?? false;
@@ -80,7 +69,7 @@ export function FormNavigation({
                         variant="outline"
                         onClick={handlePrevious}
                         disabled={currentStep === 1}
-                        className="flex items-center"
+                        className="cursor-pointer flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
                     >
                         <ChevronLeft className="w-4 h-4 mr-2" />
                         Previous
@@ -95,7 +84,7 @@ export function FormNavigation({
                             variant="outline"
                             onClick={onSave}
                             disabled={isSaving}
-                            className="flex items-center"
+                            className="cursor-pointer flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
                         >
                             <Save className="w-4 h-4 mr-2" />
                             {isSaving ? 'Saving...' : 'Save Draft'}
@@ -107,17 +96,17 @@ export function FormNavigation({
                         <Button
                             type="button"
                             onClick={handleNext}
-                            className="flex items-center"
+                            className="cursor-pointer flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                         >
+                            <ChevronRight className="w-4 h-4 mr-2" />
                             Next
-                            <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                     ) : canSubmit ? (
                         <Button
                             type="button"
                             onClick={onSubmit}
                             disabled={isSubmitting}
-                            className="flex items-center bg-green-600 hover:bg-green-700"
+                            className="cursor-pointer flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             {isSubmitting ? 'Submitting...' : 'Submit Portfolio'}

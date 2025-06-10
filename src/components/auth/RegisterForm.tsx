@@ -65,6 +65,7 @@ export const RegisterForm: React.FC = () => {
             success('Account created successfully! Please check your email to verify your account.');
         } catch (error) {
             // Error is handled by useAuth hook and useEffect above
+            console.error('Registration failed because', error);
         }
     };
 
@@ -76,6 +77,7 @@ export const RegisterForm: React.FC = () => {
             success('Successfully signed up with Google!');
         } catch (error) {
             // Error is handled by useAuth hook and useEffect above
+            console.error('Google Registration failed because', error);
         }
     };
 
@@ -123,7 +125,7 @@ export const RegisterForm: React.FC = () => {
                             Full Name *
                         </label>
                         <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <User className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('displayName')}
                                 type="text"
@@ -149,7 +151,7 @@ export const RegisterForm: React.FC = () => {
                             Email Address *
                         </label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Mail className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('email')}
                                 type="email"
@@ -175,7 +177,7 @@ export const RegisterForm: React.FC = () => {
                             Password *
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Lock className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('password')}
                                 type={showPassword ? 'text' : 'password'}
@@ -189,7 +191,7 @@ export const RegisterForm: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-[9px] h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                                className="absolute right-4 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
                                 disabled={isSubmitting || loading}
                             >
                                 {showPassword ? <EyeOff /> : <Eye />}
@@ -210,7 +212,7 @@ export const RegisterForm: React.FC = () => {
                             Confirm Password *
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-[9px] h-4 w-4 text-gray-400" />
+                            <Lock className="absolute left-3 top-4 h-4 w-4 text-gray-400 z-99" />
                             <Input
                                 {...register('confirmPassword')}
                                 type={showConfirmPassword ? 'text' : 'password'}
@@ -224,7 +226,7 @@ export const RegisterForm: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                                className="absolute right-4 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
                                 disabled={isSubmitting || loading}
                             >
                                 {showConfirmPassword ? <EyeOff /> : <Eye />}

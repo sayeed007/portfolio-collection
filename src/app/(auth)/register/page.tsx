@@ -12,9 +12,9 @@ export default function RegisterPage() {
             {/* Background decoration */}
             <BackgroundDecoration />
 
-            <div className="relative z-10 container mx-auto px-4 py-8">
+            <div className="relative z-10 container mx-auto px-4 py-4">
                 {/* Navigation */}
-                <div className="mb-8">
+                <div className="mb-4">
                     <Link
                         href="/"
                         className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors group"

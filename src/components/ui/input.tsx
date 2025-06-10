@@ -1,23 +1,23 @@
 // src/components/ui/input.tsx
-import * as React from "react";
 import { cn } from "@/lib/utils/helpers";
+import React, { ChangeEvent, FocusEvent, forwardRef, ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
     helperText?: string;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, label, error, icon, helperText, ...props }, ref) => {
-        const [isFocused, setIsFocused] = React.useState(false);
-        const [hasValue, setHasValue] = React.useState(false);
-        const inputId = React.useId();
-        const inputRef = React.useRef<HTMLInputElement>(null);
+        const [isFocused, setIsFocused] = useState(false);
+        const [hasValue, setHasValue] = useState(false);
+        const inputId = useId();
+        const inputRef = useRef<HTMLInputElement>(null);
 
         // Combine refs to handle both forwarded ref and internal ref
-        const combinedRef = React.useCallback(
+        const combinedRef = useCallback(
             (node: HTMLInputElement) => {
                 inputRef.current = node;
                 if (typeof ref === 'function') {
@@ -30,40 +30,37 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         );
 
         // Check if input has value - improved to handle all cases
-        const checkHasValue = React.useCallback(() => {
+        const checkHasValue = useCallback(() => {
             const input = inputRef.current;
             if (input) {
                 setHasValue(Boolean(input.value));
+                setIsFocused(Boolean(input.value));
             } else {
                 // Fallback to props if ref not available yet
                 setHasValue(Boolean(props.value || props.defaultValue));
+                setIsFocused(Boolean(props.value || props.defaultValue));
             }
         }, [props.value, props.defaultValue]);
 
         // Check value on mount and when props change
-        React.useEffect(() => {
-            checkHasValue();
-        }, [checkHasValue]);
+        useEffect(() => {
+            if (!isFocused) {
+                checkHasValue();
+            }
+        }, [checkHasValue, inputRef?.current?.value]);
 
-        // Also check after component mounts to catch any initial values
-        React.useEffect(() => {
-            // Small delay to ensure input is fully rendered
-            const timer = setTimeout(checkHasValue, 0);
-            return () => clearTimeout(timer);
-        }, [checkHasValue]);
-
-        const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
             setIsFocused(true);
             props.onFocus?.(e);
         };
 
-        const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
             setIsFocused(false);
             setHasValue(Boolean(e.target.value));
             props.onBlur?.(e);
         };
 
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
             setHasValue(Boolean(e.target.value));
             props.onChange?.(e);
         };

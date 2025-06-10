@@ -33,7 +33,7 @@ const PortfolioManagementCard: React.FC<PortfolioManagementCardProps> = ({
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                                className="cursor-pointer w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
                             >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Portfolio
@@ -42,7 +42,7 @@ const PortfolioManagementCard: React.FC<PortfolioManagementCardProps> = ({
                         <Link href="/portfolio/edit">
                             <Button
                                 size="lg"
-                                className="w-full sm:w-auto h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                className="text-white cursor-pointer w-full sm:w-auto h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                             >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Portfolio
