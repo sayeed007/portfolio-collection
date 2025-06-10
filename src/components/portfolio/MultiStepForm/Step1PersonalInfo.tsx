@@ -10,6 +10,7 @@ import { updateFormData, validateStep } from '@/lib/redux/slices/portfolioSlice'
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileText, Mail, Phone, Plus, Trash2, Upload, User, Users, X } from 'lucide-react';
+import Image from 'next/image';
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
@@ -284,7 +285,7 @@ export function Step1PersonalInfo() {
                 <div className="space-y-4">
                     {profileImagePreview ? (
                         <div className="relative inline-block">
-                            <img
+                            <Image
                                 src={profileImagePreview}
                                 alt="Profile preview"
                                 className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"

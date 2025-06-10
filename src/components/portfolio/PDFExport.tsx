@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import { Download, FileText, Loader2 } from 'lucide-react';
 import { Portfolio } from '@/lib/types';
 import { generatePortfolioPDF } from '@/lib/utils/pdf-generator';
+import Image from 'next/image';
 
 interface PDFExportProps {
     portfolio: Portfolio;
@@ -94,7 +95,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
             <div className="bg-blue-600 text-white p-6">
                 <div className="flex items-center gap-6">
                     {portfolio.profileImage ? (
-                        <img
+                        <Image
                             src={portfolio.profileImage}
                             alt={`${portfolio.employeeCode} profile`}
                             className="w-20 h-20 rounded-full object-cover border-4 border-white"

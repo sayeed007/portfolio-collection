@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Portfolio } from '@/lib/types';
 import { formatDate } from '@/lib/utils/formatters';
+import Image from 'next/image';
 
 interface PortfolioViewProps {
     portfolio: Portfolio;
@@ -35,18 +36,22 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
     isOwner = false,
     onEdit,
     onPDFExport,
-    showVisitCount = false
+    showVisitCount = isOwner || false
 }) => {
+
+    const { profileImage, employeeCode, designation, email, mobileNo, nationality, yearsOfExperience, languageProficiency, summary } = portfolio?.personalInfo;
+    const { visitCount } = portfolio;
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             {/* Header with Actions */}
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {portfolio.employeeCode}
+                        {employeeCode}
                     </h1>
                     <p className="text-xl text-gray-600 mt-1">
-                        {portfolio.designation}
+                        {designation}
                     </p>
                 </div>
 
@@ -55,7 +60,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                         <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
                             <Eye className="w-4 h-4 text-gray-600" />
                             <span className="text-sm text-gray-600">
-                                {portfolio.visitCount || 0} views
+                                {visitCount || 0} views
                             </span>
                         </div>
                     )}
@@ -86,10 +91,12 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             <Card className="p-6">
                 <div className="flex items-start gap-6">
                     <div className="flex-shrink-0">
-                        {portfolio.profileImage ? (
-                            <img
-                                src={portfolio.profileImage}
-                                alt={`${portfolio.employeeCode} profile`}
+                        {profileImage ? (
+                            <Image
+                                width={96}
+                                height={96}
+                                src={profileImage}
+                                alt={`${employeeCode} profile`}
                                 className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
                             />
                         ) : (
@@ -103,32 +110,32 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-gray-500" />
-                                <span>{portfolio.email}</span>
+                                <span>{email}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-gray-500" />
-                                <span>{portfolio.mobileNo}</span>
+                                <span>{mobileNo}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-gray-500" />
-                                <span>{portfolio.nationality}</span>
+                                <span>{nationality}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-gray-500" />
-                                <span>{portfolio.yearsOfExperience} years experience</span>
+                                <span>{yearsOfExperience} years experience</span>
                             </div>
                         </div>
 
-                        {portfolio.languageProficiency && portfolio.languageProficiency.length > 0 && (
+                        {languageProficiency && languageProficiency?.length > 0 && (
                             <div className="mt-4">
-                                <h4 className="font-medium text-gray-700 mb-2">Languages</h4>
+                                <h4 className="font-bold text-gray-700 mb-2">Languages</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {portfolio.languageProficiency.map((language, index) => (
+                                    {languageProficiency?.map((language, index) => (
                                         <span
-                                            key={index}
+                                            key={`language-${index}`}
                                             className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
                                         >
                                             {language}
@@ -142,26 +149,26 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             </Card>
 
             {/* Summary */}
-            {portfolio.summary && (
+            {summary && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
-                    <p className="text-gray-700 leading-relaxed">{portfolio.summary}</p>
+                    <p className="text-gray-700 leading-relaxed">{summary}</p>
                 </Card>
             )}
 
             {/* Education */}
-            {portfolio.education && portfolio.education.length > 0 && (
+            {portfolio?.education && portfolio?.education?.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <GraduationCap className="w-5 h-5" />
                         Education
                     </h2>
                     <div className="space-y-4">
-                        {portfolio.education.map((edu, index) => (
-                            <div key={index} className="border-l-4 border-blue-500 pl-4">
-                                <h3 className="font-semibold text-gray-900">{edu.degree}</h3>
-                                <p className="text-gray-600">{edu.institution}</p>
-                                <p className="text-sm text-gray-500">Graduated: {edu.passingYear}</p>
+                        {portfolio?.education?.map((edu, index) => (
+                            <div key={`education-${index}`} className="border-l-4 border-blue-500 pl-4">
+                                <h3 className="font-semibold text-gray-900">{edu?.degree}</h3>
+                                <p className="text-gray-600">{edu?.institution}</p>
+                                <p className="text-sm text-gray-500">Graduated: {edu?.passingYear}</p>
                             </div>
                         ))}
                     </div>
@@ -169,18 +176,18 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* Certifications */}
-            {portfolio.certifications && portfolio.certifications.length > 0 && (
+            {portfolio?.certifications && portfolio?.certifications.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Award className="w-5 h-5" />
                         Certifications
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {portfolio.certifications.map((cert, index) => (
-                            <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                                <h3 className="font-semibold text-gray-900">{cert.name}</h3>
-                                <p className="text-gray-600">{cert.issuingOrganization}</p>
-                                <p className="text-sm text-gray-500">Year: {cert.year}</p>
+                        {portfolio?.certifications?.map((cert, index) => (
+                            <div key={`certificate-${index}`} className="p-4 bg-gray-50 rounded-lg">
+                                <h3 className="font-semibold text-gray-900">{cert?.name}</h3>
+                                <p className="text-gray-600">{cert?.issuingOrganization}</p>
+                                <p className="text-sm text-gray-500">Year: {cert?.year}</p>
                             </div>
                         ))}
                     </div>
@@ -188,15 +195,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* Courses */}
-            {portfolio.courses && portfolio.courses.length > 0 && (
+            {portfolio?.courses && portfolio?.courses?.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <BookOpen className="w-5 h-5" />
                         Courses
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {portfolio.courses.map((course, index) => (
-                            <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                        {portfolio?.courses.map((course, index) => (
+                            <div key={`courses-${index}`} className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-semibold text-gray-900">{course.name}</h3>
                                 <p className="text-gray-600">{course.provider}</p>
                                 <p className="text-sm text-gray-500">Completed: {course.completionDate}</p>
@@ -207,15 +214,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* Technical Skills */}
-            {portfolio.technicalSkills && portfolio.technicalSkills.length > 0 && (
+            {portfolio?.technicalSkills && portfolio?.technicalSkills?.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Code className="w-5 h-5" />
                         Technical Skills
                     </h2>
                     <div className="space-y-4">
-                        {portfolio.technicalSkills.map((skillCategory, index) => (
-                            <div key={index}>
+                        {portfolio?.technicalSkills?.map((skillCategory, index) => (
+                            <div key={`technicalSkills-${index}`}>
                                 <h3 className="font-semibold text-gray-800 mb-2">
                                     {skillCategory.category}
                                 </h3>
@@ -236,15 +243,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* Work Experience */}
-            {portfolio.workExperience && portfolio.workExperience.length > 0 && (
+            {portfolio?.workExperience && portfolio?.workExperience.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Briefcase className="w-5 h-5" />
                         Work Experience
                     </h2>
                     <div className="space-y-6">
-                        {portfolio.workExperience.map((work, index) => (
-                            <div key={index} className="border-l-4 border-green-500 pl-4">
+                        {portfolio?.workExperience.map((work, index) => (
+                            <div key={`workExperience-${index}`} className="border-l-4 border-green-500 pl-4">
                                 <h3 className="font-semibold text-gray-900">{work.position}</h3>
                                 <p className="text-gray-600 font-medium">{work.company}</p>
                                 <p className="text-sm text-gray-500 mb-2">{work.duration}</p>
@@ -262,15 +269,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* Projects */}
-            {portfolio.projects && portfolio.projects.length > 0 && (
+            {portfolio?.projects && portfolio?.projects.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <FolderOpen className="w-5 h-5" />
                         Projects
                     </h2>
                     <div className="space-y-6">
-                        {portfolio.projects.map((project, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        {portfolio?.projects.map((project, index) => (
+                            <div key={`projects-${index}`} className="border border-gray-200 rounded-lg p-4">
                                 <h3 className="font-semibold text-gray-900 mb-2">{project.name}</h3>
                                 <p className="text-gray-700 mb-3">{project.description}</p>
                                 <p className="text-gray-600 mb-3">
@@ -298,15 +305,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* References */}
-            {portfolio.references && portfolio.references.length > 0 && (
+            {portfolio?.references && portfolio?.references.length > 0 && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Users className="w-5 h-5" />
                         References
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {portfolio.references.map((ref, index) => (
-                            <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                        {portfolio?.references.map((ref, index) => (
+                            <div key={`references-${index}`} className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-semibold text-gray-900">{ref.name}</h3>
                                 <p className="text-gray-600">{ref.relationship}</p>
                                 <p className="text-sm text-gray-500">{ref.contactInfo}</p>
@@ -318,8 +325,8 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
             {/* Footer */}
             <div className="text-center text-sm text-gray-500 py-4">
-                <p>Portfolio created on {formatDate(portfolio.createdAt)}</p>
-                <p>Last updated on {formatDate(portfolio.updatedAt)}</p>
+                <p>Portfolio created on {formatDate(portfolio?.createdAt)}</p>
+                <p>Last updated on {formatDate(portfolio?.updatedAt)}</p>
             </div>
         </div>
     );

@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { RootState } from '@/lib/redux/store';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { cn } from '@/lib/utils/helpers';
+import Image from 'next/image';
 
 interface HeaderProps {
     onMobileMenuToggle?: () => void;
@@ -169,7 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
                         >
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold text-sm shadow-md">
                                 {user?.photoURL ? (
-                                    <img
+                                    <Image
+                                        width={32}
+                                        height={32}
                                         src={user.photoURL}
                                         alt={user.displayName || 'User'}
                                         className="h-8 w-8 rounded-lg object-cover"
@@ -200,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
                                             {user?.photoURL ? (
-                                                <img
+                                                <Image
                                                     src={user.photoURL}
                                                     alt={user.displayName || 'User'}
                                                     className="h-10 w-10 rounded-xl object-cover"

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui';
 import { User, MapPin, Calendar, Eye, Download } from 'lucide-react';
 import { Portfolio } from '@/lib/types';
 import { formatDate } from '@/lib/utils/formatters';
+import Image from 'next/image';
 
 interface PortfolioCardProps {
     portfolio: Portfolio;
@@ -34,7 +35,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                     <div className="flex items-start gap-4 mb-4">
                         <div className="relative">
                             {portfolio.profileImage ? (
-                                <img
+                                <Image
                                     src={portfolio.profileImage}
                                     alt={`${portfolio.employeeCode} profile`}
                                     className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
