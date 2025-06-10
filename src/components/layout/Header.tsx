@@ -1,28 +1,27 @@
 // src/components/layout/Header.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import {
-    User,
-    Settings,
-    LogOut,
-    Menu,
-    X,
-    Bell,
-    Search,
-    ChevronDown,
-    Sparkles,
-    Home,
-    FolderOpen
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RootState } from '@/lib/redux/store';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { RootState } from '@/lib/redux/store';
 import { cn } from '@/lib/utils/helpers';
+import {
+    Bell,
+    ChevronDown,
+    Home,
+    LogOut,
+    Menu,
+    Search,
+    Settings,
+    Sparkles,
+    User,
+    X
+} from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 interface HeaderProps {
     onMobileMenuToggle?: () => void;
@@ -96,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50"
                 : "bg-white/80 backdrop-blur-sm border-b border-gray-100"
         )}>
-            <div className="container flex h-16 items-center justify-between px-4 max-w-7xl mx-auto">
+            <div className="container flex h-16 items-center justify-between px-4 mx-auto">
                 {/* Left side - Logo and Mobile Menu */}
                 <div className="flex items-center gap-4">
                     {/* Mobile menu button */}
@@ -204,6 +203,8 @@ export const Header: React.FC<HeaderProps> = ({
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
                                             {user?.photoURL ? (
                                                 <Image
+                                                    width={40}
+                                                    height={40}
                                                     src={user.photoURL}
                                                     alt={user.displayName || 'User'}
                                                     className="h-10 w-10 rounded-xl object-cover"

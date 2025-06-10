@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { Portfolio } from '@/lib/types/portfolio';
+import BackgroundDecoration from '@/components/common/BackgroundDecoration';
 
 export default function PortfolioPage() {
     const params = useParams();
@@ -102,6 +103,8 @@ export default function PortfolioPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <BackgroundDecoration />
+
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">

@@ -96,6 +96,8 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
                 <div className="flex items-center gap-6">
                     {portfolio.profileImage ? (
                         <Image
+                            width={80}
+                            height={80}
                             src={portfolio.profileImage}
                             alt={`${portfolio.employeeCode} profile`}
                             className="w-20 h-20 rounded-full object-cover border-4 border-white"

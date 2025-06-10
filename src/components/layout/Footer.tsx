@@ -21,14 +21,14 @@ export const Footer: React.FC = () => {
                         </p>
                         <div className="flex space-x-4">
                             <a
-                                href="mailto:contact@portfoliocolletion.com"
+                                href="mailto:bappy143081@gmail.com"
                                 className="text-gray-300 hover:text-white transition-colors"
                                 aria-label="Email us"
                             >
                                 <Mail className="w-5 h-5" />
                             </a>
                             <a
-                                href="https://github.com"
+                                href="https://github.com/sayeed007"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-300 hover:text-white transition-colors"
@@ -37,7 +37,7 @@ export const Footer: React.FC = () => {
                                 <Github className="w-5 h-5" />
                             </a>
                             <a
-                                href="tel:+1234567890"
+                                href="+8801934939844"
                                 className="text-gray-300 hover:text-white transition-colors"
                                 aria-label="Call us"
                             >
@@ -131,7 +131,7 @@ export const Footer: React.FC = () => {
                         <div className="flex items-center space-x-2 text-gray-300">
                             <span>Made with</span>
                             <Heart className="w-4 h-4 text-red-500" />
-                            <span>by the Portfolio Collection Team</span>
+                            <span>by the Portfolio Collection Team(SHB)</span>
                         </div>
                         <div className="text-gray-300 mt-4 md:mt-0">
                             <p>&copy; {currentYear} Portfolio Collection. All rights reserved.</p>

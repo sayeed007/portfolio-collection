@@ -286,6 +286,8 @@ export function Step1PersonalInfo() {
                     {profileImagePreview ? (
                         <div className="relative inline-block">
                             <Image
+                                width={128}
+                                height={128}
                                 src={profileImagePreview}
                                 alt="Profile preview"
                                 className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"

@@ -36,6 +36,8 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                         <div className="relative">
                             {portfolio.profileImage ? (
                                 <Image
+                                    width={64}
+                                    height={64}
                                     src={portfolio.profileImage}
                                     alt={`${portfolio.employeeCode} profile`}
                                     className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
