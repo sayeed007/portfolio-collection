@@ -3,8 +3,10 @@ export interface SkillCategory {
   categoryId: string;
   name: string;
   approved: boolean;
-  createdAt: string;
-  updatedAt: string;
+  // createdAt: string;
+  // updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CategoryRequest {

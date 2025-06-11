@@ -208,20 +208,53 @@ const transformPortfolioToFormData = (portfolio: any): PortfolioFormData => {
 };
 
 // Async thunks
-export const submitPortfolio = createAsyncThunk(
+// export const submitPortfolio = createAsyncThunk<
+//   Portfolio | void,  // This indicates the success result type (Portfolio or void)
+//   {                   // This is the type of arguments you will pass
+//     portfolioData: PortfolioFormData;
+//     userId: string;
+//     portfolioId?: string;
+//   },
+//   { rejectValue: string } // This is the rejectValue type (string for error messages)
+// >(
+//   "portfolio/submit",
+//   async ({ portfolioData, userId, portfolioId }, { rejectWithValue }) => {
+//     try {
+//       const portfolioPayload = {
+//         ...transformFormDataToPortfolio(portfolioData),
+//         isPublic: true,
+//         status: "published" as const,
+//       };
+
+//       if (portfolioId) {
+//         const updatedPortfolio = await updatePortfolio(
+//           portfolioId,
+//           portfolioPayload
+//         );
+//         return updatedPortfolio; // This will be of type Portfolio
+//       } else {
+//         const newPortfolio = await createPortfolio(userId, portfolioPayload);
+//         return newPortfolio; // This will be of type Portfolio
+//       }
+//     } catch (error) {
+//       console.error("Submit portfolio error:", error);
+//       return rejectWithValue(
+//         error instanceof Error ? error.message : "Failed to submit portfolio"
+//       );
+//     }
+//   }
+// );
+export const submitPortfolio = createAsyncThunk<
+  Portfolio,  // Changed from Portfolio | void to just Portfolio
+  {
+    portfolioData: PortfolioFormData;
+    userId: string;
+    portfolioId?: string;
+  },
+  { rejectValue: string }
+>(
   "portfolio/submit",
-  async (
-    {
-      portfolioData,
-      userId,
-      portfolioId,
-    }: {
-      portfolioData: PortfolioFormData;
-      userId: string;
-      portfolioId?: string;
-    },
-    { rejectWithValue }
-  ) => {
+  async ({ portfolioData, userId, portfolioId }, { rejectWithValue }) => {
     try {
       const portfolioPayload = {
         ...transformFormDataToPortfolio(portfolioData),
@@ -230,8 +263,9 @@ export const submitPortfolio = createAsyncThunk(
       };
 
       if (portfolioId) {
+        // Fix: updatePortfolio expects userId, not portfolioId
         const updatedPortfolio = await updatePortfolio(
-          portfolioId,
+          userId,
           portfolioPayload
         );
         return updatedPortfolio;
@@ -248,17 +282,62 @@ export const submitPortfolio = createAsyncThunk(
   }
 );
 
-export const savePortfolioDraft = createAsyncThunk(
+
+// export const savePortfolioDraft = createAsyncThunk(
+//   "portfolio/saveDraft",
+//   async (
+//     {
+//       portfolioData,
+//       userId,
+//       portfolioId,
+//     }: {
+//       portfolioData: PortfolioFormData;
+//       userId: string;
+//       portfolioId?: string;
+//     },
+//     { rejectWithValue }
+//   ) => {
+//     try {
+//       const portfolioPayload = {
+//         ...transformFormDataToPortfolio(portfolioData),
+//         isPublic: false,
+//         status: "draft" as const,
+//       };
+
+//       if (portfolioId) {
+//         const updatedPortfolio = await updatePortfolio(
+//           portfolioId,
+//           portfolioPayload
+//         );
+//         return updatedPortfolio;
+//       } else {
+//         const newPortfolio = await createPortfolio(userId, portfolioPayload);
+//         return newPortfolio;
+//       }
+//     } catch (error) {
+//       console.error("Save draft error:", error);
+//       return rejectWithValue(
+//         error instanceof Error ? error.message : "Failed to save draft"
+//       );
+//     }
+//   }
+// );
+
+export const savePortfolioDraft = createAsyncThunk<
+  Portfolio,  // Return type
+  {           // Argument type
+    portfolioData: PortfolioFormData;
+    userId: string;
+    portfolioId?: string;
+  },
+  { rejectValue: string } // RejectValue type
+>(
   "portfolio/saveDraft",
   async (
     {
       portfolioData,
       userId,
       portfolioId,
-    }: {
-      portfolioData: PortfolioFormData;
-      userId: string;
-      portfolioId?: string;
     },
     { rejectWithValue }
   ) => {
@@ -270,8 +349,9 @@ export const savePortfolioDraft = createAsyncThunk(
       };
 
       if (portfolioId) {
+        // Fix: updatePortfolio expects userId, not portfolioId
         const updatedPortfolio = await updatePortfolio(
-          portfolioId,
+          userId,
           portfolioPayload
         );
         return updatedPortfolio;

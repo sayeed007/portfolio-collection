@@ -80,45 +80,6 @@ export const usePortfolio = () => {
     [dispatch]
   );
 
-  // Fetch current user's portfolio
-  // const fetchMyPortfolio = useCallback(async () => {
-  //   if (!user?.uid) {
-  //     console.warn("No user ID available for portfolio fetch");
-  //     return null;
-  //   }
-
-  //   if (portfolioState.loading) {
-  //     console.info("Portfolio fetch already in progress");
-  //     return null;
-  //   }
-
-  //   try {
-  //     console.info("Fetching portfolio for user:", user.uid);
-  //     const result = await dispatch(fetchUserPortfolio(user.uid));
-
-  //     if (fetchUserPortfolio.fulfilled.match(result)) {
-  //       console.info("Portfolio fetched successfully");
-  //       return result.payload;
-  //     } else if (fetchUserPortfolio.rejected.match(result)) {
-  //       const errorMessage = result.payload as string;
-  //       console.info("Portfolio fetch rejected:", errorMessage);
-
-  //       if (errorMessage === "No portfolio found") {
-  //         console.info(
-  //           "No portfolio found for user - this is expected for new users"
-  //         );
-  //         return null;
-  //       }
-
-  //       throw new Error(errorMessage || "Failed to fetch portfolio");
-  //     }
-
-  //     return result.payload;
-  //   } catch (error) {
-  //     console.error("Error in fetchMyPortfolio:", error);
-  //     throw error;
-  //   }
-  // }, [user?.uid, portfolioState.loading, dispatch]);
   const fetchMyPortfolio = useCallback(async () => {
     if (!user?.uid) {
       console.warn("No user ID available for portfolio fetch");

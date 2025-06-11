@@ -1,24 +1,23 @@
 // src/lib/firebase/firestore.ts
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  increment,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
   setDoc,
   updateDoc,
-  deleteDoc,
-  query,
   where,
-  orderBy,
-  limit,
-  increment,
-  addDoc,
-  onSnapshot,
-  QueryConstraint,
-  writeBatch,
+  writeBatch
 } from "firebase/firestore";
+import { CategoryRequest, Portfolio, PortfolioFilters, SkillCategory } from "../types";
 import { db } from "./config";
-import { Portfolio, SkillCategory, CategoryRequest, PortfolioFilters } from "../types";
 
 // Portfolio operations
 export const createPortfolio = async (
