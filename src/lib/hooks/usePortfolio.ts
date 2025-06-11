@@ -32,6 +32,15 @@ export const usePortfolio = () => {
     completed: false,
   });
 
+  // Track public portfolios fetch state
+  const [publicFetchState, setPublicFetchState] = useState<{
+    attempted: boolean;
+    completed: boolean;
+  }>({
+    attempted: false,
+    completed: false,
+  });
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Clear timeout on unmount
@@ -72,6 +81,44 @@ export const usePortfolio = () => {
   );
 
   // Fetch current user's portfolio
+  // const fetchMyPortfolio = useCallback(async () => {
+  //   if (!user?.uid) {
+  //     console.warn("No user ID available for portfolio fetch");
+  //     return null;
+  //   }
+
+  //   if (portfolioState.loading) {
+  //     console.info("Portfolio fetch already in progress");
+  //     return null;
+  //   }
+
+  //   try {
+  //     console.info("Fetching portfolio for user:", user.uid);
+  //     const result = await dispatch(fetchUserPortfolio(user.uid));
+
+  //     if (fetchUserPortfolio.fulfilled.match(result)) {
+  //       console.info("Portfolio fetched successfully");
+  //       return result.payload;
+  //     } else if (fetchUserPortfolio.rejected.match(result)) {
+  //       const errorMessage = result.payload as string;
+  //       console.info("Portfolio fetch rejected:", errorMessage);
+
+  //       if (errorMessage === "No portfolio found") {
+  //         console.info(
+  //           "No portfolio found for user - this is expected for new users"
+  //         );
+  //         return null;
+  //       }
+
+  //       throw new Error(errorMessage || "Failed to fetch portfolio");
+  //     }
+
+  //     return result.payload;
+  //   } catch (error) {
+  //     console.error("Error in fetchMyPortfolio:", error);
+  //     throw error;
+  //   }
+  // }, [user?.uid, portfolioState.loading, dispatch]);
   const fetchMyPortfolio = useCallback(async () => {
     if (!user?.uid) {
       console.warn("No user ID available for portfolio fetch");
@@ -89,27 +136,26 @@ export const usePortfolio = () => {
 
       if (fetchUserPortfolio.fulfilled.match(result)) {
         console.info("Portfolio fetched successfully");
-        return result.payload;
+        return result.payload; // result.payload should be correctly typed now
       } else if (fetchUserPortfolio.rejected.match(result)) {
         const errorMessage = result.payload as string;
         console.info("Portfolio fetch rejected:", errorMessage);
 
         if (errorMessage === "No portfolio found") {
-          console.info(
-            "No portfolio found for user - this is expected for new users"
-          );
+          console.info("No portfolio found for user - this is expected for new users");
           return null;
         }
 
         throw new Error(errorMessage || "Failed to fetch portfolio");
       }
 
-      return result.payload;
+      return null;
     } catch (error) {
       console.error("Error in fetchMyPortfolio:", error);
       throw error;
     }
   }, [user?.uid, portfolioState.loading, dispatch]);
+
 
   // Auto-fetch user portfolio with improved logic
   useEffect(() => {
@@ -158,19 +204,59 @@ export const usePortfolio = () => {
   // Fetch public portfolios
   const fetchPortfolios = useCallback(
     async (filters?: PortfolioFilters) => {
+      // Prevent multiple simultaneous fetches
+      if (portfolioState.loading) {
+        console.info("Portfolio fetch already in progress");
+        return portfolioState.portfolios;
+      }
+
       try {
+        console.info("Fetching portfolios with filters:", filters);
+
+        // Use the minimal index strategy to avoid index issues
         const result = await dispatch(fetchPublicPortfolios(filters));
+
         if (fetchPublicPortfolios.fulfilled.match(result)) {
+          console.info("Portfolios fetched successfully:", result.payload.length);
           return result.payload;
         }
+
         throw new Error(result.payload as string);
       } catch (error) {
         console.error("Error fetching portfolios:", error);
+
+        // If it's an index error, try with simpler query
+        if (error instanceof Error && error.message.includes('requires an index')) {
+          console.warn("Index error detected, falling back to client-side filtering");
+
+          try {
+            // Fetch all public portfolios without complex filtering
+            const simpleResult = await dispatch(fetchPublicPortfolios());
+
+            if (fetchPublicPortfolios.fulfilled.match(simpleResult)) {
+              return simpleResult.payload;
+            }
+          } catch (fallbackError) {
+            console.error("Fallback query also failed:", fallbackError);
+          }
+        }
+
         throw error;
       }
     },
-    [dispatch]
+    [dispatch, portfolioState.loading, portfolioState.portfolios]
   );
+
+  // Auto-fetch public portfolios if not already fetched
+  const fetchPortfoliosIfNeeded = useCallback(async () => {
+    if (
+      !publicFetchState.attempted &&
+      !portfolioState.loading &&
+      (!portfolioState.portfolios || portfolioState.portfolios.length === 0)
+    ) {
+      await fetchPortfolios();
+    }
+  }, [publicFetchState.attempted, portfolioState.loading, portfolioState.portfolios, fetchPortfolios]);
 
   // Create portfolio
   const createPortfolio = useCallback(
@@ -199,6 +285,11 @@ export const usePortfolio = () => {
             attempted: false,
             completed: false,
           }));
+          // Also refresh public portfolios to include the new one
+          setPublicFetchState({
+            attempted: false,
+            completed: false,
+          });
           return result.payload;
         } else {
           throw new Error(result.payload as string);
@@ -227,6 +318,11 @@ export const usePortfolio = () => {
         );
 
         if (updateUserPortfolio.fulfilled.match(result)) {
+          // Refresh public portfolios to reflect updates
+          setPublicFetchState({
+            attempted: false,
+            completed: false,
+          });
           return result.payload;
         } else {
           throw new Error(result.payload as string);
@@ -255,6 +351,11 @@ export const usePortfolio = () => {
           attempted: false,
           completed: false,
         }));
+        // Refresh public portfolios to remove the deleted one
+        setPublicFetchState({
+          attempted: false,
+          completed: false,
+        });
         return result.payload;
       } else {
         throw new Error(result.payload as string);
@@ -291,7 +392,7 @@ export const usePortfolio = () => {
   );
 
   const updateStep = useCallback(
-    (step: keyof PortfolioFormData, data: any) => {
+    (step: keyof PortfolioFormData, data: Portfolio) => {
       dispatch(updateFormData({ [step]: data }));
     },
     [dispatch]
@@ -305,8 +406,10 @@ export const usePortfolio = () => {
   const setPortfolioFilters = useCallback(
     (filters: PortfolioFilters) => {
       dispatch(setFilters(filters));
+      // Refresh portfolios with new filters
+      fetchPortfolios(filters);
     },
-    [dispatch]
+    [dispatch, fetchPortfolios]
   );
 
   // Clear errors
@@ -317,6 +420,7 @@ export const usePortfolio = () => {
   // Manual retry function
   const retryFetch = useCallback(async () => {
     setFetchState((prev) => ({ ...prev, attempted: false, completed: false }));
+    setPublicFetchState({ attempted: false, completed: false });
     dispatch(clearError());
 
     if (timeoutRef.current) {
@@ -348,6 +452,10 @@ export const usePortfolio = () => {
     return !!portfolioState.currentPortfolio;
   }, [portfolioState.currentPortfolio]);
 
+  const hasPublicPortfolios = useCallback(() => {
+    return portfolioState.portfolios && portfolioState.portfolios.length > 0;
+  }, [portfolioState.portfolios]);
+
   return {
     // State
     currentPortfolio: portfolioState.currentPortfolio,
@@ -367,6 +475,7 @@ export const usePortfolio = () => {
     getPortfolio,
     fetchMyPortfolio,
     fetchPortfolios,
+    fetchPortfoliosIfNeeded,
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
@@ -382,5 +491,6 @@ export const usePortfolio = () => {
     isPortfolioNotFound: isPortfolioNotFound(),
     shouldShowLoading: shouldShowLoading(),
     hasPortfolio: hasPortfolio(),
+    hasPublicPortfolios: hasPublicPortfolios(),
   };
 };

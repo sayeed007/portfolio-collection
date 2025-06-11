@@ -288,7 +288,7 @@ export const savePortfolioDraft = createAsyncThunk(
   }
 );
 
-export const fetchUserPortfolio = createAsyncThunk(
+export const fetchUserPortfolio = createAsyncThunk<Portfolio | null, string, { rejectValue: string }>(
   "portfolio/fetch",
   async (userId: string, { rejectWithValue }) => {
     try {
@@ -381,17 +381,39 @@ export const deleteUserPortfolio = createAsyncThunk(
   }
 );
 
-export const fetchPublicPortfolios = createAsyncThunk(
+export const fetchPublicPortfolios = createAsyncThunk<
+  Portfolio[], // Return type
+  PortfolioFilters | undefined, // Argument type
+  { rejectValue: string } // ThunkAPI type for rejectWithValue
+>(
   "portfolio/fetchPublic",
-  async (filters?: PortfolioFilters, { rejectWithValue }) => {
+  async (filters, { rejectWithValue }) => {
     try {
+      console.log("Fetching public portfolios with filters:", filters);
+
       const portfolios = await getPublicPortfolios(filters);
+
+      // Validate the response
+      if (!Array.isArray(portfolios)) {
+        throw new Error("Invalid response: expected array of portfolios");
+      }
+
+      console.log(`Successfully fetched ${portfolios.length} public portfolios`);
       return portfolios;
     } catch (error) {
       console.error("Fetch public portfolios error:", error);
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Failed to fetch portfolios"
-      );
+
+      // Handle different types of errors
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+
+      // Handle network errors
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        return rejectWithValue(`Network error: ${(error as any).code}`);
+      }
+
+      return rejectWithValue("Failed to fetch portfolios");
     }
   }
 );

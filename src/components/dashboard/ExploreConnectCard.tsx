@@ -33,7 +33,7 @@ const ExploreConnectCard: React.FC = () => {
                 <Button
                     variant="outline"
                     size="lg"
-                    className="w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                    className="hidden w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
                 >
                     <Search className="w-4 h-4 mr-2" />
                     Advanced Search

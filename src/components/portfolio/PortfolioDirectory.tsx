@@ -2,6 +2,7 @@
 
 import { Card, Input } from '@/components/ui';
 import { useDebounce } from '@/lib/hooks/useDebounce';
+import { Portfolio } from '@/lib/types';
 import {
     ChevronDown,
     Filter,
@@ -14,12 +15,11 @@ import {
 import React, { useMemo, useState } from 'react';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { PortfolioCard } from './PortfolioCard';
-import { Portfolio } from '@/lib/types';
 
 interface PortfolioDirectoryProps {
     portfolios: Portfolio[];
     loading?: boolean;
-    error?: string;
+    error?: boolean;
     onPDFExport?: (portfolio: Portfolio) => void;
 }
 
@@ -43,6 +43,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
     error,
     onPDFExport
 }) => {
+
     const [searchTerm, setSearchTerm] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [sortField, setSortField] = useState<SortField>('updated');
@@ -82,7 +83,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
 
     // Filter and sort portfolios
     const filteredAndSortedPortfolios = useMemo(() => {
-        let filtered = portfolios.filter(portfolio => {
+        const filtered = portfolios.filter(portfolio => {
             // Search filter
             if (debouncedSearchTerm) {
                 const searchLower = debouncedSearchTerm.toLowerCase();
@@ -133,7 +134,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
 
         // Sort portfolios
         filtered.sort((a, b) => {
-            let aValue: any, bValue: any;
+            let aValue: string | number, bValue: string | number;
 
             switch (sortField) {
                 case 'name':
@@ -164,15 +165,25 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
         return filtered;
     }, [portfolios, debouncedSearchTerm, filters, sortField, sortOrder]);
 
-    const handleFilterChange = (
+    // Function overload signatures (no implementation)
+    function handleFilterChange(
+        filterType: 'experienceRange',
+        value: { min: number; max: number }
+    ): void;
+    function handleFilterChange(
+        filterType: 'skills' | 'nationality' | 'designation',
+        value: string[]
+    ): void;
+    // Implementation signature
+    function handleFilterChange(
         filterType: keyof FilterState,
-        value: any
-    ) => {
+        value: FilterState[keyof FilterState]
+    ): void {
         setFilters(prev => ({
             ...prev,
             [filterType]: value
         }));
-    };
+    }
 
     const clearFilters = () => {
         setFilters({

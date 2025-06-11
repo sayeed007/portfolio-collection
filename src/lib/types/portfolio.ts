@@ -106,10 +106,26 @@ export interface PortfolioState {
   filters: PortfolioFilters;
 }
 
+// export interface PortfolioFilters {
+//   yearsOfExperience?: number;
+//   skills?: string[];
+//   education?: string;
+//   institution?: string;
+//   searchQuery?: string;
+// }
+
+// Updated PortfolioFilters type
 export interface PortfolioFilters {
-  yearsOfExperience?: number;
+  searchTerm?: string;
+  experienceRange?: {
+    min: number;
+    max: number;
+  };
   skills?: string[];
-  education?: string;
-  institution?: string;
-  searchQuery?: string;
+  nationality?: string[];
+  designation?: string[];
+  location?: string[];
+  // Add pagination support
+  page?: number;
+  pageSize?: number;
 }

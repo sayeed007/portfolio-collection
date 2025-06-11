@@ -27,19 +27,21 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
         }
     };
 
+    const { profileImage, employeeCode, designation, yearsOfExperience, nationality, summary } = portfolio?.personalInfo;
+
     return (
         <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
             <Link href={`/portfolio/${portfolio.userId}`}>
                 <div className="p-6">
                     {/* Header with Profile Image and Basic Info */}
                     <div className="flex items-start gap-4 mb-4">
-                        <div className="relative">
-                            {portfolio.profileImage ? (
+                        <div className="relative self-center">
+                            {profileImage ? (
                                 <Image
                                     width={64}
                                     height={64}
-                                    src={portfolio.profileImage}
-                                    alt={`${portfolio.employeeCode} profile`}
+                                    src={profileImage}
+                                    alt={`${employeeCode} profile`}
                                     className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                                 />
                             ) : (
@@ -54,20 +56,20 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
 
                         <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                                {portfolio.employeeCode}
+                                {employeeCode}
                             </h3>
                             <p className="text-gray-600 font-medium truncate">
-                                {portfolio.designation}
+                                {designation}
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
                                     <Calendar className="w-4 h-4" />
-                                    {portfolio.yearsOfExperience} years exp.
+                                    {yearsOfExperience} years exp.
                                 </span>
-                                {portfolio.nationality && (
+                                {nationality && (
                                     <span className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4" />
-                                        {portfolio.nationality}
+                                        {nationality}
                                     </span>
                                 )}
                             </div>
@@ -95,9 +97,9 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                     </div>
 
                     {/* Summary */}
-                    {portfolio.summary && (
+                    {summary && (
                         <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                            {portfolio.summary}
+                            {summary}
                         </p>
                     )}
 

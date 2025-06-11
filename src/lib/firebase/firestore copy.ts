@@ -15,7 +15,6 @@ import {
   addDoc,
   onSnapshot,
   QueryConstraint,
-  writeBatch,
 } from "firebase/firestore";
 import { db } from "./config";
 import { Portfolio, SkillCategory, CategoryRequest, PortfolioFilters } from "../types";
@@ -38,12 +37,6 @@ export const createPortfolio = async (
   };
 
   await setDoc(portfolioRef, portfolio);
-
-  // If portfolio is public, also create/update it in the public portfolios collection
-  if (portfolio.isPublic) {
-    await syncToPublicCollection(userId, portfolio);
-  }
-
   return portfolio;
 };
 
@@ -52,24 +45,10 @@ export const updatePortfolio = async (
   portfolioData: Partial<Portfolio>
 ) => {
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
-  const updatedData = {
+  await updateDoc(portfolioRef, {
     ...portfolioData,
     updatedAt: new Date().toISOString(),
-  };
-
-  await updateDoc(portfolioRef, updatedData);
-
-  // Get the full portfolio to check if it's public
-  const fullPortfolio = await getPortfolio(userId);
-  if (fullPortfolio) {
-    if (fullPortfolio.isPublic) {
-      // Sync to public collection
-      await syncToPublicCollection(userId, { ...fullPortfolio, ...updatedData });
-    } else {
-      // Remove from public collection if it was made private
-      await removeFromPublicCollection(userId);
-    }
-  }
+  });
 };
 
 export const getPortfolio = async (
@@ -83,6 +62,7 @@ export const getPortfolio = async (
       return portfolioSnap.data() as Portfolio;
     }
 
+    // Return null for non-existent portfolio (not an error)
     return null;
   } catch (error) {
     console.error("Error fetching portfolio:", error);
@@ -91,124 +71,36 @@ export const getPortfolio = async (
 };
 
 export const deletePortfolio = async (userId: string) => {
-  const batch = writeBatch(db);
-
-  // Delete from user's private collection
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
-  batch.delete(portfolioRef);
-
-  // Delete from public collection if it exists
-  const publicPortfolioRef = doc(db, "portfolios", userId);
-  batch.delete(publicPortfolioRef);
-
-  await batch.commit();
+  await deleteDoc(portfolioRef);
 };
 
 export const incrementPortfolioVisits = async (userId: string) => {
-  const batch = writeBatch(db);
-
-  // Update visit count in user's private collection
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
-  batch.update(portfolioRef, {
+  await updateDoc(portfolioRef, {
     visitCount: increment(1),
   });
-
-  // Update visit count in public collection if it exists
-  const publicPortfolioRef = doc(db, "portfolios", userId);
-  const publicPortfolioSnap = await getDoc(publicPortfolioRef);
-  if (publicPortfolioSnap.exists()) {
-    batch.update(publicPortfolioRef, {
-      visitCount: increment(1),
-    });
-  }
-
-  await batch.commit();
-};
-
-// Helper function to sync portfolio to public collection
-const syncToPublicCollection = async (userId: string, portfolio: Portfolio) => {
-  const publicPortfolioRef = doc(db, "portfolios", userId);
-  await setDoc(publicPortfolioRef, {
-    ...portfolio,
-    id: userId, // Ensure the document has an id field
-  });
-};
-
-// Helper function to remove portfolio from public collection
-const removeFromPublicCollection = async (userId: string) => {
-  const publicPortfolioRef = doc(db, "portfolios", userId);
-  try {
-    await deleteDoc(publicPortfolioRef);
-  } catch (error) {
-    // Document might not exist, which is fine
-    console.log("Portfolio not found in public collection:", error);
-  }
-};
-
-// Function to migrate existing portfolios to public collection (run once)
-export const migrateExistingPortfolios = async () => {
-  try {
-    console.log("Starting portfolio migration...");
-
-    // This is a one-time migration function
-    // You would run this once to migrate existing public portfolios
-    const usersRef = collection(db, "users");
-    const usersSnapshot = await getDocs(usersRef);
-
-    const batch = writeBatch(db);
-    let migrationCount = 0;
-
-    for (const userDoc of usersSnapshot.docs) {
-      const userId = userDoc.id;
-      const portfolioRef = doc(db, "users", userId, "portfolio", "data");
-      const portfolioSnap = await getDoc(portfolioRef);
-
-      if (portfolioSnap.exists()) {
-        const portfolio = portfolioSnap.data() as Portfolio;
-        if (portfolio.isPublic) {
-          const publicPortfolioRef = doc(db, "portfolios", userId);
-          batch.set(publicPortfolioRef, {
-            ...portfolio,
-            id: userId,
-          });
-          migrationCount++;
-        }
-      }
-    }
-
-    await batch.commit();
-    console.log(`Migration completed. Migrated ${migrationCount} public portfolios.`);
-    return migrationCount;
-  } catch (error) {
-    console.error("Error during migration:", error);
-    throw error;
-  }
 };
 
 export const getPublicPortfolios = async (filters?: PortfolioFilters): Promise<Portfolio[]> => {
   try {
-    // Now we can efficiently query the public portfolios collection
+    // Base query - only filter by isPublic and orderBy updatedAt
+    // This requires only ONE composite index: isPublic + updatedAt
     const portfoliosRef = collection(db, 'portfolios');
     const baseQuery = query(
       portfoliosRef,
       where('isPublic', '==', true),
       orderBy('updatedAt', 'desc'),
-      limit(1000)
+      limit(1000) // Reasonable limit to prevent excessive data transfer
     );
 
     const snapshot = await getDocs(baseQuery);
-
-    if (snapshot.empty) {
-      console.log('No public portfolios found');
-      return [];
-    }
-
     let portfolios: Portfolio[] = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as Portfolio));
 
-    // Apply client-side filters
+    // Apply filters client-side
     if (filters) {
       portfolios = applyClientSideFilters(portfolios, filters);
     }
@@ -216,22 +108,11 @@ export const getPublicPortfolios = async (filters?: PortfolioFilters): Promise<P
     return portfolios;
   } catch (error) {
     console.error('Error fetching public portfolios:', error);
-
-    // Provide helpful error messages
-    if (error instanceof Error) {
-      if (error.message.includes('index')) {
-        throw new Error('Database index missing. Please create a composite index for isPublic + updatedAt fields in the portfolios collection.');
-      }
-      if (error.message.includes('permission')) {
-        throw new Error('Insufficient permissions to read portfolios.');
-      }
-    }
-
-    throw new Error('Failed to fetch portfolios. Please try again later.');
+    throw error;
   }
 };
 
-// Client-side filtering function (unchanged)
+// Client-side filtering function
 const applyClientSideFilters = (portfolios: Portfolio[], filters: PortfolioFilters): Portfolio[] => {
   return portfolios.filter(portfolio => {
     // Experience range filter
@@ -265,7 +146,7 @@ const applyClientSideFilters = (portfolios: Portfolio[], filters: PortfolioFilte
     // Designation filter
     if (filters.designation && filters.designation.length > 0) {
       if (!filters.designation.some(des =>
-        portfolio.designation?.toLowerCase().includes(des.toLowerCase())
+        portfolio.designation.toLowerCase().includes(des.toLowerCase())
       )) {
         return false;
       }
@@ -299,7 +180,7 @@ const applyClientSideFilters = (portfolios: Portfolio[], filters: PortfolioFilte
   });
 };
 
-// Skill categories operations (unchanged)
+// Skill categories operations
 export const getSkillCategories = async (): Promise<SkillCategory[]> => {
   const q = query(
     collection(db, "skillCategories"),
@@ -345,7 +226,7 @@ export const deleteSkillCategory = async (categoryId: string) => {
   await deleteDoc(categoryRef);
 };
 
-// Category requests operations (unchanged)
+// Category requests operations
 export const createCategoryRequest = async (
   requestData: Omit<CategoryRequest, "id" | "createdAt">
 ) => {
@@ -381,21 +262,18 @@ export const updateCategoryRequest = async (
   await updateDoc(requestRef, updateData);
 };
 
-// Updated real-time listeners
+// Real-time listeners
 export const subscribeToPortfolios = (
   callback: (portfolios: Portfolio[]) => void
 ) => {
   const q = query(
-    collection(db, "portfolios"), // Now using the public portfolios collection
+    collection(db, "portfolios"),
     where("isPublic", "==", true),
     orderBy("updatedAt", "desc")
   );
 
   return onSnapshot(q, (querySnapshot) => {
-    const portfolios = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data()
-    } as Portfolio));
+    const portfolios = querySnapshot.docs.map((doc) => doc.data() as Portfolio);
     callback(portfolios);
   });
 };

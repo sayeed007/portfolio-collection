@@ -31,7 +31,6 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
 }) => {
 
     const { designation, yearsOfExperience, nationality } = portfolio?.personalInfo;
-    console.log(portfolio);
 
     return (
         <Card className="p-8 border-0 bg-white/80 backdrop-blur hover:shadow-xl transition-all duration-300">

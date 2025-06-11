@@ -1,17 +1,17 @@
 // src\components\portfolio\MultiStepForm\Step4Projects.tsx
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useDispatch, useSelector } from 'react-redux';
-import { z } from 'zod';
-import { RootState } from '@/lib/redux/store';
-import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FolderOpen, Plus, Trash2, Code, Star, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
+import { RootState } from '@/lib/redux/store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AlertCircle, Code, FolderOpen, Plus, Star, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { z } from 'zod';
 
 // Validation schema
 const step4Schema = z.object({
