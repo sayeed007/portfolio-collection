@@ -1,20 +1,18 @@
 // src/app/(dashboard)/dashboard/page.tsx
 "use client";
 
+import BackgroundDecoration from "@/components/common/BackgroundDecoration";
+import DashboardLoading from "@/components/common/DashboardLoading";
+import ErrorStateCard from "@/components/dashboard/ErrorStateCard";
+import ExploreConnectCard from "@/components/dashboard/ExploreConnectCard";
+import PortfolioManagementCard from "@/components/dashboard/PortfolioManagementCard";
+import PortfolioOverviewCard from "@/components/dashboard/PortfolioOverviewCard";
+import StatsCard from "@/components/dashboard/StatsCard";
+import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
-import { User, FileText, Eye, Award } from "lucide-react";
+import { Award, Eye, FileText, User } from "lucide-react";
 import { useEffect } from "react";
-import DashboardLoading from "@/components/common/DashboardLoading";
-
-// Import new components
-import BackgroundDecoration from "@/components/common/BackgroundDecoration";
-import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
-import StatsCard from "@/components/dashboard/StatsCard";
-import PortfolioManagementCard from "@/components/dashboard/PortfolioManagementCard";
-import ExploreConnectCard from "@/components/dashboard/ExploreConnectCard";
-import PortfolioOverviewCard from "@/components/dashboard/PortfolioOverviewCard";
-import ErrorStateCard from "@/components/dashboard/ErrorStateCard";
 
 export default function DashboardPage() {
     const { user } = useAuth();

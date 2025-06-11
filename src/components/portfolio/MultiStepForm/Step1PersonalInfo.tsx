@@ -47,8 +47,6 @@ export function Step1PersonalInfo() {
     // Ref to track all input elements in the form
     const formRef = useRef<HTMLFormElement>(null);
 
-    console.log('formData from step 1', formData);
-
     // Helper function to trigger input component logic for all inputs
     const triggerInputComponentLogic = useCallback(() => {
         if (!formRef.current) return;
@@ -113,7 +111,6 @@ export function Step1PersonalInfo() {
     useEffect(() => {
         if (formData) {
             const normalizedData = normalizeFormData(formData);
-            console.log('Syncing form with updated formData:', normalizedData);
 
             reset(normalizedData);
 
@@ -140,7 +137,6 @@ export function Step1PersonalInfo() {
 
         const subscription = watch((value) => {
             const normalizedValue = normalizeFormData(value);
-            console.log('Form changed, updating Redux:', normalizedValue);
 
             dispatch(updateFormData(normalizedValue));
 

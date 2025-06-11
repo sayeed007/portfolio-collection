@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText, Eye, Edit, Plus } from 'lucide-react';
+import PrimaryButton from '../ui/PrimaryButton';
 
 interface PortfolioManagementCardProps {
     hasPortfolio: boolean;
@@ -33,20 +34,17 @@ const PortfolioManagementCard: React.FC<PortfolioManagementCardProps> = ({
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="cursor-pointer w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                                className="w-full sm:w-auto h-12 px-6 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
                             >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Portfolio
                             </Button>
                         </Link>
                         <Link href="/portfolio/edit">
-                            <Button
-                                size="lg"
-                                className="text-white cursor-pointer w-full sm:w-auto h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                            >
+                            <PrimaryButton>
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Portfolio
-                            </Button>
+                            </PrimaryButton>
                         </Link>
                     </div>
                 </>
@@ -62,13 +60,10 @@ const PortfolioManagementCard: React.FC<PortfolioManagementCardProps> = ({
                         Ready to showcase your professional journey? Create your stunning portfolio in just a few minutes and stand out from the crowd.
                     </p>
                     <Link href="/portfolio/create">
-                        <Button
-                            size="lg"
-                            className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                        >
+                        <PrimaryButton>
                             <Plus className="w-4 h-4 mr-2" />
                             Create Your Portfolio
-                        </Button>
+                        </PrimaryButton>
                     </Link>
                 </div>
             )}

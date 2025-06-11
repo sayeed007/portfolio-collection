@@ -4,15 +4,16 @@
 import BackgroundDecoration from '@/components/common/BackgroundDecoration';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import {
   ArrowRight,
   Download,
   FileText,
-  Search,
-  Users,
-  Star,
   Globe,
+  Search,
   Shield,
+  Star,
+  Users,
   Zap
 } from 'lucide-react';
 import Link from 'next/link';
@@ -104,13 +105,10 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
                 <Link href="/register">
-                  <Button
-                    size="lg"
-                    className="h-14 px-8 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                  >
+                  <PrimaryButton className='h-14 text-lg'>
                     Get Started Free
                     <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  </PrimaryButton>
                 </Link>
                 <Link href="/directory">
                   <Button
@@ -268,7 +266,7 @@ export default function HomePage() {
                       <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-6 leading-relaxed italic">"{testimonial.content}"</p>
+                  <p className="text-gray-600 mb-6 leading-relaxed italic">{`"${testimonial.content}"`}</p>
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                       {testimonial.name.charAt(0)}

@@ -282,7 +282,7 @@ export function Step3SkillsExperience() {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => removeSkill(categoryIndex)}
-                                                className="my-auto h-12 cursor-pointer hover:bg-red-400"
+                                                className="my-auto h-12 hover:bg-red-400"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
@@ -326,7 +326,7 @@ export function Step3SkillsExperience() {
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => removeSkillFromCategory(categoryIndex, skillIndex)}
-                                                            className="my-auto h-12 cursor-pointer hover:bg-red-400"
+                                                            className="my-auto h-12 hover:bg-red-400"
                                                         >
                                                             <Trash2 className="w-3 h-3" />
                                                         </Button>
@@ -433,7 +433,7 @@ export function Step3SkillsExperience() {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => removeExperience(experienceIndex)}
-                                                className="my-auto h-12 cursor-pointer hover:bg-red-400"
+                                                className="my-auto h-12 hover:bg-red-400"
                                             >
                                                 <Trash2 className="w-4 h-4 mr-2" />
                                                 Remove Experience
@@ -472,7 +472,7 @@ export function Step3SkillsExperience() {
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => removeResponsibility(experienceIndex, responsibilityIndex)}
-                                                            className="my-auto h-12 cursor-pointer hover:bg-red-400"
+                                                            className="my-auto h-12 hover:bg-red-400"
                                                         >
                                                             <Trash2 className="w-3 h-3" />
                                                         </Button>
@@ -513,7 +513,7 @@ export function Step3SkillsExperience() {
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => removeTechnology(experienceIndex, techIndex)}
-                                                            className="my-auto h-12 cursor-pointer hover:bg-red-400"
+                                                            className="my-auto h-12 hover:bg-red-400"
                                                         >
                                                             <Trash2 className="w-3 h-3" />
                                                         </Button>

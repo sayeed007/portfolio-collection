@@ -1,9 +1,9 @@
 // components/dashboard/ExploreConnectCard.tsx
-import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 import { Globe, Search } from 'lucide-react';
+import Link from 'next/link';
+import React from 'react';
 
 const ExploreConnectCard: React.FC = () => {
     return (

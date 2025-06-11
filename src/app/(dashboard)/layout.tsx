@@ -1,12 +1,12 @@
 // src/app/(dashboard)/layout.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({
     children,
@@ -22,11 +22,9 @@ export default function DashboardLayout({
         }
     }, [user, loading, router]);
 
-    // console.log('Loading from layout............', loading);
-
-    // if (loading) {
-    //     return <LoadingSpinner />;
-    // }
+    if (loading && !user) {
+        return <LoadingSpinner />;
+    }
 
     if (!user) {
         return null;

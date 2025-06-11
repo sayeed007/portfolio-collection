@@ -5,9 +5,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { usePortfolio } from '@/lib/hooks/usePortfolio';
 import {
     fetchUserPortfolio,
-    resetForm,
     savePortfolioDraft,
-    setCurrentStep,
     setFormData,
     setIsEditing,
     submitPortfolio,
@@ -61,8 +59,6 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         isEditing,
         stepValidation
     } = useSelector((state: RootState) => state.portfolio);
-    console.log('formData from index', formData);
-
 
     const [isLoading, setIsLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -138,11 +134,11 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 const result = await dispatch(fetchUserPortfolio(user.uid));
 
                 if (fetchUserPortfolio.fulfilled.match(result)) {
-                    console.log('User portfolio loaded:', result.payload);
+                    // console.info('User portfolio loaded:', result.payload);
                     // Optionally set as form data if you want to pre-populate
                     dispatch(setFormData(result.payload));
                 } else if (fetchUserPortfolio.rejected.match(result)) {
-                    console.log('No existing portfolio found or error:', result.payload);
+                    console.info('No existing portfolio found or error:', result.payload);
                     // This might be expected for new users
                 }
             }
@@ -184,8 +180,6 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
             toast.error('You must be logged in to submit a portfolio');
             return;
         }
-
-        console.log(formData);
 
         // Final validation of all steps
         let allStepsValid = true;

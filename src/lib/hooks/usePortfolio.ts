@@ -79,23 +79,23 @@ export const usePortfolio = () => {
     }
 
     if (portfolioState.loading) {
-      console.log("Portfolio fetch already in progress");
+      console.info("Portfolio fetch already in progress");
       return null;
     }
 
     try {
-      console.log("Fetching portfolio for user:", user.uid);
+      console.info("Fetching portfolio for user:", user.uid);
       const result = await dispatch(fetchUserPortfolio(user.uid));
 
       if (fetchUserPortfolio.fulfilled.match(result)) {
-        console.log("Portfolio fetched successfully");
+        console.info("Portfolio fetched successfully");
         return result.payload;
       } else if (fetchUserPortfolio.rejected.match(result)) {
         const errorMessage = result.payload as string;
-        console.log("Portfolio fetch rejected:", errorMessage);
+        console.info("Portfolio fetch rejected:", errorMessage);
 
         if (errorMessage === "No portfolio found") {
-          console.log(
+          console.info(
             "No portfolio found for user - this is expected for new users"
           );
           return null;
@@ -132,7 +132,7 @@ export const usePortfolio = () => {
 
     // Set timeout to prevent hanging
     timeoutRef.current = setTimeout(() => {
-      console.log("Portfolio fetch timeout reached");
+      console.info("Portfolio fetch timeout reached");
       setFetchState((prev) => ({ ...prev, completed: true }));
     }, 15000);
 

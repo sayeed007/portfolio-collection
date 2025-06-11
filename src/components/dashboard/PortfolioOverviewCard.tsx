@@ -1,32 +1,22 @@
 // components/dashboard/PortfolioOverviewCard.tsx
-import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Card } from '@/components/ui/card';
+import { Portfolio } from '@/lib/types';
 import {
-    User,
-    FileText,
-    TrendingUp,
     Award,
     Calendar,
-    MapPin,
+    Download,
     Edit,
     Eye,
-    Download,
-    Zap,
-    RefreshCw
+    FileText,
+    MapPin,
+    RefreshCw,
+    TrendingUp,
+    User,
+    Zap
 } from 'lucide-react';
-
-interface Portfolio {
-    designation?: string;
-    yearsOfExperience?: number;
-    nationality?: string;
-    education?: any[];
-    certifications?: any[];
-    workExperience?: any[];
-    projects?: any[];
-    technicalSkills?: Array<{ skills: any[] }>;
-}
+import Link from 'next/link';
+import React from 'react';
 
 interface PortfolioOverviewCardProps {
     portfolio: Portfolio;
@@ -39,6 +29,10 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
     userId,
     loading
 }) => {
+
+    const { designation, yearsOfExperience, nationality } = portfolio?.personalInfo;
+    console.log(portfolio);
+
     return (
         <Card className="p-8 border-0 bg-white/80 backdrop-blur hover:shadow-xl transition-all duration-300">
             <div className="flex items-center justify-between mb-8">
@@ -68,21 +62,21 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
                             <Award className="w-4 h-4 mr-3 mt-0.5 text-purple-500 flex-shrink-0" />
                             <div>
                                 <span className="text-sm font-medium text-gray-800 block">Role</span>
-                                <span className="text-sm">{portfolio.designation || 'Not specified'}</span>
+                                <span className="text-sm">{designation || 'Not specified'}</span>
                             </div>
                         </div>
                         <div className="flex items-start text-gray-600">
                             <Calendar className="w-4 h-4 mr-3 mt-0.5 text-green-500 flex-shrink-0" />
                             <div>
                                 <span className="text-sm font-medium text-gray-800 block">Experience</span>
-                                <span className="text-sm">{portfolio.yearsOfExperience || 0} years</span>
+                                <span className="text-sm">{yearsOfExperience || 0} years</span>
                             </div>
                         </div>
                         <div className="flex items-start text-gray-600">
                             <MapPin className="w-4 h-4 mr-3 mt-0.5 text-red-500 flex-shrink-0" />
                             <div>
                                 <span className="text-sm font-medium text-gray-800 block">Location</span>
-                                <span className="text-sm">{portfolio.nationality || 'Not specified'}</span>
+                                <span className="text-sm">{nationality || 'Not specified'}</span>
                             </div>
                         </div>
                     </div>
@@ -95,31 +89,31 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
                         Content Stats
                     </h3>
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
                             <span className="text-gray-600 text-sm font-medium">Projects</span>
                             <span className="font-bold text-gray-900 text-lg">
                                 {portfolio.projects?.length || 0}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
                             <span className="text-gray-600 text-sm font-medium">Education</span>
                             <span className="font-bold text-gray-900 text-lg">
                                 {portfolio.education?.length || 0}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
                             <span className="text-gray-600 text-sm font-medium">Certifications</span>
                             <span className="font-bold text-gray-900 text-lg">
                                 {portfolio.certifications?.length || 0}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
                             <span className="text-gray-600 text-sm font-medium">Work Experience</span>
                             <span className="font-bold text-gray-900 text-lg">
                                 {portfolio.workExperience?.length || 0}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-gray-50/80 rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg">
                             <span className="text-gray-600 text-sm font-medium">Skills</span>
                             <span className="font-bold text-gray-900 text-lg">
                                 {portfolio.technicalSkills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0}
@@ -134,7 +128,7 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
                         <Zap className="w-5 h-5 mr-2 text-blue-600" />
                         Quick Actions
                     </h3>
-                    <div className="space-y-3">
+                    <div className="flex flex-col space-y-3 gap-2">
                         <Link href="/portfolio/edit">
                             <Button
                                 variant="outline"

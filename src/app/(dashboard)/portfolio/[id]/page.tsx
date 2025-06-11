@@ -99,8 +99,6 @@ export default function PortfolioPage() {
 
     const isOwner = user?.uid === portfolioId;
 
-    console.log('Portfolio in view mode', portfolio);
-
     return (
         <div className="container mx-auto px-4 py-8">
             <BackgroundDecoration />

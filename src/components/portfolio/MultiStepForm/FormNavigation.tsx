@@ -69,7 +69,7 @@ export function FormNavigation({
                         variant="outline"
                         onClick={handlePrevious}
                         disabled={currentStep === 1}
-                        className="cursor-pointer flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
+                        className="flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
                     >
                         <ChevronLeft className="w-4 h-4 mr-2" />
                         Previous
@@ -84,7 +84,7 @@ export function FormNavigation({
                             variant="outline"
                             onClick={onSave}
                             disabled={isSaving}
-                            className="cursor-pointer flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
+                            className="flex items-center h-12 px-6 border-gray-300 text-gray-700 hover:border-yellow-500 hover:text-yellow-500 hover:bg-yellow-50 transition-colors duration-200"
                         >
                             <Save className="w-4 h-4 mr-2" />
                             {isSaving ? 'Saving...' : 'Save Draft'}
@@ -96,7 +96,7 @@ export function FormNavigation({
                         <Button
                             type="button"
                             onClick={handleNext}
-                            className="cursor-pointer flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                            className="flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                         >
                             <ChevronRight className="w-4 h-4 mr-2" />
                             Next
@@ -106,7 +106,7 @@ export function FormNavigation({
                             type="button"
                             onClick={onSubmit}
                             disabled={isSubmitting}
-                            className="cursor-pointer flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                            className="flex items-center h-12 px-6 text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             {isSubmitting ? 'Submitting...' : 'Submit Portfolio'}
