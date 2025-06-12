@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email in ['admin@portfolio-collection.com'] ||
+        request.auth.token.admin == true
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate skill category request data
+    function isValidSkillCategoryRequest() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'requestedBy', 'requestedByEmail', 'status', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.requestedBy == request.auth.uid &&
+             data.requestedByEmail == request.auth.token.email &&
+             data.status == 'pending' &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.adminComment == null || data.adminComment is string);
+    }
+
+    // Validate skill request data
+    function isValidSkillRequest() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'categoryId', 'requestedBy', 'requestedByEmail', 'status', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.categoryId is string &&
+             data.requestedBy == request.auth.uid &&
+             data.requestedByEmail == request.auth.token.email &&
+             data.status == 'pending' &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.adminComment == null || data.adminComment is string);
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+      match /portfolio/{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Public portfolios
+    match /portfolios/{portfolioId} {
+      allow read: if resource.data.isPublic == true;
+      allow create: if isAuthenticated() && portfolioId == request.auth.uid &&
+                     request.resource.data.isPublic == true &&
+                     request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(portfolioId) || isAdmin();
+      allow read, write: if isAdmin();
+    }
+
+    // Skill categories
+    match /skillCategories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Skill category requests
+    match /skillCategoryRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidSkillCategoryRequest();
+      allow update: if isAdmin() && request.resource.data.status in ['pending', 'approved', 'rejected'];
+      allow delete: if isAdmin();
+    }
+
+    // Skills
+    match /skills/{skillId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Skill requests
+    match /skillRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidSkillRequest();
+      allow update: if isAdmin() && request.resource.data.status in ['pending', 'approved', 'rejected'];
+      allow delete: if isAdmin();
+    }
+
+    // Category requests
+    match /categoryRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid &&
+                     request.resource.data.keys().hasAll(['userId', 'categoryName', 'status']) &&
+                     request.resource.data.status == 'pending';
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Languages
+    match /languages/{languageId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Degrees
+    match /degrees/{degreeId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Institutions
+    match /institutions/{institutionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Institution requests
+    match /institutionRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.requestedBy == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidInstitutionRequest();
+      allow update: if isAdmin() && request.resource.data.status in ['pending', 'approved', 'rejected'];
+      allow delete: if isAdmin();
+    }
+  }
+}

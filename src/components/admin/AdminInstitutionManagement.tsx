@@ -13,7 +13,6 @@ import {
     Timestamp,
     updateDoc,
     writeBatch,
-    where
 } from 'firebase/firestore';
 import {
     AlertCircle,
@@ -22,9 +21,10 @@ import {
     Plus,
     Save,
     X,
-    Clock,
     CheckSquare,
-    XSquare
+    XSquare,
+    MapPin,
+    Building,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { DeleteButton } from '../ui/DeleteButton';
@@ -35,11 +35,11 @@ interface Institution {
     id: string;
     name: string;
     shortName?: string;
-    type: string; // University, College, School, Institute
-    location: string; // City/District
-    division: string; // Division in Bangladesh
+    type: string;
+    location: string;
+    division: string;
     isActive: boolean;
-    isVerified: boolean; // Admin verified
+    isVerified: boolean;
     createdAt: Timestamp;
     updatedAt: Timestamp;
 }
@@ -51,7 +51,7 @@ interface InstitutionRequest {
     type: string;
     location: string;
     division: string;
-    requestedBy: string; // User ID
+    requestedBy: string;
     requestedByEmail: string;
     status: 'pending' | 'approved' | 'rejected';
     adminComment?: string;
@@ -59,37 +59,40 @@ interface InstitutionRequest {
     updatedAt: Timestamp;
 }
 
-// Comprehensive list of institutions in Bangladesh
 const POPULAR_INSTITUTIONS = [
-    // Major Public Universities
+    // Public Universities
     { name: 'University of Dhaka', shortName: 'DU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Bangladesh University of Engineering and Technology', shortName: 'BUET', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'Chittagong University', shortName: 'CU', type: 'University', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
-    { name: 'Rajshahi University', shortName: 'RU', type: 'University', location: 'Rajshahi', division: 'Rajshahi', isActive: true, isVerified: true },
+    { name: 'University of Chittagong', shortName: 'CU', type: 'University', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'University of Rajshahi', shortName: 'RU', type: 'University', location: 'Rajshahi', division: 'Rajshahi', isActive: true, isVerified: true },
     { name: 'Jahangirnagar University', shortName: 'JU', type: 'University', location: 'Savar', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Bangladesh Agricultural University', shortName: 'BAU', type: 'University', location: 'Mymensingh', division: 'Mymensingh', isActive: true, isVerified: true },
     { name: 'Khulna University', shortName: 'KU', type: 'University', location: 'Khulna', division: 'Khulna', isActive: true, isVerified: true },
     { name: 'Shahjalal University of Science and Technology', shortName: 'SUST', type: 'University', location: 'Sylhet', division: 'Sylhet', isActive: true, isVerified: true },
-    { name: 'Bangabandhu Sheikh Mujib Medical University', shortName: 'BSMMU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'Hajee Mohammad Danesh Science and Technology University', shortName: 'HSTU', type: 'University', location: 'Dinajpur', division: 'Rangpur', isActive: true, isVerified: true },
-    { name: 'Jessore University of Science and Technology', shortName: 'JUST', type: 'University', location: 'Jessore', division: 'Khulna', isActive: true, isVerified: true },
-    { name: 'Comilla University', shortName: 'CoU', type: 'University', location: 'Comilla', division: 'Chittagong', isActive: true, isVerified: true },
-    { name: 'Noakhali Science and Technology University', shortName: 'NSTU', type: 'University', location: 'Noakhali', division: 'Chittagong', isActive: true, isVerified: true },
-    { name: 'Patuakhali Science and Technology University', shortName: 'PSTU', type: 'University', location: 'Patuakhali', division: 'Barisal', isActive: true, isVerified: true },
-    { name: 'Mawlana Bhashani Science and Technology University', shortName: 'MBSTU', type: 'University', location: 'Tangail', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'Rangamati Science and Technology University', shortName: 'RMSTU', type: 'University', location: 'Rangamati', division: 'Chittagong', isActive: true, isVerified: true },
-    { name: 'Begum Rokeya University', shortName: 'BRUR', type: 'University', location: 'Rangpur', division: 'Rangpur', isActive: true, isVerified: true },
-    { name: 'Jatiya Kabi Kazi Nazrul Islam University', shortName: 'JKKNIU', type: 'University', location: 'Mymensingh', division: 'Mymensingh', isActive: true, isVerified: true },
-    { name: 'Jagannath University', shortName: 'JnU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Islamic University', shortName: 'IU', type: 'University', location: 'Kushtia', division: 'Khulna', isActive: true, isVerified: true },
+    { name: 'Jagannath University', shortName: 'JnU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Barisal University', shortName: 'BU', type: 'University', location: 'Barisal', division: 'Barisal', isActive: true, isVerified: true },
+    { name: 'Comilla University', shortName: 'CoU', type: 'University', location: 'Comilla', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'Jatiya Kabi Kazi Nazrul Islam University', shortName: 'JKKNIU', type: 'University', location: 'Mymensingh', division: 'Mymensingh', isActive: true, isVerified: true },
+    { name: 'Begum Rokeya University', shortName: 'BRUR', type: 'University', location: 'Rangpur', division: 'Rangpur', isActive: true, isVerified: true },
+    { name: 'Hajee Mohammad Danesh Science and Technology University', shortName: 'HSTU', type: 'University', location: 'Dinajpur', division: 'Rangpur', isActive: true, isVerified: true },
+    { name: 'Mawlana Bhashani Science and Technology University', shortName: 'MBSTU', type: 'University', location: 'Tangail', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Noakhali Science and Technology University', shortName: 'NSTU', type: 'University', location: 'Noakhali', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'Jessore University of Science and Technology', shortName: 'JUST', type: 'University', location: 'Jessore', division: 'Khulna', isActive: true, isVerified: true },
+    { name: 'Pabna University of Science and Technology', shortName: 'PUST', type: 'University', location: 'Pabna', division: 'Rajshahi', isActive: true, isVerified: true },
+    { name: 'Patuakhali Science and Technology University', shortName: 'PSTU', type: 'University', location: 'Patuakhali', division: 'Barisal', isActive: true, isVerified: true },
+    { name: 'Rangamati Science and Technology University', shortName: 'RMSTU', type: 'University', location: 'Rangamati', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'Sylhet Agricultural University', shortName: 'SAU', type: 'University', location: 'Sylhet', division: 'Sylhet', isActive: true, isVerified: true },
+    { name: 'Sher-e-Bangla Agricultural University', shortName: 'SBAU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Bangabandhu Sheikh Mujibur Rahman Agricultural University', shortName: 'BSMRAU', type: 'University', location: 'Gazipur', division: 'Dhaka', isActive: true, isVerified: true },
 
-    // Major Private Universities
+    // Private Universities
     { name: 'North South University', shortName: 'NSU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'BRAC University', shortName: 'BRACU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'BRAC University', shortName: 'VU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Independent University, Bangladesh', shortName: 'IUB', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'American International University-Bangladesh', shortName: 'AIUB', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'East West University', shortName: 'EWU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'American International University-Bangladesh', shortName: 'AIU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'United International University', shortName: 'UIU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'East West University', shortName: 'EWU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Daffodil International University', shortName: 'DIU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Ahsanullah University of Science and Technology', shortName: 'AUST', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Southeast University', shortName: 'SEU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
@@ -99,6 +102,9 @@ const POPULAR_INSTITUTIONS = [
     { name: 'Metropolitan University', shortName: 'MU', type: 'University', location: 'Sylhet', division: 'Sylhet', isActive: true, isVerified: true },
     { name: 'Premier University', shortName: 'PU', type: 'University', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
     { name: 'International University of Business Agriculture and Technology', shortName: 'IUBAT', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Eastern University', shortName: 'EU', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Green University of Bangladesh', shortName: 'GUB', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'World University of Bangladesh', shortName: 'WUB', type: 'University', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
 
     // Medical Colleges
     { name: 'Dhaka Medical College', shortName: 'DMC', type: 'Medical College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
@@ -108,15 +114,17 @@ const POPULAR_INSTITUTIONS = [
     { name: 'Mymensingh Medical College', shortName: 'MMC', type: 'Medical College', location: 'Mymensingh', division: 'Mymensingh', isActive: true, isVerified: true },
     { name: 'Sir Salimullah Medical College', shortName: 'SSMC', type: 'Medical College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Sher-E-Bangla Medical College', shortName: 'SBMC', type: 'Medical College', location: 'Barisal', division: 'Barisal', isActive: true, isVerified: true },
+    { name: 'Rangpur Medical College', shortName: 'RpMC', type: 'Medical College', location: 'Rangpur', division: 'Rangpur', isActive: true, isVerified: true },
+    { name: 'Dinajpur Medical College', shortName: 'DjMC', type: 'Medical College', location: 'Dinajpur', division: 'Rangpur', isActive: true, isVerified: true },
 
     // Engineering Colleges
-    { name: 'Military Institute of Science and Technology', shortName: 'MIST', type: 'Engineering College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Chittagong University of Engineering & Technology', shortName: 'CUET', type: 'Engineering College', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
     { name: 'Rajshahi University of Engineering & Technology', shortName: 'RUET', type: 'Engineering College', location: 'Rajshahi', division: 'Rajshahi', isActive: true, isVerified: true },
     { name: 'Khulna University of Engineering & Technology', shortName: 'KUET', type: 'Engineering College', location: 'Khulna', division: 'Khulna', isActive: true, isVerified: true },
     { name: 'Dhaka University of Engineering & Technology', shortName: 'DUET', type: 'Engineering College', location: 'Gazipur', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Military Institute of Science and Technology', shortName: 'MIST', type: 'Engineering College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
 
-    // Prominent Colleges
+    // Colleges
     { name: 'Dhaka College', shortName: 'DC', type: 'College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Notre Dame College', shortName: 'NDC', type: 'College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Holy Cross College', shortName: 'HCC', type: 'College', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
@@ -125,15 +133,26 @@ const POPULAR_INSTITUTIONS = [
     { name: 'Rajshahi College', shortName: 'RC', type: 'College', location: 'Rajshahi', division: 'Rajshahi', isActive: true, isVerified: true },
     { name: 'Government Edward College', shortName: 'GEC', type: 'College', location: 'Pabna', division: 'Rajshahi', isActive: true, isVerified: true },
     { name: 'MC College', shortName: 'MCC', type: 'College', location: 'Sylhet', division: 'Sylhet', isActive: true, isVerified: true },
+    { name: 'Ananda Mohan College', shortName: 'AMC', type: 'College', location: 'Mymensingh', division: 'Mymensingh', isActive: true, isVerified: true },
+    { name: 'Carmichael College', shortName: 'CC', type: 'College', location: 'Rangpur', division: 'Rangpur', isActive: true, isVerified: true },
 
-    // Prominent Schools
+    // Schools
     { name: 'Dhaka Residential Model College', shortName: 'DRMC', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Viqarunnisa Noon School and College', shortName: 'VNS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Holy Cross Girls High School', shortName: 'HCGHS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
-    { name: 'St. Gregory\'s High School', shortName: 'SGHS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: "St. Gregory's High School", shortName: 'SGHS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Scholastica School', shortName: 'SS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Maple Leaf International School', shortName: 'MLIS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
     { name: 'Chittagong Grammar School', shortName: 'CGS', type: 'School', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'Ideal School and College', shortName: 'ISC', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: "Motijheel Government Boys' High School", shortName: 'MGBHS', type: 'School', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Sylhet Government Pilot High School', shortName: 'SGPHS', type: 'School', location: 'Sylhet', division: 'Sylhet', isActive: true, isVerified: true },
+
+    // Technical Institutes
+    { name: 'Dhaka Polytechnic Institute', shortName: 'DPI', type: 'Technical Institute', location: 'Dhaka', division: 'Dhaka', isActive: true, isVerified: true },
+    { name: 'Chittagong Polytechnic Institute', shortName: 'CPI', type: 'Technical Institute', location: 'Chittagong', division: 'Chittagong', isActive: true, isVerified: true },
+    { name: 'Rajshahi Polytechnic Institute', shortName: 'RPI', type: 'Technical Institute', location: 'Rajshahi', division: 'Rajshahi', isActive: true, isVerified: true },
+    { name: 'Khulna Polytechnic Institute', shortName: 'KPI', type: 'Technical Institute', location: 'Khulna', division: 'Khulna', isActive: true, isVerified: true },
 ];
 
 const INSTITUTION_TYPES = [
@@ -144,7 +163,7 @@ const INSTITUTION_TYPES = [
     'School',
     'Institute',
     'Madrasa',
-    'Technical Institute'
+    'Technical Institute',
 ];
 
 const BANGLADESH_DIVISIONS = [
@@ -155,7 +174,7 @@ const BANGLADESH_DIVISIONS = [
     'Barisal',
     'Sylhet',
     'Rangpur',
-    'Mymensingh'
+    'Mymensingh',
 ];
 
 const AdminInstitutionManagement = () => {
@@ -172,80 +191,81 @@ const AdminInstitutionManagement = () => {
         location: '',
         division: 'Dhaka',
         isActive: true,
-        isVerified: true
+        isVerified: true,
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     // Fetch institutions and prefill if empty
     useEffect(() => {
-        const institutionsQuery = query(
-            collection(db, 'institutions'),
-            orderBy('type'),
-            orderBy('name', 'asc')
-        );
+        const institutionsQuery = query(collection(db, 'institutions'), orderBy('type'), orderBy('name', 'asc'));
 
-        const unsubscribe = onSnapshot(institutionsQuery, async (snapshot) => {
-            const institutionsList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Institution[];
+        const unsubscribe = onSnapshot(
+            institutionsQuery,
+            async snapshot => {
+                const institutionsList = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Institution[];
 
-            setInstitutions(institutionsList);
-            setLoading(false);
+                setInstitutions(institutionsList);
+                setLoading(false);
 
-            // If no institutions exist, prefill with popular institutions
-            if (institutionsList.length === 0) {
-                try {
-                    const batch = writeBatch(db);
-                    POPULAR_INSTITUTIONS.forEach((institution) => {
-                        const institutionRef = doc(collection(db, 'institutions'));
-                        batch.set(institutionRef, {
-                            name: institution.name,
-                            shortName: institution.shortName,
-                            type: institution.type,
-                            location: institution.location,
-                            division: institution.division,
-                            isActive: institution.isActive,
-                            isVerified: institution.isVerified,
-                            createdAt: serverTimestamp(),
-                            updatedAt: serverTimestamp()
+                if (institutionsList.length === 0) {
+                    try {
+                        const batch = writeBatch(db);
+                        POPULAR_INSTITUTIONS.forEach(institution => {
+                            const institutionRef = doc(collection(db, 'institutions'));
+                            batch.set(institutionRef, {
+                                name: institution.name,
+                                shortName: institution.shortName,
+                                type: institution.type,
+                                location: institution.location,
+                                division: institution.division,
+                                isActive: institution.isActive,
+                                isVerified: institution.isVerified,
+                                createdAt: serverTimestamp(),
+                                updatedAt: serverTimestamp(),
+                            });
                         });
-                    });
-                    await batch.commit();
-                    setSuccess('Popular institutions added successfully');
-                    setTimeout(() => setSuccess(''), 3000);
-                } catch (error) {
-                    console.error('Error prefilling institutions:', error);
-                    setError('Failed to prefill institutions');
+                        await batch.commit();
+                        setSuccess('Popular institutions added successfully');
+                        setTimeout(() => setSuccess(''), 3000);
+                    } catch (error) {
+                        console.error('Error prefilling institutions:', error);
+                        setError('Failed to prefill institutions');
+                    }
                 }
+            },
+            error => {
+                console.error('Error fetching institutions:', error);
+                setError('Failed to fetch institutions');
+                setLoading(false);
             }
-        }, (error) => {
-            console.error('Error fetching institutions:', error);
-            setError('Failed to fetch institutions');
-            setLoading(false);
-        });
+        );
 
         return () => unsubscribe();
     }, []);
 
     // Fetch institution requests
     useEffect(() => {
-        const requestsQuery = query(
-            collection(db, 'institutionRequests'),
-            orderBy('createdAt', 'desc')
+        const requestsQuery = query(collection(db, 'institutionRequests'), orderBy('createdAt', 'desc'));
+
+        const unsubscribe = onSnapshot(
+            requestsQuery,
+            snapshot => {
+                const requestsList = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as InstitutionRequest[];
+
+                setInstitutionRequests(requestsList);
+            },
+            error => {
+                console.error('Error fetching institution requests:', error);
+                setError('Failed to fetch institution requests');
+            }
         );
-
-        const unsubscribe = onSnapshot(requestsQuery, (snapshot) => {
-            const requestsList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as InstitutionRequest[];
-
-            setInstitutionRequests(requestsList);
-        }, (error) => {
-            console.error('Error fetching institution requests:', error);
-        });
 
         return () => unsubscribe();
     }, []);
@@ -258,7 +278,7 @@ const AdminInstitutionManagement = () => {
             location: '',
             division: 'Dhaka',
             isActive: true,
-            isVerified: true
+            isVerified: true,
         });
         setEditingId(null);
         setShowAddForm(false);
@@ -271,15 +291,14 @@ const AdminInstitutionManagement = () => {
         setError('');
         setSuccess('');
 
-        if (!formData.name.trim() || !formData.location.trim()) {
-            setError('Institution name and location are required');
+        if (!formData.name.trim() || !formData.location.trim() || !formData.division.trim()) {
+            setError('Institution name, location, and division are required');
             return;
         }
 
-        // Check for duplicate institution names
-        const existingInstitution = institutions.find(institution =>
-            institution.name.toLowerCase() === formData.name.toLowerCase() &&
-            institution.id !== editingId
+        const existingInstitution = institutions.find(
+            institution =>
+                institution.name.toLowerCase() === formData.name.toLowerCase() && institution.id !== editingId
         );
 
         if (existingInstitution) {
@@ -289,7 +308,6 @@ const AdminInstitutionManagement = () => {
 
         try {
             if (editingId) {
-                // Update existing institution
                 const institutionRef = doc(db, 'institutions', editingId);
                 await updateDoc(institutionRef, {
                     name: formData.name.trim(),
@@ -299,11 +317,10 @@ const AdminInstitutionManagement = () => {
                     division: formData.division,
                     isActive: formData.isActive,
                     isVerified: formData.isVerified,
-                    updatedAt: serverTimestamp()
+                    updatedAt: serverTimestamp(),
                 });
                 setSuccess('Institution updated successfully');
             } else {
-                // Add new institution
                 await addDoc(collection(db, 'institutions'), {
                     name: formData.name.trim(),
                     shortName: formData.shortName.trim() || null,
@@ -313,7 +330,7 @@ const AdminInstitutionManagement = () => {
                     isActive: formData.isActive,
                     isVerified: formData.isVerified,
                     createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
+                    updatedAt: serverTimestamp(),
                 });
                 setSuccess('Institution added successfully');
             }
@@ -334,10 +351,11 @@ const AdminInstitutionManagement = () => {
             location: institution.location,
             division: institution.division,
             isActive: institution.isActive,
-            isVerified: institution.isVerified
+            isVerified: institution.isVerified,
         });
         setEditingId(institution.id);
         setShowAddForm(true);
+        setActiveTab('institutions');
     };
 
     const handleDelete = async (id: string, name: string) => {
@@ -360,11 +378,24 @@ const AdminInstitutionManagement = () => {
             const institutionRef = doc(db, 'institutions', id);
             await updateDoc(institutionRef, {
                 isActive: !currentStatus,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             });
         } catch (error) {
             console.error('Error updating institution status:', error);
             setError('Failed to update institution status');
+        }
+    };
+
+    const toggleVerification = async (id: string, currentStatus: boolean) => {
+        try {
+            const institutionRef = doc(db, 'institutions', id);
+            await updateDoc(institutionRef, {
+                isVerified: !currentStatus,
+                updatedAt: serverTimestamp(),
+            });
+        } catch (error) {
+            console.error('Error updating institution verification:', error);
+            setError('Failed to update institution verification');
         }
     };
 
@@ -374,7 +405,6 @@ const AdminInstitutionManagement = () => {
             if (!request) return;
 
             if (action === 'approve') {
-                // Add institution to main collection
                 await addDoc(collection(db, 'institutions'), {
                     name: request.name,
                     shortName: request.shortName || null,
@@ -384,16 +414,15 @@ const AdminInstitutionManagement = () => {
                     isActive: true,
                     isVerified: true,
                     createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
+                    updatedAt: serverTimestamp(),
                 });
             }
 
-            // Update request status
             const requestRef = doc(db, 'institutionRequests', requestId);
             await updateDoc(requestRef, {
                 status: action === 'approve' ? 'approved' : 'rejected',
                 adminComment: adminComment || null,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             });
 
             setSuccess(`Institution request ${action}d successfully`);
@@ -429,9 +458,7 @@ const AdminInstitutionManagement = () => {
                 </div>
 
                 {!showAddForm && (
-                    <PrimaryButton
-                        onClick={() => setShowAddForm(true)}
-                    >
+                    <PrimaryButton onClick={() => setShowAddForm(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Add Institution
                     </PrimaryButton>
@@ -442,18 +469,14 @@ const AdminInstitutionManagement = () => {
             <div className="flex space-x-1 mb-6">
                 <button
                     onClick={() => setActiveTab('institutions')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'institutions'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-900'
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'institutions' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
                         }`}
                 >
                     Institutions ({institutions.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors relative ${activeTab === 'requests'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-900'
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors relative ${activeTab === 'requests' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
                         }`}
                 >
                     Requests ({institutionRequests.length})
@@ -507,7 +530,7 @@ const AdminInstitutionManagement = () => {
                                     <input
                                         type="text"
                                         value={formData.name}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                        onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                         placeholder="e.g., University of Dhaka"
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         required
@@ -521,7 +544,7 @@ const AdminInstitutionManagement = () => {
                                     <input
                                         type="text"
                                         value={formData.shortName}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, shortName: e.target.value }))}
+                                        onChange={e => setFormData(prev => ({ ...prev, shortName: e.target.value }))}
                                         placeholder="e.g., DU"
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     />
@@ -533,12 +556,14 @@ const AdminInstitutionManagement = () => {
                                     </label>
                                     <select
                                         value={formData.type}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                                        onChange={e => setFormData(prev => ({ ...prev, type: e.target.value }))}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         required
                                     >
                                         {INSTITUTION_TYPES.map(type => (
-                                            <option key={type} value={type}>{type}</option>
+                                            <option key={type} value={type}>
+                                                {type}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -547,3 +572,302 @@ const AdminInstitutionManagement = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Location *
                                     </label>
+                                    <input
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                                        placeholder="e.g., Dhaka"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Division *
+                                    </label>
+                                    <select
+                                        value={formData.division}
+                                        onChange={e => setFormData(prev => ({ ...prev, division: e.target.value }))}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        required
+                                    >
+                                        {BANGLADESH_DIVISIONS.map(division => (
+                                            <option key={division} value={division}>
+                                                {division}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex items-center gap-6">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isActive}
+                                            onChange={e => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Active</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isVerified}
+                                            onChange={e => setFormData(prev => ({ ...prev, isVerified: e.target.checked }))}
+                                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Verified</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <PrimaryButton type="submit">
+                                    <Save className="w-4 h-4 mr-2" />
+                                    {editingId ? 'Update Institution' : 'Add Institution'}
+                                </PrimaryButton>
+                                <Button size="lg" type="button" variant="outline" onClick={resetForm}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </Card>
+            )}
+
+            {/* Institutions List */}
+            {activeTab === 'institutions' && (
+                <Card className="overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">Institutions ({institutions.length})</h2>
+                    </div>
+
+                    {institutions.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Institutions Found</h3>
+                            <p className="text-gray-600 mb-6">Get started by adding your first institution.</p>
+                            <PrimaryButton onClick={() => setShowAddForm(true)}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add First Institution
+                            </PrimaryButton>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Institution
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Location
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Verified
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {institutions.map(institution => (
+                                        <tr key={institution.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div className="font-medium text-gray-900">{institution.name}</div>
+                                                    {institution.shortName && (
+                                                        <div className="text-sm text-gray-500">{institution.shortName}</div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <Building className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-sm text-gray-600">{institution.type}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                                    <div>
+                                                        <div className="text-sm text-gray-900">{institution.location}</div>
+                                                        <div className="text-xs text-gray-500">{institution.division}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => toggleStatus(institution.id, institution.isActive)}
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${institution.isActive
+                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                        : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                        }`}
+                                                >
+                                                    {institution.isActive ? 'Active' : 'Inactive'}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => toggleVerification(institution.id, institution.isVerified)}
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${institution.isVerified
+                                                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                                        : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                        }`}
+                                                >
+                                                    {institution.isVerified ? 'Verified' : 'Unverified'}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center gap-2 justify-end">
+                                                    <EditButton onEdit={() => handleEdit(institution)} editData={institution} />
+                                                    <DeleteButton
+                                                        alignWith="auto"
+                                                        onDelete={() => handleDelete(institution.id, institution.name)}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </Card>
+            )}
+
+            {/* Institution Requests List */}
+            {activeTab === 'requests' && (
+                <Card className="overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Institution Requests ({institutionRequests.length})
+                        </h2>
+                    </div>
+
+                    {institutionRequests.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <School className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Institution Requests</h3>
+                            <p className="text-gray-600">No pending institution requests at the moment.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Institution
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Location
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Requested By
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Created At
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {institutionRequests.map(request => (
+                                        <tr key={request.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div className="font-medium text-gray-900">{request.name}</div>
+                                                    {request.shortName && (
+                                                        <div className="text-sm text-gray-500">{request.shortName}</div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <Building className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-sm text-gray-600">{request.type}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                                    <div>
+                                                        <div className="text-sm text-gray-900">{request.location}</div>
+                                                        <div className="text-xs text-gray-500">{request.division}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                {request.requestedByEmail}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${request.status === 'pending'
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : request.status === 'approved'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                        }`}
+                                                >
+                                                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                {request.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                {request.status === 'pending' && (
+                                                    <div className="flex items-center gap-2 justify-end">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleRequestAction(request.id, 'approve', 'Approved by admin')
+                                                            }
+                                                            className="bg-green-600 hover:bg-green-700"
+                                                        >
+                                                            <CheckSquare className="w-4 h-4 mr-2" />
+                                                            Approve
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() =>
+                                                                handleRequestAction(request.id, 'reject', 'Rejected by admin')
+                                                            }
+                                                            className="text-red-600 hover:text-red-800"
+                                                        >
+                                                            <XSquare className="w-4 h-4 mr-2" />
+                                                            Reject
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </Card>
+            )}
+        </div>
+    );
+};
+
+export default AdminInstitutionManagement;

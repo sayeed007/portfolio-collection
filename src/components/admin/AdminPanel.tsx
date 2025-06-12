@@ -1,26 +1,26 @@
 // src/components/admin/AdminPanel.tsx
 'use client';
 
-import { CheckCircle, FolderPlus, GraduationCap, Languages, Settings } from 'lucide-react';
+import { FolderPlus, GraduationCap, Languages, School, Settings } from 'lucide-react';
 import React, { useState } from 'react';
 import BackgroundDecoration from '../common/BackgroundDecoration';
-// import { CategoryManagement } from './CategoryManagement';
-import { Overview } from './Overview';
-// import { RequestApproval } from './RequestApproval';
-import AdminLanguageManagement from './AdminLanguageManagement';
 import AdminDegreeManagement from './AdminDegreeManagement';
+import AdminInstitutionManagement from './AdminInstitutionManagement';
+import AdminLanguageManagement from './AdminLanguageManagement';
+import AdminSkillManagement from './AdminSkillManagement';
+import { Overview } from './Overview';
 
-type TabType = 'overview' | 'languages' | 'degrees' | 'categories' | 'requests';
+type TabType = 'overview' | 'languages' | 'degrees' | 'institutions' | 'categories';
 
 export const AdminPanel: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<TabType>('degrees');
+    const [activeTab, setActiveTab] = useState<TabType>('overview');
 
     const tabs = [
         { id: 'overview' as TabType, label: 'Overview', icon: Settings },
         { id: 'languages' as TabType, label: 'Language', icon: Languages },
         { id: 'degrees' as TabType, label: 'Degrees', icon: GraduationCap },
+        { id: 'institutions' as TabType, label: 'Institutions', icon: School },
         { id: 'categories' as TabType, label: 'Categories', icon: FolderPlus },
-        { id: 'requests' as TabType, label: 'Requests', icon: CheckCircle },
     ];
 
     const renderContent = () => {
@@ -29,10 +29,10 @@ export const AdminPanel: React.FC = () => {
                 return <AdminLanguageManagement />;
             case 'degrees':
                 return <AdminDegreeManagement />;
-            // case 'categories':
-            //     return <CategoryManagement />;
-            // case 'requests':
-            //     return <RequestApproval />;
+            case 'institutions':
+                return <AdminInstitutionManagement />;
+            case 'categories':
+                return <AdminSkillManagement />;
             default:
                 return <Overview setActiveTab={setActiveTab} />;
         }
@@ -43,8 +43,8 @@ export const AdminPanel: React.FC = () => {
             <BackgroundDecoration />
 
             {/* TABS */}
-            <div className="border-b border-gray-500 bg-white">
-                <div className="container mx-auto px-4">
+            <div className="bg-white">
+                <div className="container mx-auto px-4 border-b border-blue-200">
                     <div className="flex space-x-8">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
