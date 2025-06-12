@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 // src/lib/types/portfolio.ts
 export interface PersonalInfo {
   employeeCode: string;
@@ -70,8 +72,8 @@ export interface Portfolio {
   technicalSkills: TechnicalSkill[];
   workExperience: WorkExperience[];
   projects: Project[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   visitCount: number;
   isPublic: boolean;
 }

@@ -10,6 +10,7 @@ import {
   query,
   where,
   orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 
 export async function GET(request: NextRequest) {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     const docRef = await addDoc(requestsRef, {
       ...requestData,
       status: "Pending",
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     });
 
     return NextResponse.json({ id: docRef.id, success: true });

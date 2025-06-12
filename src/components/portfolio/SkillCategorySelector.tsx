@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, Button, Input, Modal } from '@/components/ui';
-import { Plus, X, Send, Trash2, Edit2, Zap, Star, Users } from 'lucide-react';
-import { SkillCategory, TechnicalSkill, CategoryRequest } from '@/lib/types';
-import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
+import { Button, Card, Input, Modal } from '@/components/ui';
 import { useCategoryRequests } from '@/lib/hooks/useCategoryRequests';
+import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
+import { TechnicalSkill } from '@/lib/types';
+import { Edit2, Plus, Send, Star, Trash2, Users, X, Zap } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface SkillCategorySelectorProps {
     selectedSkills: TechnicalSkill[];
@@ -23,7 +23,7 @@ export const SkillCategorySelector: React.FC<SkillCategorySelectorProps> = ({
     const [suggestedSkills, setSuggestedSkills] = useState<string[]>(['']);
     const [editingCategory, setEditingCategory] = useState<number | null>(null);
 
-    const { categories, loading: categoriesLoading } = useSkillCategories();
+    const { categories } = useSkillCategories();
     const { submitRequest, loading: requestLoading } = useCategoryRequests();
 
     // Add a new skill category to the selected skills
@@ -261,7 +261,7 @@ export const SkillCategorySelector: React.FC<SkillCategorySelectorProps> = ({
 
                 {/* Empty State */}
                 {selectedSkills?.length === 0 && (
-                    <Card className="p-12 text-center border-0 bg-white/60 backdrop-blur rounded-2xl border-2 border-dashed border-gray-300">
+                    <Card className="p-12 text-center bg-white/60 backdrop-blur rounded-2xl border-2 border-dashed border-gray-300">
                         <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                             <Star className="w-8 h-8 text-purple-600" />
                         </div>

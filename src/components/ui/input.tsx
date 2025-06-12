@@ -47,6 +47,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             if (!isFocused) {
                 checkHasValue();
             }
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [checkHasValue, inputRef?.current?.value]);
 
         const handleFocus = (e: FocusEvent<HTMLInputElement>) => {

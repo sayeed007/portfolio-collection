@@ -25,8 +25,9 @@ const step4Schema = z.object({
 
 type Step4FormData = z.infer<typeof step4Schema>;
 
+
 // Helper function for robust deep copying of JSON-serializable data
-const deepCopyJSON = (data) => JSON.parse(JSON.stringify(data));
+const deepCopyJSON = (data: any) => JSON.parse(JSON.stringify(data));
 
 export function Step4Projects() {
     const dispatch = useDispatch();
@@ -42,7 +43,6 @@ export function Step4Projects() {
         getValues,
         formState: { errors, isValid },
         reset,
-        trigger,
     } = useForm<Step4FormData>({
         resolver: zodResolver(step4Schema),
         mode: 'onChange',
@@ -70,6 +70,7 @@ export function Step4Projects() {
                         technologies: ['']
                     }],
             });
+
             setIsInitialized(true);
             // Small delay to ensure reset is complete before allowing watch to trigger
             setTimeout(() => {

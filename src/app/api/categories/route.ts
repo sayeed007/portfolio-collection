@@ -1,15 +1,15 @@
-// ### src/app/api/categories/route.tsimport { NextRequest, NextResponse } from 'next/server';
+// ### src/app/api/categories/route.ts
 import { db } from "@/lib/firebase/config";
 import {
-  collection,
-  getDocs,
   addDoc,
-  doc,
-  updateDoc,
+  collection,
   deleteDoc,
-  query,
-  where,
+  doc,
+  getDocs,
+  serverTimestamp,
+  updateDoc
 } from "firebase/firestore";
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
 
     const docRef = await addDoc(categoriesRef, {
       ...categoryData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
 
     return NextResponse.json({ id: docRef.id, success: true });

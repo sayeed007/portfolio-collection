@@ -29,6 +29,8 @@ export interface Certification {
   name: string;
   issuer: string;
   date: string;
+  issuingOrganization: string;
+  year: string | number;
   expiryDate?: string;
   credentialId?: string;
 }
@@ -60,12 +62,13 @@ export interface Project {
   name: string;
   description: string;
   technologies: string[];
-  startDate: string;
+  contribution: string;
+  startDate?: string;
   endDate?: string;
-  isOngoing: boolean;
-  role: string;
-  responsibilities: string[];
-  outcomes: string[];
+  isOngoing?: boolean;
+  role?: string;
+  responsibilities?: string[];
+  outcomes?: string[];
   url?: string;
   repository?: string;
 }
@@ -94,7 +97,7 @@ export interface PortfolioFormData {
   workExperience: WorkExperience[];
 
   // Step 4: Projects
-  projects: Project[];
+  projects?: Project[];
 }
 
 export interface StepValidation {

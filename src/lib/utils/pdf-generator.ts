@@ -33,7 +33,6 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
     workExperience,
     projects,
     references,
-    createdAt,
   } = portfolio;
 
   return `
@@ -229,11 +228,10 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
       <div class="container">
         <!-- Header Section -->
         <div class="header">
-          ${
-            profileImage
-              ? `<img src="${profileImage}" alt="Profile" class="profile-image">`
-              : ""
-          }
+          ${profileImage
+      ? `<img src="${profileImage}" alt="Profile" class="profile-image">`
+      : ""
+    }
           <div class="name">Employee ID: ${employeeCode}</div>
           <div class="designation">${designation}</div>
           <div class="contact-info">
@@ -245,209 +243,198 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
         </div>
 
         <!-- Summary Section -->
-        ${
-          summary
-            ? `
+        ${summary
+      ? `
         <div class="section">
           <h2 class="section-title">Professional Summary</h2>
           <div class="summary">${summary}</div>
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Languages Section -->
-        ${
-          languageProficiency && languageProficiency.length > 0
-            ? `
+        ${languageProficiency && languageProficiency.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Language Proficiency</h2>
           <p>${formatList(languageProficiency)}</p>
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Technical Skills Section -->
-        ${
-          technicalSkills && technicalSkills.length > 0
-            ? `
+        ${technicalSkills && technicalSkills.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Technical Skills</h2>
           ${technicalSkills
-            .map(
-              (category) => `
+        .map(
+          (category) => `
             <div class="skills-category">
               <h4>${category.category}</h4>
               <div class="skills-list">
                 ${category.skills
-                  .map((skill) => `<span class="skill-tag">${skill}</span>`)
-                  .join("")}
+              .map((skill) => `<span class="skill-tag">${skill}</span>`)
+              .join("")}
               </div>
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Work Experience Section -->
-        ${
-          workExperience && workExperience.length > 0
-            ? `
+        ${workExperience && workExperience.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Work Experience</h2>
           ${workExperience
-            .map(
-              (exp) => `
+        .map(
+          (exp) => `
             <div class="card">
               <h4>${exp.position}</h4>
               <p><strong>${exp.company}</strong></p>
               <p class="meta">${exp.duration}</p>
-              ${
-                exp.responsibility && exp.responsibility.length > 0
-                  ? `
+              ${exp.responsibility && exp.responsibility.length > 0
+              ? `
                 <ul class="responsibilities">
                   ${exp.responsibility
-                    .map((resp) => `<li>${resp}</li>`)
-                    .join("")}
+                .map((resp) => `<li>${resp}</li>`)
+                .join("")}
                 </ul>
               `
-                  : ""
-              }
+              : ""
+            }
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Projects Section -->
-        ${
-          projects && projects.length > 0
-            ? `
+        ${projects && projects.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Projects</h2>
           ${projects
-            .map(
-              (project) => `
+        .map(
+          (project) => `
             <div class="card">
               <h4>${project.name}</h4>
               <p>${project.description}</p>
               <p><strong>Contribution:</strong> ${project.contribution}</p>
-              ${
-                project.technologies && project.technologies.length > 0
-                  ? `
+              ${project.technologies && project.technologies.length > 0
+              ? `
                 <div class="technologies">
                   <strong>Technologies:</strong> ${formatList(
-                    project.technologies
-                  )}
+                project.technologies
+              )}
                 </div>
               `
-                  : ""
-              }
+              : ""
+            }
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Education Section -->
-        ${
-          education && education.length > 0
-            ? `
+        ${education && education.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Education</h2>
           ${education
-            .map(
-              (edu) => `
+        .map(
+          (edu) => `
             <div class="card">
               <h4>${edu.degree}</h4>
               <p><strong>${edu.institution}</strong></p>
               <p class="meta">Graduated: ${edu.passingYear}</p>
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Certifications Section -->
-        ${
-          certifications && certifications.length > 0
-            ? `
+        ${certifications && certifications.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Certifications</h2>
           ${certifications
-            .map(
-              (cert) => `
+        .map(
+          (cert) => `
             <div class="card">
               <h4>${cert.name}</h4>
               <p><strong>${cert.issuingOrganization}</strong></p>
               <p class="meta">Year: ${cert.year}</p>
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Courses Section -->
-        ${
-          courses && courses.length > 0
-            ? `
+        ${courses && courses.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">Courses & Training</h2>
           ${courses
-            .map(
-              (course) => `
+        .map(
+          (course) => `
             <div class="card">
               <h4>${course.name}</h4>
               <p><strong>${course.provider}</strong></p>
               <p class="meta">Completed: ${course.completionDate}</p>
             </div>
           `
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- References Section -->
-        ${
-          references && references.length > 0
-            ? `
+        ${references && references.length > 0
+      ? `
         <div class="section">
           <h2 class="section-title">References</h2>
           <div class="grid">
             ${references
-              .map(
-                (ref) => `
+        .map(
+          (ref) => `
               <div class="card">
                 <h4>${ref.name}</h4>
                 <p><strong>${ref.relationship}</strong></p>
                 <p>${ref.contactInfo}</p>
               </div>
             `
-              )
-              .join("")}
+        )
+        .join("")}
           </div>
         </div>
         `
-            : ""
-        }
+      : ""
+    }
 
         <!-- Footer -->
         <div class="footer">

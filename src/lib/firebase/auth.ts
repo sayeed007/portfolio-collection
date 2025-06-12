@@ -1,27 +1,18 @@
 // src/lib/firebase/auth.ts
 import {
   createUserWithEmailAndPassword,
+  User as FirebaseUser,
+  GoogleAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider,
   signOut,
   updateProfile,
-  User as FirebaseUser,
-  sendPasswordResetEmail,
-  sendEmailVerification,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { User } from "../types";
 import { auth, db } from "./config";
-
-export interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  emailVerified: boolean;
-  createdAt?: any;
-  updatedAt?: any;
-}
 
 // Create user profile in Firestore
 export const createUserProfile = async (
@@ -48,8 +39,8 @@ export const createUserProfile = async (
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
       emailVerified: firebaseUser.emailVerified,
-      createdAt: new Date().toISOString(), // Use current timestamp
-      updatedAt: new Date().toISOString(),
+      createdAt: serverTimestamp(), // Use current timestamp
+      updatedAt: serverTimestamp(),
     };
 
     await setDoc(userRef, firestoreData);
@@ -132,6 +123,7 @@ export const signOutUser = async (): Promise<void> => {
   try {
     await signOut(auth);
   } catch (error: any) {
+    console.error(error);
     throw new Error("Failed to sign out");
   }
 };
@@ -168,6 +160,7 @@ export const updateUserProfile = async (updates: {
       { merge: true }
     );
   } catch (error: any) {
+    console.error(error);
     throw new Error("Failed to update profile");
   }
 };

@@ -9,7 +9,7 @@ import { useToast } from '@/lib/contexts/ToastContext';
 import { updateFormData, validateStep } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FileText, Mail, Phone, Plus, Trash2, Upload, User, Users, X } from 'lucide-react';
+import { FileText, Mail, Phone, Plus, Upload, User, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -79,7 +79,7 @@ export function Step1PersonalInfo() {
             profileImage: data.profileImage || '',
             summary: data.summary || '',
             references: Array.isArray(data.references)
-                ? data.references.map(ref => ({ ...ref }))
+                ? data.references.map((ref: any) => ({ ...ref }))
                 : [{ name: '', contactInfo: '', relationship: '' }],
         };
     }, []);
@@ -129,6 +129,7 @@ export function Step1PersonalInfo() {
                 setIsInitialized(true);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, normalizeFormData, reset, triggerInputComponentLogic]);
 
     // Watch form changes and update Redux (only after initialization)

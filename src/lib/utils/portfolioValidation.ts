@@ -63,22 +63,6 @@ function validateStep1(formData: Partial<PortfolioFormData>): ValidationResult {
     errors.push("Professional summary must be at least 50 characters");
   }
 
-  // if (!formData.references?.length) {
-  //   errors.push("At least one reference is required");
-  // } else {
-  //   formData.references.forEach((ref, index) => {
-  //     if (!ref.name?.trim()) {
-  //       errors.push(`Reference ${index + 1}: Name is required`);
-  //     }
-  //     if (!ref.contactInfo?.trim()) {
-  //       errors.push(`Reference ${index + 1}: Contact info is required`);
-  //     }
-  //     if (!ref.relationship?.trim()) {
-  //       errors.push(`Reference ${index + 1}: Relationship is required`);
-  //     }
-  //   });
-  }
-
   return {
     isValid: errors.length === 0,
     errors,
@@ -118,7 +102,7 @@ function validateStep2(formData: Partial<PortfolioFormData>): ValidationResult {
           `Certification ${index + 1}: Issuing organization is required`
         );
       }
-      if (!cert.year?.trim()) {
+      if (!cert.year) {
         errors.push(`Certification ${index + 1}: Year is required`);
       }
     });
@@ -191,8 +175,7 @@ function validateStep3(formData: Partial<PortfolioFormData>): ValidationResult {
         exp.responsibilities.some((resp) => !resp.trim())
       ) {
         errors.push(
-          `Work experience ${
-            index + 1
+          `Work experience ${index + 1
           }: At least one valid responsibility is required`
         );
       }

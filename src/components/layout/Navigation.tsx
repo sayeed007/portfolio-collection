@@ -1,21 +1,19 @@
 // src/components/layout/Navigation.tsx
 'use client';
 
-import React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import {
-    Home,
-    User,
-    Users,
-    Settings,
-    PlusCircle,
-    Search,
-    FileText
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RootState } from '@/lib/redux/store';
 import { cn } from '@/lib/utils/helpers';
+import {
+    Home,
+    PlusCircle,
+    Search,
+    Settings,
+    User
+} from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import React from 'react';
+import { useSelector } from 'react-redux';
 
 interface NavigationItem {
     label: string;

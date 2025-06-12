@@ -1,8 +1,8 @@
 // src/components/ui/modal.tsx
+import { cn } from "@/lib/utils/helpers";
+import { X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils/helpers";
 import { Button } from "./button";
 
 interface ModalProps {
@@ -212,7 +212,7 @@ const ModalVariants = {
 
         return (
             <Modal {...props} size="md">
-                <div className="text-center">
+                <div ref={ref} className="text-center">
                     {children}
                     <div className="flex flex-col sm:flex-row gap-3 mt-8">
                         <Button

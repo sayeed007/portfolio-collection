@@ -20,10 +20,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requireAdmin = false,
     redirectTo = '/login'
 }) => {
-    const { user, isLoading } = useSelector((state: RootState) => state.auth);
+    const { user, loading } = useSelector((state: RootState) => state.auth);
 
     // Show loading while checking authentication
-    if (isLoading) {
+    if (loading) {
         return <PageLoader text="Checking authentication..." />;
     }
 

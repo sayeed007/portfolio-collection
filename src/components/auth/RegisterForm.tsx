@@ -96,7 +96,6 @@ export const RegisterForm: React.FC = () => {
                             </p>
                         </div>
                         <Button
-                            asChild
                             className="w-full"
                         >
                             <a href="/login">Continue to Sign In</a>

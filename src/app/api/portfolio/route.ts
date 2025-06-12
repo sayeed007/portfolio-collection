@@ -12,6 +12,7 @@ import {
   where,
   orderBy,
   limit,
+  serverTimestamp,
 } from "firebase/firestore";
 
 export async function GET(request: NextRequest) {
@@ -70,8 +71,8 @@ export async function POST(request: NextRequest) {
     const docRef = doc(db, "users", userId, "portfolio", "data");
     await setDoc(docRef, {
       ...portfolioData,
-      updatedAt: new Date().toISOString(),
-      createdAt: portfolioData.createdAt || new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+      createdAt: portfolioData.createdAt || serverTimestamp(),
     });
 
     return NextResponse.json({ success: true });

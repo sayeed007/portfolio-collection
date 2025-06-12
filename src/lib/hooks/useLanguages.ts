@@ -1,12 +1,13 @@
 // hooks/useLanguages.ts
-import { useState, useEffect } from 'react';
 import {
     collection,
-    query,
+    onSnapshot,
     orderBy,
-    where,
-    onSnapshot
+    query,
+    Timestamp,
+    where
 } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import { db } from '../firebase/config';
 // import { db } from '@/lib/firebase';
 
@@ -15,8 +16,8 @@ export interface Language {
     name: string;
     code: string;
     isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
 }
 
 export const useLanguages = (activeOnly: boolean = true) => {

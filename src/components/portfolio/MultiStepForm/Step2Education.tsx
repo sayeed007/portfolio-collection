@@ -1,17 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useDispatch, useSelector } from 'react-redux';
-import { z } from 'zod';
-import { RootState } from '@/lib/redux/store';
-import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { GraduationCap, Award, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { DeleteButton } from '@/components/ui/DeleteButton';
+import { Input } from '@/components/ui/input';
+import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
+import { RootState } from '@/lib/redux/store';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Award, BookOpen, GraduationCap, Plus } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
+import { z } from 'zod';
 
 // Validation schema for Step2Education.tsx
 const step2Schema = z.object({

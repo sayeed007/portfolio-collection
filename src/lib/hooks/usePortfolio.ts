@@ -64,6 +64,21 @@ export const usePortfolio = () => {
   }, [user?.uid, fetchState.userId]);
 
   // Memoized portfolio getter with error handling
+  // const getPortfolio = useCallback(
+  //   async (portfolioId: string) => {
+  //     try {
+  //       const result = await dispatch(fetchUserPortfolio(portfolioId));
+  //       if (fetchUserPortfolio.fulfilled.match(result)) {
+  //         return result.payload;
+  //       }
+  //       throw new Error(result.payload as string);
+  //     } catch (error) {
+  //       console.error("Error fetching portfolio:", error);
+  //       throw error;
+  //     }
+  //   },
+  //   [dispatch]
+  // );
   const getPortfolio = useCallback(
     async (portfolioId: string) => {
       try {
@@ -79,6 +94,7 @@ export const usePortfolio = () => {
     },
     [dispatch]
   );
+
 
   const fetchMyPortfolio = useCallback(async () => {
     if (!user?.uid) {

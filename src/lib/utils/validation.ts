@@ -1,5 +1,6 @@
 // src/lib/utils/validation.ts
 import { z } from "zod";
+import { Education, Portfolio, Reference } from "../types";
 
 // Zod schemas for form validation
 export const registerSchema = z
@@ -122,7 +123,7 @@ export const validateImage = (base64String: string): ValidationResult => {
 };
 
 // Personal Information validation
-export const validatePersonalInfo = (data: any): ValidationResult => {
+export const validatePersonalInfo = (data: Portfolio): ValidationResult => {
   const errors: string[] = [];
 
   if (!data.employeeCode?.trim()) {
@@ -164,7 +165,7 @@ export const validatePersonalInfo = (data: any): ValidationResult => {
   if (!data.references || data.references.length === 0) {
     errors.push("At least one reference is required");
   } else {
-    data.references.forEach((ref: any, index: number) => {
+    data.references.forEach((ref: Reference, index: number) => {
       if (!ref.name?.trim()) {
         errors.push(`Reference ${index + 1}: Name is required`);
       }
@@ -188,7 +189,7 @@ export const validatePersonalInfo = (data: any): ValidationResult => {
 };
 
 // Education validation
-export const validateEducation = (education: any[]): ValidationResult => {
+export const validateEducation = (education: Education[]): ValidationResult => {
   const errors: string[] = [];
 
   if (!education || education.length === 0) {
@@ -216,36 +217,6 @@ export const validateEducation = (education: any[]): ValidationResult => {
   };
 };
 
-// // Skills validation
-// export const validateSkills = (data: any): ValidationResult => {
-//   const errors: string[] = [];
-
-//   if (
-//     !data.technicalSkills ||
-//     data.technicalSkills.length === 0 ||
-//     data.technicalSkills.every(
-//       (skill: { category: string; skills: string[]; proficiency: string }) =>
-//         !skill.category?.trim() || !skill.skills?.length
-//     )
-//   ) {
-//     errors.push(
-//       "At least one technical skill with a valid category and at least one skill is required"
-//     );
-//   }
-
-//   // if (
-//   //   !data.softSkills ||
-//   //   data.softSkills.length === 0 ||
-//   //   data.softSkills.every((skill: string) => !skill?.trim())
-//   // ) {
-//   //   errors.push("At least one soft skill is required");
-//   // }
-
-//   return {
-//     isValid: errors.length === 0,
-//     errors,
-//   };
-// };
 // Skills validation - Updated to match your Step3 structure
 export const validateSkills = (data: any): ValidationResult => {
   const errors: string[] = [];
@@ -284,61 +255,6 @@ export const validateSkills = (data: any): ValidationResult => {
 };
 
 
-// // Work Experience validation
-// export const validateWorkExperience = (experience: any[]): ValidationResult => {
-//   const errors: string[] = [];
-
-//   experience.forEach((exp, index) => {
-//     if (!exp.company?.trim()) {
-//       errors.push(`Work Experience ${index + 1}: Company name is required`);
-//     }
-
-//     if (!exp.position?.trim()) {
-//       errors.push(`Work Experience ${index + 1}: Role is required`);
-//     }
-
-//     // if (!exp.duration?.trim()) {
-//     //   errors.push(`Work Experience ${index + 1}: Duration is required`);
-//     // }
-
-//     // if (
-//     //   !exp.responsibility ||
-//     //   exp.responsibility.length === 0 ||
-//     //   exp.responsibility.every((resp: string) => !resp?.trim())
-//     // ) {
-//     //   errors.push(
-//     //     `Work Experience ${index + 1}: At least one responsibility is required`
-//     //   );
-//     // }
-//     if (
-//       !exp.responsibilities ||
-//       exp.responsibilities.length === 0 ||
-//       exp.responsibilities.every((resp: string) => !resp?.trim())
-//     ) {
-//       errors.push(
-//         `Work Experience ${
-//           index + 1
-//         }: At least one non-empty responsibility is required`
-//       );
-//     }
-//     if (
-//       !exp.technologies ||
-//       exp.technologies.length === 0 ||
-//       exp.technologies.every((tech: string) => !tech?.trim())
-//     ) {
-//       errors.push(
-//         `Work Experience ${
-//           index + 1
-//         }: At least one non-empty technology is required`
-//       );
-//     }
-//   });
-
-//   return {
-//     isValid: errors.length === 0,
-//     errors,
-//   };
-// };
 // Work Experience validation - Updated to match your Step3 structure
 export const validateWorkExperience = (experience: any[]): ValidationResult => {
   const errors: string[] = [];
@@ -429,33 +345,6 @@ export const validateProjects = (projects: any[]): ValidationResult => {
   };
 };
 
-// // Step-by-step validation function
-// export const validatePortfolioStep = (
-//   step: number,
-//   formData: any
-// ): ValidationResult => {
-//   switch (step) {
-//     case 1:
-//       return validatePersonalInfo(formData);
-//     case 2:
-//       return validateEducation(formData.education || []);
-//     case 3:
-//       // Validate both skills and work experience for step 3
-//       const skillsResult = validateSkills(formData);
-//       const workExpResult = validateWorkExperience(
-//         formData.workExperience || []
-//       );
-
-//       return {
-//         isValid: skillsResult.isValid && workExpResult.isValid,
-//         errors: [...skillsResult.errors, ...workExpResult.errors],
-//       };
-//     case 4:
-//       return validateProjects(formData.projects || []);
-//     default:
-//       return { isValid: false, errors: ["Invalid step"] };
-//   }
-// };
 // Updated step validation for Step 3
 export const validatePortfolioStep = (
   step: number,

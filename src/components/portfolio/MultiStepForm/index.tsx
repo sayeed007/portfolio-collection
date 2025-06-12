@@ -56,8 +56,6 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         isSubmitting,
         isSaving,
         submitError,
-        isEditing,
-        stepValidation
     } = useSelector((state: RootState) => state.portfolio);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -102,10 +100,12 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 setIsLoading(true);
                 try {
                     // Use thunk for consistency
-                    const result = await dispatch(getPortfolio(portfolioId));
+                    // const result = await dispatch(getPortfolio(portfolioId));
+                    const portfolio = await getPortfolio(portfolioId);
 
-                    if (getPortfolio.fulfilled.match(result)) {
-                        const portfolio = result.payload;
+                    // if (getPortfolio.fulfilled.match(result)) {
+                    if (portfolio) {
+                        // const portfolio = result.payload;
                         dispatch(setFormData(portfolio));
                         dispatch(setIsEditing(true));
 
@@ -145,6 +145,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         };
 
         loadPortfolioData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, portfolioId, dispatch, router, user?.uid]); // Removed getPortfolio and toast
 
     // Track unsaved changes - Fixed to check for meaningful data

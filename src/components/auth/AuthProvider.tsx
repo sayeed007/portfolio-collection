@@ -8,6 +8,7 @@ import { auth } from '@/lib/firebase/config';
 import { setUser, setLoading, clearAuth } from '@/lib/redux/slices/authSlice'; // Changed clearUser to clearAuth
 import { RootState } from '@/lib/redux/store';
 import { User } from '@/lib/types/auth';
+import { serverTimestamp, Timestamp } from 'firebase/firestore';
 
 interface AuthContextType {
     user: User | null;
@@ -43,7 +44,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     displayName: firebaseUser.displayName || '',
                     photoURL: firebaseUser.photoURL || '',
                     isAdmin: isUserAdmin,
-                    createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
+                    createdAt: firebaseUser.metadata.creationTime
+                        ? Timestamp.fromDate(new Date(firebaseUser.metadata.creationTime))
+                        : serverTimestamp() as unknown as Timestamp,
                 };
 
                 dispatch(setUser(userData));
