@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/Select';
-import { useDegree } from '@/lib/hooks/useDegree';
 import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Award, BookOpen, GraduationCap, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
 
@@ -44,11 +42,6 @@ export function Step2Education() {
     const dispatch = useDispatch();
     const { formData } = useSelector((state: RootState) => state.portfolio);
     const previousDataRef = useRef<string>('');
-
-    // Use the custom degree hook - only fetch active degrees for user selection
-    const { degreeOptions, loading: degreesLoading } = useDegree({
-        activeOnly: true
-    });
 
     const {
         register,
@@ -135,25 +128,12 @@ export function Step2Education() {
                 <div className="space-y-4">
                     {educationFields.map((field, index) => (
                         <div key={`education-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
-                            <Controller
-                                name={`education.${index}.degree`}
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                    <Select
-                                        label="Degree"
-                                        placeholder="Select a degree..."
-                                        options={degreeOptions}
-                                        value={degreeOptions.find(option => option.value === value) || null}
-                                        onChange={(selectedOption: any) => {
-                                            onChange(selectedOption?.value || '');
-                                        }}
-                                        loading={degreesLoading}
-                                        searchable={true}
-                                        clearable={true}
-                                        error={errors.education?.[index]?.degree?.message}
-                                        required
-                                    />
-                                )}
+                            <Input
+                                {...register(`education.${index}.degree`)}
+                                label="Degree"
+                                placeholder="e.g., Bachelor of Science in Computer Science"
+                                error={errors.education?.[index]?.degree?.message}
+                                required
                             />
 
                             <Input

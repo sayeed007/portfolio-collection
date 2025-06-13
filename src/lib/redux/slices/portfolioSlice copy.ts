@@ -122,22 +122,6 @@ export interface PortfolioState {
   isEditing: boolean;
 }
 
-// Helper function to serialize Firestore data
-const serializePortfolio = (portfolio: any): Portfolio => {
-  if (!portfolio) return portfolio;
-
-  return {
-    ...portfolio,
-    createdAt: portfolio.createdAt?.toDate ? portfolio.createdAt.toDate().toISOString() : portfolio.createdAt,
-    updatedAt: portfolio.updatedAt?.toDate ? portfolio.updatedAt.toDate().toISOString() : portfolio.updatedAt,
-  };
-};
-
-// Helper function to serialize array of portfolios
-const serializePortfolios = (portfolios: any[]): Portfolio[] => {
-  return portfolios.map(serializePortfolio);
-};
-
 const initialFormData: PortfolioFormData = {
   employeeCode: "",
   designation: "",
@@ -261,8 +245,7 @@ export const submitPortfolio = createAsyncThunk<
         return rejectWithValue("Failed to create or update portfolio");
       }
 
-      // Serialize the result before returning
-      return serializePortfolio(result);
+      return result;
     } catch (error) {
       console.error("Submit portfolio error:", error);
       return rejectWithValue(
@@ -297,17 +280,17 @@ export const savePortfolioDraft = createAsyncThunk<
         status: "draft" as const,
       };
 
-      let result: Portfolio;
-
       if (portfolioId) {
         // Fix: updatePortfolio expects userId, not portfolioId
-        result = await updatePortfolio(userId, portfolioPayload);
+        const updatedPortfolio = await updatePortfolio(
+          userId,
+          portfolioPayload
+        );
+        return updatedPortfolio;
       } else {
-        result = await createPortfolio(userId, portfolioPayload);
+        const newPortfolio = await createPortfolio(userId, portfolioPayload);
+        return newPortfolio;
       }
-
-      // Serialize the result before returning
-      return serializePortfolio(result);
     } catch (error) {
       console.error("Save draft error:", error);
       return rejectWithValue(
@@ -322,13 +305,10 @@ export const fetchUserPortfolio = createAsyncThunk<Portfolio | null, string, { r
   async (userId: string, { rejectWithValue }) => {
     try {
       const portfolio = await getPortfolio(userId);
-
-      if (!portfolio) {
-        return null;
-      }
-
-      // Serialize the portfolio before returning
-      return serializePortfolio(portfolio);
+      // if (!portfolio) {
+      //   return rejectWithValue("No portfolio found");
+      // }
+      return portfolio;
     } catch (error) {
       console.error("Fetch portfolio error:", error);
       return rejectWithValue(
@@ -355,9 +335,7 @@ export const createUserPortfolio = createAsyncThunk(
   ) => {
     try {
       const newPortfolio = await createPortfolio(userId, portfolioData);
-
-      // Serialize the result before returning
-      return serializePortfolio(newPortfolio);
+      return newPortfolio;
     } catch (error) {
       console.error("Create portfolio error:", error);
       return rejectWithValue(
@@ -390,9 +368,7 @@ export const updateUserPortfolio = createAsyncThunk(
         existingPortfolio.id,
         portfolioData
       );
-
-      // Serialize the result before returning
-      return serializePortfolio(updatedPortfolio);
+      return updatedPortfolio;
     } catch (error) {
       console.error("Update portfolio error:", error);
       return rejectWithValue(
@@ -435,9 +411,7 @@ export const fetchPublicPortfolios = createAsyncThunk<
       }
 
       console.info(`Successfully fetched ${portfolios.length} public portfolios`);
-
-      // Serialize all portfolios before returning
-      return serializePortfolios(portfolios);
+      return portfolios;
     } catch (error) {
       console.error("Fetch public portfolios error:", error);
 
@@ -575,6 +549,21 @@ const portfolioSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      // .addCase(fetchUserPortfolio.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.currentPortfolio = action.payload;
+      //   state.error = null;
+      // })
+      // .addCase(fetchUserPortfolio.rejected, (state, action) => {
+      //   state.loading = false;
+      //   const errorMessage = action.payload as string;
+      //   if (errorMessage === "No portfolio found") {
+      //     state.error = null;
+      //     state.currentPortfolio = null;
+      //   } else {
+      //     state.error = errorMessage;
+      //   }
+      // })
       .addCase(fetchUserPortfolio.fulfilled, (state, action) => {
         state.loading = false;
         if (action.payload) {

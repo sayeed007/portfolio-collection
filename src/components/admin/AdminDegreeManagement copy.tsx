@@ -1,5 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { db } from '@/lib/firebase/config';
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
+    Timestamp,
+    updateDoc,
+    writeBatch
+} from 'firebase/firestore';
 import {
     AlertCircle,
     CheckCircle,
@@ -8,35 +22,137 @@ import {
     Save,
     X
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
 import { EditButton } from '../ui/edit-button';
-import { useDegree, type Degree, type DegreeFormData, DEGREE_LEVELS } from '@/lib/hooks/useDegree';
-// import { useDegree, type Degree, type DegreeFormData, DEGREE_LEVELS } from '@/hooks/useDegree';
+
+interface Degree {
+    id: string;
+    name: string;
+    shortName: string; // e.g., BSc, MSc, PhD
+    level: string; // e.g., Undergraduate, Graduate, Postgraduate
+    description?: string;
+    isActive: boolean;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+}
+
+// Predefined list of popular degrees in Bangladesh
+const POPULAR_DEGREES = [
+    // Undergraduate Degrees
+    { name: 'Bachelor of Science', shortName: 'BSc', level: 'Undergraduate', description: 'Bachelor of Science degree', isActive: true },
+    { name: 'Bachelor of Arts', shortName: 'BA', level: 'Undergraduate', description: 'Bachelor of Arts degree', isActive: true },
+    { name: 'Bachelor of Commerce', shortName: 'BCom', level: 'Undergraduate', description: 'Bachelor of Commerce degree', isActive: true },
+    { name: 'Bachelor of Business Administration', shortName: 'BBA', level: 'Undergraduate', description: 'Bachelor of Business Administration degree', isActive: true },
+    { name: 'Bachelor of Computer Science', shortName: 'BCS', level: 'Undergraduate', description: 'Bachelor of Computer Science degree', isActive: true },
+    { name: 'Bachelor of Engineering', shortName: 'BE', level: 'Undergraduate', description: 'Bachelor of Engineering degree', isActive: true },
+    { name: 'Bachelor of Technology', shortName: 'BTech', level: 'Undergraduate', description: 'Bachelor of Technology degree', isActive: true },
+    { name: 'Bachelor of Medicine', shortName: 'MBBS', level: 'Undergraduate', description: 'Bachelor of Medicine and Bachelor of Surgery', isActive: true },
+    { name: 'Bachelor of Pharmacy', shortName: 'BPharm', level: 'Undergraduate', description: 'Bachelor of Pharmacy degree', isActive: true },
+    { name: 'Bachelor of Laws', shortName: 'LLB', level: 'Undergraduate', description: 'Bachelor of Laws degree', isActive: true },
+    { name: 'Bachelor of Social Science', shortName: 'BSS', level: 'Undergraduate', description: 'Bachelor of Social Science degree', isActive: true },
+    { name: 'Bachelor of Fine Arts', shortName: 'BFA', level: 'Undergraduate', description: 'Bachelor of Fine Arts degree', isActive: true },
+    { name: 'Bachelor of Architecture', shortName: 'BArch', level: 'Undergraduate', description: 'Bachelor of Architecture degree', isActive: true },
+
+    // Graduate/Masters Degrees
+    { name: 'Master of Science', shortName: 'MSc', level: 'Graduate', description: 'Master of Science degree', isActive: true },
+    { name: 'Master of Arts', shortName: 'MA', level: 'Graduate', description: 'Master of Arts degree', isActive: true },
+    { name: 'Master of Commerce', shortName: 'MCom', level: 'Graduate', description: 'Master of Commerce degree', isActive: true },
+    { name: 'Master of Business Administration', shortName: 'MBA', level: 'Graduate', description: 'Master of Business Administration degree', isActive: true },
+    { name: 'Master of Computer Science', shortName: 'MCS', level: 'Graduate', description: 'Master of Computer Science degree', isActive: true },
+    { name: 'Master of Engineering', shortName: 'ME', level: 'Graduate', description: 'Master of Engineering degree', isActive: true },
+    { name: 'Master of Technology', shortName: 'MTech', level: 'Graduate', description: 'Master of Technology degree', isActive: true },
+    { name: 'Master of Philosophy', shortName: 'MPhil', level: 'Graduate', description: 'Master of Philosophy degree', isActive: true },
+    { name: 'Master of Laws', shortName: 'LLM', level: 'Graduate', description: 'Master of Laws degree', isActive: true },
+    { name: 'Master of Social Science', shortName: 'MSS', level: 'Graduate', description: 'Master of Social Science degree', isActive: true },
+    { name: 'Master of Fine Arts', shortName: 'MFA', level: 'Graduate', description: 'Master of Fine Arts degree', isActive: true },
+    { name: 'Master of Architecture', shortName: 'MArch', level: 'Graduate', description: 'Master of Architecture degree', isActive: true },
+
+    // Postgraduate/Doctoral Degrees
+    { name: 'Doctor of Philosophy', shortName: 'PhD', level: 'Postgraduate', description: 'Doctor of Philosophy degree', isActive: true },
+    { name: 'Doctor of Medicine', shortName: 'MD', level: 'Postgraduate', description: 'Doctor of Medicine degree', isActive: true },
+    { name: 'Doctor of Science', shortName: 'DSc', level: 'Postgraduate', description: 'Doctor of Science degree', isActive: true },
+    { name: 'Doctor of Engineering', shortName: 'DEng', level: 'Postgraduate', description: 'Doctor of Engineering degree', isActive: true },
+
+    // Diploma Degrees
+    { name: 'Diploma in Engineering', shortName: 'Diploma', level: 'Diploma', description: 'Diploma in Engineering', isActive: true },
+    { name: 'Diploma in Computer Science', shortName: 'DCS', level: 'Diploma', description: 'Diploma in Computer Science', isActive: true },
+    { name: 'Diploma in Business Studies', shortName: 'DBS', level: 'Diploma', description: 'Diploma in Business Studies', isActive: true },
+
+    // Certificate Degrees
+    { name: 'Higher Secondary Certificate', shortName: 'HSC', level: 'Certificate', description: 'Higher Secondary Certificate', isActive: true },
+    { name: 'Secondary School Certificate', shortName: 'SSC', level: 'Certificate', description: 'Secondary School Certificate', isActive: true },
+];
+
+const DEGREE_LEVELS = [
+    'Certificate',
+    'Diploma',
+    'Undergraduate',
+    'Graduate',
+    'Postgraduate'
+];
 
 const AdminDegreeManagement = () => {
-    const {
-        degrees,
-        loading,
-        error,
-        success,
-        addDegree,
-        updateDegree,
-        deleteDegree,
-        toggleDegreeStatus,
-        clearMessages,
-    } = useDegree({ autoPopulate: true });
-
+    const [degrees, setDegrees] = useState<Degree[]>([]);
+    const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [formData, setFormData] = useState<DegreeFormData>({
+    const [formData, setFormData] = useState({
         name: '',
         shortName: '',
         level: 'Undergraduate',
         description: '',
         isActive: true
     });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    // Fetch degrees and prefill if empty
+    useEffect(() => {
+        const q = query(collection(db, 'degrees'), orderBy('level'), orderBy('name', 'asc'));
+
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const degreesList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Degree[];
+
+            setDegrees(degreesList);
+            setLoading(false);
+
+            // If no degrees exist, prefill with popular degrees
+            if (degreesList.length === 0) {
+                try {
+                    const batch = writeBatch(db);
+                    POPULAR_DEGREES.forEach((degree) => {
+                        const degreeRef = doc(collection(db, 'degrees'));
+                        batch.set(degreeRef, {
+                            name: degree.name,
+                            shortName: degree.shortName,
+                            level: degree.level,
+                            description: degree.description,
+                            isActive: degree.isActive,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        });
+                    });
+                    await batch.commit();
+                    setSuccess('Popular degrees added successfully');
+                    setTimeout(() => setSuccess(''), 3000);
+                } catch (error) {
+                    console.error('Error prefilling degrees:', error);
+                    setError('Failed to prefill degrees');
+                }
+            }
+        }, (error) => {
+            console.error('Error fetching degrees:', error);
+            setError('Failed to fetch degrees');
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const resetForm = () => {
         setFormData({
@@ -48,22 +164,64 @@ const AdminDegreeManagement = () => {
         });
         setEditingId(null);
         setShowAddForm(false);
-        clearMessages();
+        setError('');
+        setSuccess('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
+
+        if (!formData.name.trim() || !formData.shortName.trim()) {
+            setError('Degree name and short name are required');
+            return;
+        }
+
+        // Check for duplicate degree names or short names
+        const existingDegree = degrees.find(degree =>
+            (degree.name.toLowerCase() === formData.name.toLowerCase() ||
+                degree.shortName.toLowerCase() === formData.shortName.toLowerCase()) &&
+            degree.id !== editingId
+        );
+
+        if (existingDegree) {
+            setError('Degree name or short name already exists');
+            return;
+        }
 
         try {
             if (editingId) {
-                await updateDegree(editingId, formData);
+                // Update existing degree
+                const degreeRef = doc(db, 'degrees', editingId);
+                await updateDoc(degreeRef, {
+                    name: formData.name.trim(),
+                    shortName: formData.shortName.trim(),
+                    level: formData.level,
+                    description: formData.description.trim(),
+                    isActive: formData.isActive,
+                    updatedAt: serverTimestamp()
+                });
+                setSuccess('Degree updated successfully');
             } else {
-                await addDegree(formData);
+                // Add new degree
+                await addDoc(collection(db, 'degrees'), {
+                    name: formData.name.trim(),
+                    shortName: formData.shortName.trim(),
+                    level: formData.level,
+                    description: formData.description.trim(),
+                    isActive: formData.isActive,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                setSuccess('Degree added successfully');
             }
+
             resetForm();
+            setTimeout(() => setSuccess(''), 3000);
         } catch (error) {
-            // Error is already handled by the hook
-            console.error('Form submission error:', error);
+            console.error('Error saving degree:', error);
+            setError('Failed to save degree');
         }
     };
 
@@ -85,21 +243,38 @@ const AdminDegreeManagement = () => {
         }
 
         try {
-            await deleteDegree(id);
+            await deleteDoc(doc(db, 'degrees', id));
+            setSuccess('Degree deleted successfully');
+            setTimeout(() => setSuccess(''), 3000);
         } catch (error) {
-            // Error is already handled by the hook
-            console.error('Delete error:', error);
+            console.error('Error deleting degree:', error);
+            setError('Failed to delete degree');
         }
     };
 
-    const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    const toggleStatus = async (id: string, currentStatus: boolean) => {
         try {
-            await toggleDegreeStatus(id, currentStatus);
+            const degreeRef = doc(db, 'degrees', id);
+            await updateDoc(degreeRef, {
+                isActive: !currentStatus,
+                updatedAt: serverTimestamp()
+            });
         } catch (error) {
-            // Error is already handled by the hook
-            console.error('Toggle status error:', error);
+            console.error('Error updating degree status:', error);
+            setError('Failed to update degree status');
         }
     };
+
+    // Group degrees by level for better organization
+    // const groupedDegrees =
+    degrees.reduce((acc, degree) => {
+        if (!acc[degree.level]) {
+            acc[degree.level] = [];
+        }
+        acc[degree.level].push(degree);
+        return acc;
+    }, {} as Record<string, Degree[]>);
+
 
     if (loading) {
         return (
@@ -318,7 +493,7 @@ const AdminDegreeManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <button
-                                                onClick={() => handleToggleStatus(degree.id, degree.isActive)}
+                                                onClick={() => toggleStatus(degree.id, degree.isActive)}
                                                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${degree.isActive
                                                     ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                                     : 'bg-red-100 text-red-800 hover:bg-red-200'
