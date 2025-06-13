@@ -383,9 +383,9 @@ export const fetchUserPortfolio = createAsyncThunk<Portfolio | null, string, { r
   async (userId: string, { rejectWithValue }) => {
     try {
       const portfolio = await getPortfolio(userId);
-      if (!portfolio) {
-        return rejectWithValue("No portfolio found");
-      }
+      // if (!portfolio) {
+      //   return rejectWithValue("No portfolio found");
+      // }
       return portfolio;
     } catch (error) {
       console.error("Fetch portfolio error:", error);
@@ -629,20 +629,36 @@ const portfolioSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      // .addCase(fetchUserPortfolio.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.currentPortfolio = action.payload;
+      //   state.error = null;
+      // })
+      // .addCase(fetchUserPortfolio.rejected, (state, action) => {
+      //   state.loading = false;
+      //   const errorMessage = action.payload as string;
+      //   if (errorMessage === "No portfolio found") {
+      //     state.error = null;
+      //     state.currentPortfolio = null;
+      //   } else {
+      //     state.error = errorMessage;
+      //   }
+      // })
       .addCase(fetchUserPortfolio.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentPortfolio = action.payload;
-        state.error = null;
+        if (action.payload) {
+          // Portfolio exists
+          state.currentPortfolio = action.payload;
+          state.error = null;
+        } else {
+          // No portfolio found - this is a valid state
+          state.currentPortfolio = null;
+          state.error = null;
+        }
       })
       .addCase(fetchUserPortfolio.rejected, (state, action) => {
         state.loading = false;
-        const errorMessage = action.payload as string;
-        if (errorMessage === "No portfolio found") {
-          state.error = null;
-          state.currentPortfolio = null;
-        } else {
-          state.error = errorMessage;
-        }
+        state.error = action.payload || "Failed to fetch portfolio";
       })
 
       // Create portfolio

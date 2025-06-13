@@ -67,6 +67,9 @@ export interface Portfolio {
     language: string;
     proficiency: string;
   }>;
+  email?: string;
+  mobileNo?: string;
+  profileImage?: string;
   designation: string;
   employeeCode: string;
   summary: string;

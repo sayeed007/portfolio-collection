@@ -133,18 +133,16 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 // For create mode, load user's existing portfolio if any
                 setIsLoading(true);
                 try {
-                    const initialPortfolio = await fetchUserPortfolio(user.uid);
+                    // Dispatch the thunk and unwrap the result
+                    const result = await dispatch(fetchUserPortfolio(user.uid)).unwrap();
 
-                    if (initialPortfolio) {
-                        dispatch(setFormData(initialPortfolio));
-                    } else {
-                        toast.error('Portfolio not found');
-                        router.push('/dashboard');
+                    if (result) {
+                        // Portfolio exists
+                        dispatch(setFormData(result));
                     }
                 } catch (error) {
+                    // This catches actual errors (network issues, permission problems, etc.)
                     console.error('Error loading portfolio:', error);
-                    toast.error('Failed to load portfolio data');
-                    router.push('/dashboard');
                 } finally {
                     setIsLoading(false);
                 }

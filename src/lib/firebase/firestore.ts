@@ -79,6 +79,23 @@ export const updatePortfolio = async (
   return updatedPortfolio;
 };
 
+// export const getPortfolio = async (
+//   userId: string
+// ): Promise<Portfolio | null> => {
+//   try {
+//     const portfolioRef = doc(db, "users", userId, "portfolio", "data");
+//     const portfolioSnap = await getDoc(portfolioRef);
+
+//     if (portfolioSnap.exists()) {
+//       return portfolioSnap.data() as Portfolio;
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("Error fetching portfolio:", error);
+//     throw error;
+//   }
+// };
 export const getPortfolio = async (
   userId: string
 ): Promise<Portfolio | null> => {
@@ -90,6 +107,7 @@ export const getPortfolio = async (
       return portfolioSnap.data() as Portfolio;
     }
 
+    // Return null when no portfolio document exists
     return null;
   } catch (error) {
     console.error("Error fetching portfolio:", error);

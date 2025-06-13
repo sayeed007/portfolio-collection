@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/Select';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { useLanguages } from '@/lib/hooks/useLanguages';
 import { updateFormData, validateStep } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +17,9 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
+// import { Select, SelectOption } from '@/components/ui/Select';
+// import { useLanguages } from '@/hooks/useLanguages';
+
 
 const step1Schema = z.object({
     employeeCode: z.string().min(1, 'Employee code is required'),
@@ -55,6 +60,7 @@ export function Step1PersonalInfo() {
     const dispatch = useDispatch();
     const toast = useToast();
     const { formData } = useSelector((state: RootState) => state.portfolio);
+    const { languageOptions, loading: languagesLoading, error: languagesError } = useLanguages();
     const [profileImagePreview, setProfileImagePreview] = useState<string>('');
     const [isInitialized, setIsInitialized] = useState(false);
 
@@ -152,10 +158,10 @@ export function Step1PersonalInfo() {
             }
 
             // Trigger logic for all inputs after reset
-            setTimeout(() => {
-                // Trigger Input component logic for all inputs
-                triggerInputComponentLogic();
-            }, 0);
+            // setTimeout(() => {
+            //     // Trigger Input component logic for all inputs
+            //     triggerInputComponentLogic();
+            // }, 0);
 
             // Move isInitialized inside this check if you really want to avoid re-inits
             if (!isInitialized) {
@@ -377,40 +383,57 @@ export function Step1PersonalInfo() {
                         Add Language
                     </Button>
                 </div>
+
+                {/* Show error if languages failed to load */}
+                {languagesError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 text-sm">{languagesError}</p>
+                    </div>
+                )}
+
                 <div className="space-y-4">
                     {languageFields.map((field, index) => (
                         <div key={`language-${index}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg">
-                            <Input
-                                {...register(`languageProficiency.${index}.language`)}
-                                label="Language"
-                                placeholder="e.g., English, Bengali, Hindi"
-                                error={errors.languageProficiency?.[index]?.language?.message}
-                                required
-                            />
+                            <div>
+                                <Select
+                                    label="Language"
+                                    required
+                                    options={languageOptions}
+                                    loading={languagesLoading}
+                                    searchable
+                                    clearable
+                                    placeholder="Select or search language..."
+                                    value={languageOptions.find(option => option.value === watch(`languageProficiency.${index}.language`)) || null}
+                                    onChange={(selectedOption) => {
+                                        if (selectedOption && 'value' in selectedOption) {
+                                            setValue(`languageProficiency.${index}.language`, selectedOption.value || '');
+                                        }
+                                    }}
+                                    error={errors.languageProficiency?.[index]?.language?.message}
+                                />
+                            </div>
+
                             <div className="flex gap-2">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Proficiency Level <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        {...register(`languageProficiency.${index}.proficiency`)}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        {proficiencyLevels.map((level) => (
-                                            <option key={level.value} value={level.value}>
-                                                {level.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.languageProficiency?.[index]?.proficiency && (
-                                        <p className="text-red-500 text-sm mt-1">
-                                            {errors.languageProficiency[index]?.proficiency?.message}
-                                        </p>
-                                    )}
+                                    <Select
+                                        label="Proficiency Level"
+                                        required
+                                        options={proficiencyLevels}
+                                        searchable={false}
+                                        clearable={false}
+                                        placeholder="Select proficiency..."
+                                        value={proficiencyLevels.find(level => level.value === watch(`languageProficiency.${index}.proficiency`)) || proficiencyLevels[1]}
+                                        onChange={(selectedOption) => {
+                                            if (selectedOption && 'value' in selectedOption) {
+                                                setValue(`languageProficiency.${index}.proficiency`, selectedOption.value || 'conversational');
+                                            }
+                                        }}
+                                        error={errors.languageProficiency?.[index]?.proficiency?.message}
+                                    />
                                 </div>
                                 {languageFields.length > 1 && (
                                     <DeleteButton
-                                        alignWith="floating-input"
+                                        alignWith="select"
                                         onDelete={() => removeLanguage(index)}
                                     />
                                 )}
@@ -468,14 +491,14 @@ export function Step1PersonalInfo() {
                                 label="Name"
                                 placeholder="Reference Name"
                                 error={errors.references?.[index]?.name?.message}
-                                required
+                            // required
                             />
                             <Input
                                 {...register(`references.${index}.contactInfo`)}
                                 label="Contact Info"
                                 placeholder="Email or Phone"
                                 error={errors.references?.[index]?.contactInfo?.message}
-                                required
+                            // required
                             />
                             <div className="flex gap-2">
                                 <Input
@@ -483,7 +506,7 @@ export function Step1PersonalInfo() {
                                     label="Relationship"
                                     placeholder="e.g., Former Manager"
                                     error={errors.references?.[index]?.relationship?.message}
-                                    required
+                                    // required
                                     className="flex-1"
                                 />
                                 {referenceFields.length > 1 && (

@@ -20,8 +20,15 @@ export interface Language {
     updatedAt: Timestamp;
 }
 
+export interface LanguageOption {
+    value: string;
+    label: string;
+    code: string;
+}
+
 export const useLanguages = (activeOnly: boolean = true) => {
     const [languages, setLanguages] = useState<Language[]>([]);
+    const [languageOptions, setLanguageOptions] = useState<LanguageOption[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +57,16 @@ export const useLanguages = (activeOnly: boolean = true) => {
                 })) as Language[];
 
                 setLanguages(languagesList);
+
+                // Convert to options format for react-select
+                const options = languagesList.map(lang => ({
+                    value: lang.name,
+                    label: lang.name,
+                    code: lang.code
+                }));
+
+                setLanguageOptions(options);
+
                 setLoading(false);
                 setError(null);
             },
@@ -63,5 +80,5 @@ export const useLanguages = (activeOnly: boolean = true) => {
         return () => unsubscribe();
     }, [activeOnly]);
 
-    return { languages, loading, error };
+    return { languages, languageOptions, loading, error };
 };
