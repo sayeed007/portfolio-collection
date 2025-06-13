@@ -481,7 +481,7 @@ export const fetchPublicPortfolios = createAsyncThunk<
   "portfolio/fetchPublic",
   async (filters, { rejectWithValue }) => {
     try {
-      console.log("Fetching public portfolios with filters:", filters);
+      console.info("Fetching public portfolios with filters:", filters);
 
       const portfolios = await getPublicPortfolios(filters);
 
@@ -490,7 +490,7 @@ export const fetchPublicPortfolios = createAsyncThunk<
         throw new Error("Invalid response: expected array of portfolios");
       }
 
-      console.log(`Successfully fetched ${portfolios.length} public portfolios`);
+      console.info(`Successfully fetched ${portfolios.length} public portfolios`);
       return portfolios;
     } catch (error) {
       console.error("Fetch public portfolios error:", error);

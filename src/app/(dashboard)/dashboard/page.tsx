@@ -12,7 +12,6 @@ import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 import { Award, Eye, FileText, User } from "lucide-react";
-import { useEffect } from "react";
 
 export default function DashboardPage() {
     const { user } = useAuth();
@@ -24,10 +23,6 @@ export default function DashboardPage() {
         isPortfolioNotFound,
         retryFetch,
     } = usePortfolio();
-
-    useEffect(() => {
-        console.log('DashboardPage re-rendered', { loading, shouldShowLoading, isPortfolioNotFound, error });
-    });
 
     // If portfolio not found, show the friendly "No Portfolio Yet" UI immediately (no loading)
     if (isPortfolioNotFound) {

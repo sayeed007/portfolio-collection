@@ -148,15 +148,13 @@ const removeFromPublicCollection = async (userId: string) => {
     await deleteDoc(publicPortfolioRef);
   } catch (error) {
     // Document might not exist, which is fine
-    console.log("Portfolio not found in public collection:", error);
+    console.error("Portfolio not found in public collection:", error);
   }
 };
 
 // Function to migrate existing portfolios to public collection (run once)
 export const migrateExistingPortfolios = async () => {
   try {
-    console.log("Starting portfolio migration...");
-
     // This is a one-time migration function
     // You would run this once to migrate existing public portfolios
     const usersRef = collection(db, "users");
@@ -184,7 +182,7 @@ export const migrateExistingPortfolios = async () => {
     }
 
     await batch.commit();
-    console.log(`Migration completed. Migrated ${migrationCount} public portfolios.`);
+    console.info(`Migration completed. Migrated ${migrationCount} public portfolios.`);
     return migrationCount;
   } catch (error) {
     console.error("Error during migration:", error);
@@ -206,7 +204,7 @@ export const getPublicPortfolios = async (filters?: PortfolioFilters): Promise<P
     const snapshot = await getDocs(baseQuery);
 
     if (snapshot.empty) {
-      console.log('No public portfolios found');
+      console.info('No public portfolios found');
       return [];
     }
 
