@@ -21,7 +21,7 @@ export interface Reference {
 export interface Education {
   degree: string;
   institution: string;
-  year: number;
+  passingYear: string | number;
   grade?: string;
 }
 
@@ -51,10 +51,8 @@ export interface TechnicalSkill {
 export interface WorkExperience {
   company: string;
   position: string;
-  startDate: string;
-  endDate?: string;
-  isCurrentRole: boolean;
-  responsibilities: string[];
+  duration: string;
+  responsibility: string[];
   technologies: string[];
 }
 
@@ -80,7 +78,10 @@ export interface PortfolioFormData {
   designation: string;
   yearsOfExperience: number;
   nationality: string;
-  languageProficiency: string[];
+  languageProficiency: Array<{
+    language: string;
+    proficiency: string;
+  }>;
   email: string;
   mobileNo: string;
   profileImage?: string;
@@ -126,7 +127,7 @@ const initialFormData: PortfolioFormData = {
   designation: "",
   yearsOfExperience: 0,
   nationality: "",
-  languageProficiency: [""],
+  languageProficiency: [{ language: "", proficiency: "" }],
   email: "",
   mobileNo: "",
   profileImage: "",
@@ -158,27 +159,30 @@ const initialState: PortfolioState = {
 
 // Helper function to transform form data to portfolio structure
 const transformFormDataToPortfolio = (formData: PortfolioFormData) => {
+  const personalInfo = {
+    employeeCode: formData.employeeCode,
+    designation: formData.designation,
+    yearsOfExperience: formData.yearsOfExperience,
+    nationality: formData.nationality,
+    languageProficiency: formData.languageProficiency.filter(
+      (lang) => lang.language.trim() !== ""
+    ),
+    email: formData.email,
+    mobileNo: formData.mobileNo,
+    profileImage: formData.profileImage || "",
+    summary: formData.summary,
+  };
+
   return {
-    personalInfo: {
-      employeeCode: formData.employeeCode,
-      designation: formData.designation,
-      yearsOfExperience: formData.yearsOfExperience,
-      nationality: formData.nationality,
-      languageProficiency: formData.languageProficiency.filter(
-        (lang) => lang.trim() !== ""
-      ),
-      email: formData.email,
-      mobileNo: formData.mobileNo,
-      profileImage: formData.profileImage || "",
-      summary: formData.summary,
-    },
+    ...personalInfo,
+    personalInfo,
     references: formData.references,
     education: formData.education,
     certifications: formData.certifications,
     courses: formData.courses,
     technicalSkills: formData.technicalSkills,
     workExperience: formData.workExperience,
-    projects: formData.projects,
+    projects: formData.projects || [],
   };
 };
 
@@ -192,7 +196,7 @@ const transformPortfolioToFormData = (portfolio: any): PortfolioFormData => {
     languageProficiency:
       portfolio.personalInfo?.languageProficiency?.length > 0
         ? portfolio.personalInfo.languageProficiency
-        : [""],
+        : [{ language: "", proficiency: "" }],
     email: portfolio.personalInfo?.email || "",
     mobileNo: portfolio.personalInfo?.mobileNo || "",
     profileImage: portfolio.personalInfo?.profileImage || "",
@@ -212,13 +216,13 @@ const transformPortfolioToFormData = (portfolio: any): PortfolioFormData => {
 
 // Async thunks
 // export const submitPortfolio = createAsyncThunk<
-//   Portfolio | void,  // This indicates the success result type (Portfolio or void)
-//   {                   // This is the type of arguments you will pass
+//   Portfolio,  // Changed from Portfolio | void to just Portfolio
+//   {
 //     portfolioData: PortfolioFormData;
 //     userId: string;
 //     portfolioId?: string;
 //   },
-//   { rejectValue: string } // This is the rejectValue type (string for error messages)
+//   { rejectValue: string }
 // >(
 //   "portfolio/submit",
 //   async ({ portfolioData, userId, portfolioId }, { rejectWithValue }) => {
@@ -230,14 +234,15 @@ const transformPortfolioToFormData = (portfolio: any): PortfolioFormData => {
 //       };
 
 //       if (portfolioId) {
+//         // Fix: updatePortfolio expects userId, not portfolioId
 //         const updatedPortfolio = await updatePortfolio(
-//           portfolioId,
+//           userId,
 //           portfolioPayload
 //         );
-//         return updatedPortfolio; // This will be of type Portfolio
+//         return updatedPortfolio;
 //       } else {
 //         const newPortfolio = await createPortfolio(userId, portfolioPayload);
-//         return newPortfolio; // This will be of type Portfolio
+//         return newPortfolio;
 //       }
 //     } catch (error) {
 //       console.error("Submit portfolio error:", error);
@@ -248,7 +253,7 @@ const transformPortfolioToFormData = (portfolio: any): PortfolioFormData => {
 //   }
 // );
 export const submitPortfolio = createAsyncThunk<
-  Portfolio,  // Changed from Portfolio | void to just Portfolio
+  Portfolio,
   {
     portfolioData: PortfolioFormData;
     userId: string;
@@ -265,17 +270,19 @@ export const submitPortfolio = createAsyncThunk<
         status: "published" as const,
       };
 
+      let result: Portfolio;
+
       if (portfolioId) {
-        // Fix: updatePortfolio expects userId, not portfolioId
-        const updatedPortfolio = await updatePortfolio(
-          userId,
-          portfolioPayload
-        );
-        return updatedPortfolio;
+        result = await updatePortfolio(userId, portfolioPayload);
       } else {
-        const newPortfolio = await createPortfolio(userId, portfolioPayload);
-        return newPortfolio;
+        result = await createPortfolio(userId, portfolioPayload);
       }
+
+      if (!result) {
+        return rejectWithValue("Failed to create or update portfolio");
+      }
+
+      return result;
     } catch (error) {
       console.error("Submit portfolio error:", error);
       return rejectWithValue(
@@ -388,6 +395,8 @@ export const fetchUserPortfolio = createAsyncThunk<Portfolio | null, string, { r
     }
   }
 );
+
+
 
 export const createUserPortfolio = createAsyncThunk(
   "portfolio/create",

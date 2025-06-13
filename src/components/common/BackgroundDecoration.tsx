@@ -1,4 +1,6 @@
 // components/common/BackgroundDecoration.tsx
+'use client';
+
 import React from 'react';
 
 const BackgroundDecoration: React.FC = () => {

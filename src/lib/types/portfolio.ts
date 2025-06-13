@@ -6,7 +6,10 @@ export interface PersonalInfo {
   designation: string;
   yearsOfExperience: number;
   nationality: string;
-  languageProficiency: string[];
+  languageProficiency: Array<{
+    language: string;
+    proficiency: string;
+  }>;
   email: string;
   mobileNo: string;
   profileImage: string; // Base64 string
@@ -57,9 +60,13 @@ export interface Project {
 }
 
 export interface Portfolio {
+  id?: string;  // Optional since it's only used in public collection
   userId: string;
   nationality: string;
-  languageProficiency: string[];
+  languageProficiency: Array<{
+    language: string;
+    proficiency: string;
+  }>;
   designation: string;
   employeeCode: string;
   summary: string;
@@ -76,6 +83,7 @@ export interface Portfolio {
   updatedAt: Timestamp;
   visitCount: number;
   isPublic: boolean;
+  location?: string;  // Optional since it's used in filters
 }
 
 export interface PortfolioFormData {

@@ -44,7 +44,7 @@ function validateStep1(formData: Partial<PortfolioFormData>): ValidationResult {
 
   if (
     !formData.languageProficiency?.length ||
-    formData.languageProficiency.some((lang) => !lang.trim())
+    formData.languageProficiency.some((lang) => !lang.language.trim())
   ) {
     errors.push("At least one valid language proficiency is required");
   }
@@ -83,11 +83,11 @@ function validateStep2(formData: Partial<PortfolioFormData>): ValidationResult {
         errors.push(`Education ${index + 1}: Institution is required`);
       }
       if (
-        edu.year == null ||
-        edu.year < 1900 ||
-        edu.year > new Date().getFullYear() + 10
+        edu.passingYear == null ||
+        Number(edu.passingYear) < 1900 ||
+        Number(edu.passingYear) > new Date().getFullYear() + 10
       ) {
-        errors.push(`Education ${index + 1}: Valid year is required`);
+        errors.push(`Education ${index + 1}: Valid passing year is required`);
       }
     });
   }
@@ -162,23 +162,23 @@ function validateStep3(formData: Partial<PortfolioFormData>): ValidationResult {
       if (!exp.position?.trim()) {
         errors.push(`Work experience ${index + 1}: Position is required`);
       }
-      if (!exp.startDate?.trim()) {
-        errors.push(`Work experience ${index + 1}: Start date is required`);
-      }
-      if (!exp.isCurrentRole && !exp.endDate?.trim()) {
-        errors.push(
-          `Work experience ${index + 1}: End date is required for past roles`
-        );
-      }
-      if (
-        !exp.responsibilities?.length ||
-        exp.responsibilities.some((resp) => !resp.trim())
-      ) {
-        errors.push(
-          `Work experience ${index + 1
-          }: At least one valid responsibility is required`
-        );
-      }
+      // if (!exp.startDate?.trim()) {
+      //   errors.push(`Work experience ${index + 1}: Start date is required`);
+      // }
+      // if (!exp.isCurrentRole && !exp.endDate?.trim()) {
+      //   errors.push(
+      //     `Work experience ${index + 1}: End date is required for past roles`
+      //   );
+      // }
+      // if (
+      //   !exp.responsibilities?.length ||
+      //   exp.responsibilities.some((resp) => !resp.trim())
+      // ) {
+      //   errors.push(
+      //     `Work experience ${index + 1
+      //     }: At least one valid responsibility is required`
+      //   );
+      // }
     });
   }
 

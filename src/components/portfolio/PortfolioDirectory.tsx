@@ -146,8 +146,8 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     bValue = b.yearsOfExperience;
                     break;
                 case 'updated':
-                    aValue = new Date(a.updatedAt).getTime();
-                    bValue = new Date(b.updatedAt).getTime();
+                    aValue = new Date(a.updatedAt.toDate()).getTime();
+                    bValue = new Date(b.updatedAt.toDate()).getTime();
                     break;
                 case 'visits':
                     aValue = a.visitCount || 0;

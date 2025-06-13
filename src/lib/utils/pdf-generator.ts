@@ -22,9 +22,6 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
     yearsOfExperience,
     nationality,
     languageProficiency,
-    email,
-    mobileNo,
-    profileImage,
     summary,
     education,
     certifications,
@@ -34,6 +31,7 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
     projects,
     references,
   } = portfolio;
+  const { email, mobileNo, profileImage, } = portfolio?.personalInfo;
 
   return `
     <!DOCTYPE html>
@@ -258,7 +256,7 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
       ? `
         <div class="section">
           <h2 class="section-title">Language Proficiency</h2>
-          <p>${formatList(languageProficiency)}</p>
+          <p>${formatList(languageProficiency.map(lang => `${lang.language} (${lang.proficiency})`))}</p>
         </div>
         `
       : ""
@@ -557,7 +555,7 @@ export const generatePortfolioPDFBlob = async (
     const pdfBlob = await html2pdf()
       .set(config)
       .from(element)
-      .outputPdf("blob");
+      .output("blob");
 
     document.body.removeChild(element);
 

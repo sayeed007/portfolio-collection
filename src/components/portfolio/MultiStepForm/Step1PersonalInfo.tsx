@@ -21,7 +21,12 @@ const step1Schema = z.object({
     designation: z.string().min(1, 'Designation is required'),
     yearsOfExperience: z.number().nonnegative('Years of experience must be positive'),
     nationality: z.string().min(1, 'Nationality is required'),
-    languageProficiency: z.array(z.string().min(1, 'Language cannot be empty')).min(1, 'At least one language is required'),
+    languageProficiency: z.array(
+        z.object({
+            language: z.string().min(1, 'Language name is required'),
+            proficiency: z.string().min(1, 'Proficiency level is required'),
+        })
+    ).min(1, 'At least one language is required'),
     email: z.string().email('Please enter a valid email'),
     mobileNo: z.string().min(1, 'Mobile number is required'),
     profileImage: z.string().optional(),
@@ -36,6 +41,15 @@ const step1Schema = z.object({
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
+
+// Proficiency level options
+const proficiencyLevels = [
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'conversational', label: 'Conversational' },
+    { value: 'professional', label: 'Professional' },
+    { value: 'fluent', label: 'Fluent' },
+    { value: 'native', label: 'Native' },
+];
 
 export function Step1PersonalInfo() {
     const dispatch = useDispatch();
@@ -52,10 +66,10 @@ export function Step1PersonalInfo() {
         if (!formRef.current) return;
 
         // Get all input elements in the form
-        const inputs = formRef.current.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], textarea');
+        const inputs = formRef.current.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], textarea, select');
 
         inputs.forEach((input) => {
-            if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+            if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement) {
                 // Dispatch events to trigger Input component's internal state updates
                 const inputEvent = new Event('input', { bubbles: true });
                 const changeEvent = new Event('change', { bubbles: true });
@@ -65,15 +79,34 @@ export function Step1PersonalInfo() {
             }
         });
     }, []);
+
     const normalizeFormData = useCallback((data: any): Step1FormData => {
+        // Handle legacy languageProficiency format (array of strings) to new format (array of objects)
+        let normalizedLanguageProficiency;
+        if (Array.isArray(data.languageProficiency)) {
+            if (data.languageProficiency.length > 0 && typeof data.languageProficiency[0] === 'string') {
+                // Legacy format: convert strings to objects
+                normalizedLanguageProficiency = data.languageProficiency.map((lang: string) => ({
+                    language: lang,
+                    proficiency: 'conversational' // default proficiency
+                }));
+            } else {
+                // New format: ensure all objects have required properties
+                normalizedLanguageProficiency = data.languageProficiency.map((item: any) => ({
+                    language: item.language || '',
+                    proficiency: item.proficiency || 'conversational'
+                }));
+            }
+        } else {
+            normalizedLanguageProficiency = [{ language: '', proficiency: 'conversational' }];
+        }
+
         return {
             employeeCode: data.employeeCode || '',
             designation: data.designation || '',
             yearsOfExperience: Number(data.yearsOfExperience) || 0,
             nationality: data.nationality || '',
-            languageProficiency: Array.isArray(data.languageProficiency)
-                ? [...data.languageProficiency]
-                : [''],
+            languageProficiency: normalizedLanguageProficiency,
             email: data.email || '',
             mobileNo: data.mobileNo || '',
             profileImage: data.profileImage || '',
@@ -97,14 +130,14 @@ export function Step1PersonalInfo() {
         defaultValues: normalizeFormData(formData),
     });
 
-    const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
-        control,
-        name: 'languageProficiency',
-    });
-
-    const { fields: referenceFields, append: appendReference, remove: removeReference } = useFieldArray({
+    const { fields: referenceFields, append: appendReference, remove: removeReference } = useFieldArray<Step1FormData, "references">({
         control,
         name: 'references',
+    });
+
+    const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray<Step1FormData, "languageProficiency">({
+        control,
+        name: 'languageProficiency',
     });
 
     // Initialize form with Redux data on mount
@@ -142,9 +175,9 @@ export function Step1PersonalInfo() {
             dispatch(updateFormData(normalizedValue));
 
             // Validate current form state
-            const errorsArray = Object.values(errors).flatMap((err) =>
-                err ? [err.message] : []
-            );
+            const errorsArray = Object.values(errors)
+                .flatMap((err) => err ? [err.message] : [])
+                .filter((msg): msg is string => msg !== undefined);
 
             dispatch(validateStep({
                 step: 1,
@@ -337,28 +370,51 @@ export function Step1PersonalInfo() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => appendLanguage('')}
+                        onClick={() => appendLanguage({ language: '', proficiency: 'conversational' })}
                         className='cursor-pointer'
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Language
                     </Button>
                 </div>
-                <div className="flex flex-wrap">
+                <div className="space-y-4">
                     {languageFields.map((field, index) => (
-                        <div key={`language-${index}`} className="flex w-1/3 gap-2 space-y-3">
+                        <div key={`language-${index}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg">
                             <Input
-                                {...register(`languageProficiency.${index}`)}
-                                placeholder="e.g., English, Bengali"
-                                error={errors.languageProficiency?.[index]?.message}
-                                className="flex-1"
+                                {...register(`languageProficiency.${index}.language`)}
+                                label="Language"
+                                placeholder="e.g., English, Bengali, Hindi"
+                                error={errors.languageProficiency?.[index]?.language?.message}
+                                required
                             />
-                            {languageFields.length > 1 && (
-                                <DeleteButton
-                                    alignWith="input"
-                                    onDelete={() => removeLanguage(index)}
-                                />
-                            )}
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Proficiency Level <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        {...register(`languageProficiency.${index}.proficiency`)}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        {proficiencyLevels.map((level) => (
+                                            <option key={level.value} value={level.value}>
+                                                {level.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.languageProficiency?.[index]?.proficiency && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.languageProficiency[index]?.proficiency?.message}
+                                        </p>
+                                    )}
+                                </div>
+                                {languageFields.length > 1 && (
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeLanguage(index)}
+                                    />
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>

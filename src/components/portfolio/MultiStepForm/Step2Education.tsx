@@ -51,8 +51,15 @@ export function Step2Education() {
     } = useForm<Step2FormData>({
         resolver: zodResolver(step2Schema),
         defaultValues: {
-            education: formData.education || [{ degree: '', institution: '', year: new Date().getFullYear() }],
-            certifications: formData.certifications || [],
+            education: formData.education?.map(edu => ({
+                ...edu,
+                passingYear: typeof edu.passingYear === 'string' ? parseInt(edu.passingYear) : edu.passingYear
+            })) || [{ degree: '', institution: '', passingYear: new Date().getFullYear() }],
+            certifications: formData.certifications?.map(cert => ({
+                name: cert.name,
+                issuingOrganization: cert.issuingOrganization,
+                year: typeof cert.year === 'string' ? parseInt(cert.year) : cert.year
+            })) || [],
             courses: formData.courses || [],
         },
     });
@@ -79,7 +86,20 @@ export function Step2Education() {
         const currentDataString = JSON.stringify(watchedData);
 
         if (currentDataString !== previousDataRef.current) {
-            dispatch(updateFormData(watchedData));
+            const mappedData = {
+                education: watchedData.education,
+                certifications: watchedData.certifications?.map(cert => ({
+                    name: cert.name,
+                    issuer: cert.issuingOrganization,
+                    date: cert.year.toString(),
+                    issuingOrganization: cert.issuingOrganization,
+                    year: cert.year,
+                    expiryDate: cert.expiryDate,
+                    credentialId: cert.credentialId
+                })),
+                courses: watchedData.courses
+            };
+            dispatch(updateFormData(mappedData));
             previousDataRef.current = currentDataString;
         }
     }, [watchedData, dispatch]);
@@ -191,11 +211,11 @@ export function Step2Education() {
                 ) : (
                     <div className="space-y-4">
                         {certificationFields.map((field, index) => (
-                            <div key={`certificate-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                            <div key={`certification-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                                 <Input
                                     {...register(`certifications.${index}.name`)}
                                     label="Certification Name"
-                                    placeholder="e.g., AWS Certified Solutions Architect"
+                                    placeholder="e.g., Microsoft Certified Professional"
                                     error={errors.certifications?.[index]?.name?.message}
                                     required
                                 />
@@ -203,24 +223,27 @@ export function Step2Education() {
                                 <Input
                                     {...register(`certifications.${index}.issuingOrganization`)}
                                     label="Issuing Organization"
-                                    placeholder="e.g., Amazon Web Services"
+                                    placeholder="e.g., Microsoft"
                                     error={errors.certifications?.[index]?.issuingOrganization?.message}
                                     required
                                 />
 
                                 <div className="flex gap-2">
                                     <Input
-                                        {...register(`certifications.${index}.year`)}
+                                        {...register(`certifications.${index}.year`, { valueAsNumber: true })}
+                                        type="number"
                                         label="Year"
-                                        placeholder="e.g., 2023"
+                                        placeholder="e.g., 2020"
                                         error={errors.certifications?.[index]?.year?.message}
                                         required
                                         className="flex-1"
                                     />
-                                    <DeleteButton
-                                        alignWith="floating-input"
-                                        onDelete={() => removeCertification(index)}
-                                    />
+                                    {certificationFields.length > 1 && (
+                                        <DeleteButton
+                                            alignWith="floating-input"
+                                            onDelete={() => removeCertification(index)}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -239,7 +262,8 @@ export function Step2Education() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => appendCourse({ name: '', provider: '', completionDate: '' })}
+                        className="cursor-pointer"
+                        onClick={() => appendCourse({ name: '', provider: '', completionDate: '', duration: '' })}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Course
@@ -257,7 +281,7 @@ export function Step2Education() {
                                 <Input
                                     {...register(`courses.${index}.name`)}
                                     label="Course Name"
-                                    placeholder="e.g., Complete React Developer Course"
+                                    placeholder="e.g., Introduction to Programming"
                                     error={errors.courses?.[index]?.name?.message}
                                     required
                                 />
@@ -265,7 +289,7 @@ export function Step2Education() {
                                 <Input
                                     {...register(`courses.${index}.provider`)}
                                     label="Provider"
-                                    placeholder="e.g., Udemy, Coursera"
+                                    placeholder="e.g., Coursera"
                                     error={errors.courses?.[index]?.provider?.message}
                                     required
                                 />
@@ -273,32 +297,23 @@ export function Step2Education() {
                                 <div className="flex gap-2">
                                     <Input
                                         {...register(`courses.${index}.completionDate`)}
+                                        type="date"
                                         label="Completion Date"
-                                        placeholder="e.g., 2023-05"
                                         error={errors.courses?.[index]?.completionDate?.message}
                                         required
                                         className="flex-1"
                                     />
-                                    <DeleteButton
-                                        alignWith="floating-input"
-                                        onDelete={() => removeCourse(index)}
-                                    />
+                                    {courseFields.length > 1 && (
+                                        <DeleteButton
+                                            alignWith="floating-input"
+                                            onDelete={() => removeCourse(index)}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
-            </Card>
-
-            {/* Tips */}
-            <Card className="p-6 bg-blue-50 border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-2">Tips for this section:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• List your education in reverse chronological order (most recent first)</li>
-                    <li>• Include relevant certifications that showcase your expertise</li>
-                    <li>• Add online courses that complement your professional skills</li>
-                    <li>• Use completion dates in YYYY-MM format for courses</li>
-                </ul>
             </Card>
         </div>
     );

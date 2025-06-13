@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 // src/lib/types/auth.ts
 export interface User {
   uid: string;
@@ -7,8 +5,8 @@ export interface User {
   displayName: string | null;
   photoURL: string | null;
   emailVerified?: boolean;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: string;
+  updatedAt?: string;
   isAdmin?: boolean;
 }
 

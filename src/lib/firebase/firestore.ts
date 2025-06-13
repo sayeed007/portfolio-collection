@@ -14,7 +14,8 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch
+  writeBatch,
+  Timestamp
 } from "firebase/firestore";
 import { CategoryRequest, Portfolio, PortfolioFilters, SkillCategory } from "../types";
 import { db } from "./config";
@@ -28,11 +29,12 @@ export const createPortfolio = async (
   >
 ) => {
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
+  const now = Timestamp.now();
   const portfolio: Portfolio = {
     ...portfolioData,
     userId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     visitCount: 0,
   };
 
@@ -49,26 +51,32 @@ export const createPortfolio = async (
 export const updatePortfolio = async (
   userId: string,
   portfolioData: Partial<Portfolio>
-) => {
+): Promise<Portfolio> => {
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
   const updatedData = {
     ...portfolioData,
-    updatedAt: new Date().toISOString(),
+    updatedAt: Timestamp.now(),
   };
 
   await updateDoc(portfolioRef, updatedData);
 
   // Get the full portfolio to check if it's public
   const fullPortfolio = await getPortfolio(userId);
-  if (fullPortfolio) {
-    if (fullPortfolio.isPublic) {
-      // Sync to public collection
-      await syncToPublicCollection(userId, { ...fullPortfolio, ...updatedData });
-    } else {
-      // Remove from public collection if it was made private
-      await removeFromPublicCollection(userId);
-    }
+  if (!fullPortfolio) {
+    throw new Error("Portfolio not found");
   }
+
+  const updatedPortfolio = { ...fullPortfolio, ...updatedData };
+
+  if (updatedPortfolio.isPublic) {
+    // Sync to public collection
+    await syncToPublicCollection(userId, updatedPortfolio);
+  } else {
+    // Remove from public collection if it was made private
+    await removeFromPublicCollection(userId);
+  }
+
+  return updatedPortfolio;
 };
 
 export const getPortfolio = async (

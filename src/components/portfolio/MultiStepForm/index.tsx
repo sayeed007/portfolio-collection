@@ -11,7 +11,7 @@ import {
     submitPortfolio,
     validateStep
 } from '@/lib/redux/slices/portfolioSlice';
-import { RootState } from '@/lib/redux/store';
+import { RootState, AppDispatch } from '@/lib/redux/store';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -44,7 +44,7 @@ interface MultiStepFormProps {
 }
 
 export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormProps) {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
     const { user } = useAuth();
     const { getPortfolio } = usePortfolio();
@@ -131,16 +131,24 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 }
             } else if (user?.uid) {
                 // For create mode, load user's existing portfolio if any
-                const result = await dispatch(fetchUserPortfolio(user.uid));
+                setIsLoading(true);
+                try {
+                    const initialPortfolio = await fetchUserPortfolio(user.uid);
 
-                if (fetchUserPortfolio.fulfilled.match(result)) {
-                    // console.info('User portfolio loaded:', result.payload);
-                    // Optionally set as form data if you want to pre-populate
-                    dispatch(setFormData(result.payload));
-                } else if (fetchUserPortfolio.rejected.match(result)) {
-                    console.info('No existing portfolio found or error:', result.payload);
-                    // This might be expected for new users
+                    if (initialPortfolio) {
+                        dispatch(setFormData(initialPortfolio));
+                    } else {
+                        toast.error('Portfolio not found');
+                        router.push('/dashboard');
+                    }
+                } catch (error) {
+                    console.error('Error loading portfolio:', error);
+                    toast.error('Failed to load portfolio data');
+                    router.push('/dashboard');
+                } finally {
+                    setIsLoading(false);
                 }
+
             }
         };
 

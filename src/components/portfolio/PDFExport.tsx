@@ -10,14 +10,14 @@ import Image from 'next/image';
 interface PDFExportProps {
     portfolio: Portfolio;
     variant?: 'button' | 'icon';
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'sm' | 'lg' | 'default';
     className?: string;
 }
 
 export const PDFExport: React.FC<PDFExportProps> = ({
     portfolio,
     variant = 'button',
-    size = 'md',
+    size = 'default',
     className = ''
 }) => {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -59,7 +59,7 @@ export const PDFExport: React.FC<PDFExportProps> = ({
             <Button
                 onClick={handleExport}
                 disabled={isGenerating}
-                variant="primary"
+                variant="default"
                 size={size}
                 className={className}
             >
@@ -89,17 +89,19 @@ interface PDFPreviewProps {
 }
 
 export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
+    const { profileImage, employeeCode, email, mobileNo } = portfolio?.personalInfo;
+
     return (
         <div className="bg-white shadow-lg max-w-4xl mx-auto" id="pdf-preview">
             {/* PDF Header */}
             <div className="bg-blue-600 text-white p-6">
                 <div className="flex items-center gap-6">
-                    {portfolio.profileImage ? (
+                    {profileImage ? (
                         <Image
                             width={80}
                             height={80}
-                            src={portfolio.profileImage}
-                            alt={`${portfolio.employeeCode} profile`}
+                            src={profileImage}
+                            alt={`${employeeCode} profile`}
                             className="w-20 h-20 rounded-full object-cover border-4 border-white"
                         />
                     ) : (
@@ -125,10 +127,10 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
                 {/* Contact Information */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <strong>Email:</strong> {portfolio.email}
+                        <strong>Email:</strong> {email}
                     </div>
                     <div>
-                        <strong>Mobile:</strong> {portfolio.mobileNo}
+                        <strong>Mobile:</strong> {mobileNo}
                     </div>
                 </div>
 

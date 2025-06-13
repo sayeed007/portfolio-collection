@@ -1,6 +1,7 @@
 // src/lib/redux/slices/authSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { User } from "../../firebase/auth";
+import { User } from "@/lib/types/auth";
+// import { User } from "firebase/auth";
 
 interface AuthState {
   user: User | null;

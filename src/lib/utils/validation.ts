@@ -142,22 +142,22 @@ export const validatePersonalInfo = (data: Portfolio): ValidationResult => {
     errors.push("Nationality is required");
   }
 
-  if (!data.email?.trim() || !validateEmail(data.email)) {
+  if (!data.personalInfo.email?.trim() || !validateEmail(data.personalInfo.email)) {
     errors.push("Valid email is required");
   }
 
-  if (!data.mobileNo?.trim() || !validatePhoneNumber(data.mobileNo)) {
+  if (!data.personalInfo.mobileNo?.trim() || !validatePhoneNumber(data.personalInfo.mobileNo)) {
     errors.push("Valid mobile number is required");
   }
 
-  if (!data.summary?.trim() || data.summary.length < 50) {
+  if (!data.personalInfo.summary?.trim() || data.personalInfo.summary.length < 50) {
     errors.push("Professional summary must be at least 50 characters");
   }
 
   if (
     !data.languageProficiency ||
     data.languageProficiency.length === 0 ||
-    data.languageProficiency.every((lang: string) => !lang?.trim())
+    data.languageProficiency.every((lang) => !lang.language?.trim())
   ) {
     errors.push("At least one language proficiency is required");
   }
@@ -178,7 +178,7 @@ export const validatePersonalInfo = (data: Portfolio): ValidationResult => {
     });
   }
 
-  if (data.profileImage && !validateImage(data.profileImage).isValid) {
+  if (data.personalInfo.profileImage && !validateImage(data.personalInfo.profileImage).isValid) {
     errors.push("Valid profile image is required");
   }
 

@@ -49,7 +49,7 @@ const step3Schema = z.object({
 
 type Step3FormData = z.infer<typeof step3Schema>;
 
-const deepCopyJSON = (data) => JSON.parse(JSON.stringify(data));
+const deepCopyJSON = (data: any) => JSON.parse(JSON.stringify(data));
 
 export function Step3SkillsExperience() {
     const dispatch = useDispatch();
@@ -516,7 +516,7 @@ export function Step3SkillsExperience() {
                 size="2xl"
             >
                 <SkillCategorySelector
-                    onSelect={handleCategorySelect}
+                    onCategorySelect={handleCategorySelect}
                     onCancel={() => setShowCategoryModal(false)}
                 />
             </Modal>
