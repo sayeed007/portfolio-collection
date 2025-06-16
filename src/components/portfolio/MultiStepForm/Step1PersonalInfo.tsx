@@ -17,8 +17,6 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
-// import { Select, SelectOption } from '@/components/ui/Select';
-// import { useLanguages } from '@/hooks/useLanguages';
 
 
 const step1Schema = z.object({
@@ -401,7 +399,6 @@ export function Step1PersonalInfo() {
                                     options={languageOptions}
                                     loading={languagesLoading}
                                     searchable
-                                    clearable
                                     placeholder="Select or search language..."
                                     value={languageOptions.find(option => option.value === watch(`languageProficiency.${index}.language`)) || null}
                                     onChange={(selectedOption) => {

@@ -10,6 +10,7 @@ import ReactSelect, {
     ClearIndicatorProps
 } from 'react-select';
 import { ChevronDown, X } from 'lucide-react';
+import { cn } from "@/lib/utils/helpers";
 
 export interface SelectOption {
     value: string;
@@ -47,12 +48,12 @@ const ClearIndicator = (props: ClearIndicatorProps<SelectOption>) => {
     );
 };
 
-// Custom styles to match your design system
-const getCustomStyles = (error?: string): StylesConfig<SelectOption> => ({
+// Custom styles to match your design system with floating label
+const getCustomStyles = (error?: string, hasFloatingLabel?: boolean): StylesConfig<SelectOption> => ({
     control: (provided, state) => ({
         ...provided,
         minHeight: '48px',
-        padding: '0 4px',
+        padding: hasFloatingLabel ? '8px 4px 0 4px' : '0 4px', // Add top padding for floating label
         borderColor: error
             ? '#EF4444' // red-500
             : state.isFocused
@@ -60,9 +61,7 @@ const getCustomStyles = (error?: string): StylesConfig<SelectOption> => ({
                 : '#D1D5DB', // gray-300
         borderWidth: '1px',
         borderRadius: '8px',
-        boxShadow: state.isFocused
-            ? '0 0 0 2px rgba(59, 130, 246, 0.5)' // blue-500 with opacity
-            : 'none',
+        boxShadow: 'none', // Remove default box shadow
         '&:hover': {
             borderColor: error
                 ? '#EF4444'
@@ -71,16 +70,19 @@ const getCustomStyles = (error?: string): StylesConfig<SelectOption> => ({
                     : '#9CA3AF', // gray-400
         },
         transition: 'all 0.2s ease-in-out',
+        backgroundColor: 'white',
     }),
     valueContainer: (provided) => ({
         ...provided,
         padding: '0 8px',
+        paddingTop: hasFloatingLabel ? '4px' : '8px',
     }),
     input: (provided) => ({
         ...provided,
         margin: '0',
         paddingTop: '0',
         paddingBottom: '0',
+        fontSize: '14px',
     }),
     indicatorSeparator: () => ({
         display: 'none',
@@ -125,7 +127,7 @@ const getCustomStyles = (error?: string): StylesConfig<SelectOption> => ({
     }),
     placeholder: (provided) => ({
         ...provided,
-        color: '#9CA3AF', // gray-400
+        color: 'transparent', // Hide placeholder when using floating label
         fontSize: '14px',
     }),
     singleValue: (provided) => ({
@@ -155,65 +157,148 @@ export const Select = forwardRef<any, SelectProps>(({
     clearable = false,
     placeholder = 'Select an option...',
     className = '',
+    value,
     ...props
 }, ref) => {
     const id = useId();
     const [isMounted, setIsMounted] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+
+    // Check if select has value
+    const hasValue = Boolean(value);
+    const isLabelFloating = isFocused || hasValue;
+    const hasError = Boolean(error);
 
     // Fix for Next.js SSR hydration mismatch
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
+    const handleFocus = () => {
+        setIsFocused(true);
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+    };
+
     // Don't render on server to avoid hydration mismatch
     if (!isMounted) {
         return (
-            <div className={className}>
+            <div className={cn("space-y-1", className)}>
                 {label && (
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {label}
-                        {required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
+                    <div className="relative">
+                        <div className="w-full h-12 border border-gray-300 rounded-lg bg-gray-50 animate-pulse" />
+                        <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-600">
+                            {label}
+                            {required && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                    </div>
                 )}
-                <div className="w-full h-12 border border-gray-300 rounded-lg bg-gray-50 animate-pulse" />
                 {error && (
-                    <p className="text-red-500 text-sm mt-1">{error}</p>
+                    <p className="text-red-500 text-sm">{error}</p>
+                )}
+            </div>
+        );
+    }
+
+    // If no label is provided, render simple select (similar to your Input component)
+    if (!label) {
+        return (
+            <div className={cn("space-y-1", className)}>
+                <ReactSelect
+                    ref={ref}
+                    inputId={id}
+                    options={options}
+                    styles={getCustomStyles(error, false)}
+                    components={{
+                        DropdownIndicator,
+                        ClearIndicator,
+                    }}
+                    isSearchable={searchable}
+                    isClearable={clearable}
+                    isLoading={loading}
+                    placeholder={placeholder}
+                    loadingMessage={() => 'Loading...'}
+                    noOptionsMessage={() => 'No options found'}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    value={value}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    {...props}
+                />
+                {error && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {error}
+                    </p>
                 )}
             </div>
         );
     }
 
     return (
-        <div className={className}>
-            {label && (
-                <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+        <div className={cn("space-y-1", className)}>
+            <div className="relative">
+                <ReactSelect
+                    ref={ref}
+                    inputId={id}
+                    options={options}
+                    styles={getCustomStyles(error, true)}
+                    components={{
+                        DropdownIndicator,
+                        ClearIndicator,
+                    }}
+                    isSearchable={searchable}
+                    isClearable={clearable}
+                    isLoading={loading}
+                    placeholder=""
+                    loadingMessage={() => 'Loading...'}
+                    noOptionsMessage={() => 'No options found'}
+                    className="react-select-container"
+                    classNamePrefix="react-select"
+                    value={value}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    {...props}
+                />
+
+                <label
+                    htmlFor={id}
+                    className={cn(
+                        "absolute transition-all duration-200 ease-in-out cursor-text pointer-events-none",
+                        "bg-white px-1",
+                        // Positioning based on state
+                        isLabelFloating
+                            ? cn(
+                                // Floating position - on the top border
+                                "-top-2 left-3 text-xs",
+                                // Colors when floating
+                                isFocused && !hasError && "text-blue-600",
+                                hasError && "text-red-600",
+                                !isFocused && !hasError && "text-gray-600"
+                            )
+                            : cn(
+                                // Inside position
+                                "top-1/2 -translate-y-1/2 text-sm text-gray-500 left-3"
+                            )
+                    )}
+                >
                     {label}
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </label>
-            )}
-
-            <ReactSelect
-                ref={ref}
-                inputId={id}
-                options={options}
-                styles={getCustomStyles(error)}
-                components={{
-                    DropdownIndicator,
-                    ClearIndicator,
-                }}
-                isSearchable={searchable}
-                isClearable={clearable}
-                isLoading={loading}
-                placeholder={placeholder}
-                loadingMessage={() => 'Loading...'}
-                noOptionsMessage={() => 'No options found'}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                {...props}
-            />
+            </div>
 
             {error && (
-                <p className="text-red-500 text-sm mt-1">{error}</p>
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                </p>
             )}
         </div>
     );

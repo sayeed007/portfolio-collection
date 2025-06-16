@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/card';
 import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/Select';
+import { YearSelect } from '@/components/ui/YearSelect';
 import { useDegree } from '@/lib/hooks/useDegree';
+import { useInstitution } from '@/lib/hooks/useInstitution';
 import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Award, BookOpen, GraduationCap, Plus } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { z } from 'zod';
@@ -50,6 +52,22 @@ export function Step2Education() {
         activeOnly: true
     });
 
+    // Add institution hook - fetch active and verified institutions
+    const { getInstitutionsByFilter, loading: institutionsLoading } = useInstitution();
+
+    // Get institution options for dropdown - use useMemo to prevent recreation
+    const institutionOptions = useMemo(() => {
+        const institutions = getInstitutionsByFilter({
+            isActive: true,
+            isVerified: true
+        });
+        return institutions.map(institution => ({
+            value: institution.name,
+            label: `${institution.name}${institution.shortName ? ` (${institution.shortName})` : ''}`,
+            searchableText: `${institution.name} ${institution.shortName || ''} ${institution.location} ${institution.type}`.toLowerCase()
+        }));
+    }, [getInstitutionsByFilter]);
+
     const {
         register,
         control,
@@ -58,16 +76,16 @@ export function Step2Education() {
     } = useForm<Step2FormData>({
         resolver: zodResolver(step2Schema),
         defaultValues: {
-            education: formData.education?.map(edu => ({
+            education: JSON.parse(JSON.stringify(formData.education?.length > 0 ? formData.education.map(edu => ({
                 ...edu,
                 passingYear: typeof edu.passingYear === 'string' ? parseInt(edu.passingYear) : edu.passingYear
-            })) || [{ degree: '', institution: '', passingYear: new Date().getFullYear() }],
-            certifications: formData.certifications?.map(cert => ({
+            })) : [{ degree: '', institution: '', passingYear: new Date().getFullYear() }])),
+            certifications: JSON.parse(JSON.stringify(formData.certifications?.map(cert => ({
                 name: cert.name,
                 issuingOrganization: cert.issuingOrganization,
                 year: typeof cert.year === 'string' ? parseInt(cert.year) : cert.year
-            })) || [],
-            courses: formData.courses || [],
+            })) || [])),
+            courses: JSON.parse(JSON.stringify(formData.courses || [])),
         },
     });
 
@@ -88,13 +106,12 @@ export function Step2Education() {
 
     const watchedData = watch();
 
-    // Solution 1: Use deep comparison to prevent unnecessary updates
+    // Use deep comparison to prevent unnecessary updates with deep cloning
     useEffect(() => {
         const currentDataString = JSON.stringify(watchedData);
-
         if (currentDataString !== previousDataRef.current) {
             const mappedData = {
-                education: watchedData.education,
+                education: JSON.parse(JSON.stringify(watchedData.education)),
                 certifications: watchedData.certifications?.map(cert => ({
                     name: cert.name,
                     issuer: cert.issuingOrganization,
@@ -104,7 +121,7 @@ export function Step2Education() {
                     expiryDate: cert.expiryDate,
                     credentialId: cert.credentialId
                 })),
-                courses: watchedData.courses
+                courses: JSON.parse(JSON.stringify(watchedData.courses))
             };
             dispatch(updateFormData(mappedData));
             previousDataRef.current = currentDataString;
@@ -134,7 +151,7 @@ export function Step2Education() {
 
                 <div className="space-y-4">
                     {educationFields.map((field, index) => (
-                        <div key={`education-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                             <Controller
                                 name={`education.${index}.degree`}
                                 control={control}
@@ -142,11 +159,9 @@ export function Step2Education() {
                                     <Select
                                         label="Degree"
                                         placeholder="Select a degree..."
-                                        options={degreeOptions}
-                                        value={degreeOptions.find(option => option.value === value) || null}
-                                        onChange={(selectedOption: any) => {
-                                            onChange(selectedOption?.value || '');
-                                        }}
+                                        options={degreeOptions || []}
+                                        value={degreeOptions?.find(option => option.value === value) || null}
+                                        onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
                                         loading={degreesLoading}
                                         searchable={true}
                                         clearable={true}
@@ -156,23 +171,42 @@ export function Step2Education() {
                                 )}
                             />
 
-                            <Input
-                                {...register(`education.${index}.institution`)}
-                                label="Institution"
-                                placeholder="e.g., University of Dhaka"
-                                error={errors.education?.[index]?.institution?.message}
-                                required
+                            <Controller
+                                name={`education.${index}.institution`}
+                                control={control}
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        label="Institution"
+                                        placeholder="Select an institution..."
+                                        options={institutionOptions || []}
+                                        value={institutionOptions?.find(option => option.value === value) || null}
+                                        onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
+                                        loading={institutionsLoading}
+                                        searchable={true}
+                                        clearable={true}
+                                        error={errors.education?.[index]?.institution?.message}
+                                        required
+                                    />
+                                )}
                             />
 
                             <div className="flex gap-2">
-                                <Input
-                                    {...register(`education.${index}.passingYear`, { valueAsNumber: true })}
-                                    type="number"
-                                    label="Passing Year"
-                                    placeholder="e.g., 2020"
-                                    error={errors.education?.[index]?.passingYear?.message}
-                                    required
-                                    className="flex-1"
+                                <Controller
+                                    name={`education.${index}.passingYear`}
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <YearSelect
+                                            label="Passing Year"
+                                            placeholder="e.g., 2020"
+                                            value={value}
+                                            onChange={onChange}
+                                            startYear={80}
+                                            endYear={0}
+                                            error={errors.education?.[index]?.passingYear?.message}
+                                            required
+                                            className="flex-1"
+                                        />
+                                    )}
                                 />
                                 {educationFields.length > 1 && (
                                     <DeleteButton
@@ -212,7 +246,7 @@ export function Step2Education() {
                 ) : (
                     <div className="space-y-4">
                         {certificationFields.map((field, index) => (
-                            <div key={`certification-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                                 <Input
                                     {...register(`certifications.${index}.name`)}
                                     label="Certification Name"
@@ -230,21 +264,27 @@ export function Step2Education() {
                                 />
 
                                 <div className="flex gap-2">
-                                    <Input
-                                        {...register(`certifications.${index}.year`, { valueAsNumber: true })}
-                                        type="number"
-                                        label="Year"
-                                        placeholder="e.g., 2020"
-                                        error={errors.certifications?.[index]?.year?.message}
-                                        required
-                                        className="flex-1"
+                                    <Controller
+                                        name={`certifications.${index}.year`}
+                                        control={control}
+                                        render={({ field: { onChange, value } }) => (
+                                            <YearSelect
+                                                label="Year"
+                                                placeholder="e.g., 2020"
+                                                value={value}
+                                                onChange={onChange}
+                                                startYear={50}
+                                                endYear={10}
+                                                error={errors.certifications?.[index]?.year?.message}
+                                                required
+                                                className="flex-1"
+                                            />
+                                        )}
                                     />
-                                    {certificationFields.length > 1 && (
-                                        <DeleteButton
-                                            alignWith="floating-input"
-                                            onDelete={() => removeCertification(index)}
-                                        />
-                                    )}
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeCertification(index)}
+                                    />
                                 </div>
                             </div>
                         ))}
@@ -278,7 +318,7 @@ export function Step2Education() {
                 ) : (
                     <div className="space-y-4">
                         {courseFields.map((field, index) => (
-                            <div key={`course-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
                                 <Input
                                     {...register(`courses.${index}.name`)}
                                     label="Course Name"
@@ -304,12 +344,10 @@ export function Step2Education() {
                                         required
                                         className="flex-1"
                                     />
-                                    {courseFields.length > 1 && (
-                                        <DeleteButton
-                                            alignWith="floating-input"
-                                            onDelete={() => removeCourse(index)}
-                                        />
-                                    )}
+                                    <DeleteButton
+                                        alignWith="floating-input"
+                                        onDelete={() => removeCourse(index)}
+                                    />
                                 </div>
                             </div>
                         ))}

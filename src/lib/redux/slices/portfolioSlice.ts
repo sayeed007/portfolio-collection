@@ -128,8 +128,12 @@ const serializePortfolio = (portfolio: any): Portfolio => {
 
   return {
     ...portfolio,
-    createdAt: portfolio.createdAt?.toDate ? portfolio.createdAt.toDate().toISOString() : portfolio.createdAt,
-    updatedAt: portfolio.updatedAt?.toDate ? portfolio.updatedAt.toDate().toISOString() : portfolio.updatedAt,
+    createdAt: portfolio.createdAt?.toDate
+      ? portfolio.createdAt.toDate().toISOString()
+      : portfolio.createdAt,
+    updatedAt: portfolio.updatedAt?.toDate
+      ? portfolio.updatedAt.toDate().toISOString()
+      : portfolio.updatedAt,
   };
 };
 
@@ -149,7 +153,9 @@ const initialFormData: PortfolioFormData = {
   profileImage: "",
   summary: "",
   references: [{ name: "", contactInfo: "", relationship: "" }],
-  education: [],
+  education: [
+    { degree: "", institution: "", passingYear: new Date().getFullYear() },
+  ],
   certifications: [],
   courses: [],
   technicalSkills: [],
@@ -273,8 +279,9 @@ export const submitPortfolio = createAsyncThunk<
 );
 
 export const savePortfolioDraft = createAsyncThunk<
-  Portfolio,  // Return type
-  {           // Argument type
+  Portfolio, // Return type
+  {
+    // Argument type
     portfolioData: PortfolioFormData;
     userId: string;
     portfolioId?: string;
@@ -282,14 +289,7 @@ export const savePortfolioDraft = createAsyncThunk<
   { rejectValue: string } // RejectValue type
 >(
   "portfolio/saveDraft",
-  async (
-    {
-      portfolioData,
-      userId,
-      portfolioId,
-    },
-    { rejectWithValue }
-  ) => {
+  async ({ portfolioData, userId, portfolioId }, { rejectWithValue }) => {
     try {
       const portfolioPayload = {
         ...transformFormDataToPortfolio(portfolioData),
@@ -317,26 +317,27 @@ export const savePortfolioDraft = createAsyncThunk<
   }
 );
 
-export const fetchUserPortfolio = createAsyncThunk<Portfolio | null, string, { rejectValue: string }>(
-  "portfolio/fetch",
-  async (userId: string, { rejectWithValue }) => {
-    try {
-      const portfolio = await getPortfolio(userId);
+export const fetchUserPortfolio = createAsyncThunk<
+  Portfolio | null,
+  string,
+  { rejectValue: string }
+>("portfolio/fetch", async (userId: string, { rejectWithValue }) => {
+  try {
+    const portfolio = await getPortfolio(userId);
 
-      if (!portfolio) {
-        return null;
-      }
-
-      // Serialize the portfolio before returning
-      return serializePortfolio(portfolio);
-    } catch (error) {
-      console.error("Fetch portfolio error:", error);
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Failed to fetch portfolio"
-      );
+    if (!portfolio) {
+      return null;
     }
+
+    // Serialize the portfolio before returning
+    return serializePortfolio(portfolio);
+  } catch (error) {
+    console.error("Fetch portfolio error:", error);
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Failed to fetch portfolio"
+    );
   }
-);
+});
 
 export const createUserPortfolio = createAsyncThunk(
   "portfolio/create",
@@ -421,40 +422,37 @@ export const fetchPublicPortfolios = createAsyncThunk<
   Portfolio[], // Return type
   PortfolioFilters | undefined, // Argument type
   { rejectValue: string } // ThunkAPI type for rejectWithValue
->(
-  "portfolio/fetchPublic",
-  async (filters, { rejectWithValue }) => {
-    try {
-      console.info("Fetching public portfolios with filters:", filters);
+>("portfolio/fetchPublic", async (filters, { rejectWithValue }) => {
+  try {
+    console.info("Fetching public portfolios with filters:", filters);
 
-      const portfolios = await getPublicPortfolios(filters);
+    const portfolios = await getPublicPortfolios(filters);
 
-      // Validate the response
-      if (!Array.isArray(portfolios)) {
-        throw new Error("Invalid response: expected array of portfolios");
-      }
-
-      console.info(`Successfully fetched ${portfolios.length} public portfolios`);
-
-      // Serialize all portfolios before returning
-      return serializePortfolios(portfolios);
-    } catch (error) {
-      console.error("Fetch public portfolios error:", error);
-
-      // Handle different types of errors
-      if (error instanceof Error) {
-        return rejectWithValue(error.message);
-      }
-
-      // Handle network errors
-      if (typeof error === 'object' && error !== null && 'code' in error) {
-        return rejectWithValue(`Network error: ${(error as any).code}`);
-      }
-
-      return rejectWithValue("Failed to fetch portfolios");
+    // Validate the response
+    if (!Array.isArray(portfolios)) {
+      throw new Error("Invalid response: expected array of portfolios");
     }
+
+    console.info(`Successfully fetched ${portfolios.length} public portfolios`);
+
+    // Serialize all portfolios before returning
+    return serializePortfolios(portfolios);
+  } catch (error) {
+    console.error("Fetch public portfolios error:", error);
+
+    // Handle different types of errors
+    if (error instanceof Error) {
+      return rejectWithValue(error.message);
+    }
+
+    // Handle network errors
+    if (typeof error === "object" && error !== null && "code" in error) {
+      return rejectWithValue(`Network error: ${(error as any).code}`);
+    }
+
+    return rejectWithValue("Failed to fetch portfolios");
   }
-);
+});
 
 export const visitPortfolio = createAsyncThunk(
   "portfolio/visit",

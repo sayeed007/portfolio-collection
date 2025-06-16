@@ -21,3 +21,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* REACT-SELECT style overwrite */
+.css-nab3u-control,
+.css-3rhjpu{
+  padding: 0px 8px !important;
+}
