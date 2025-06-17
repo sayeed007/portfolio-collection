@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
 import { EditButton } from '../ui/edit-button';
-import { useInstitution, Institution, InstitutionFormData } from './useInstitution';
+import { useInstitution, Institution, InstitutionFormData } from '@/lib/hooks/useInstitution';
 
 const INSTITUTION_TYPES = [
     'University',
