@@ -30,7 +30,8 @@ export interface Certification {
   issuer: string;
   date: string;
   issuingOrganization: string;
-  year: string | number;
+  // year: string | number;
+  year: string;
   expiryDate?: string;
   credentialId?: string;
 }
@@ -122,12 +123,35 @@ export interface PortfolioState {
   isEditing: boolean;
 }
 
+export const initialCertification = {
+  name: "",
+  issuer: "",
+  date: new Date().getFullYear(),
+  issuingOrganization: "",
+  year: "",
+  expiryDate: "",
+  credentialId: "",
+};
+
+export const initialCourse = {
+  name: "",
+  provider: "",
+  completionDate: "",
+  duration: "",
+};
+
 // Helper function to serialize Firestore data
 const serializePortfolio = (portfolio: any): Portfolio => {
   if (!portfolio) return portfolio;
 
   return {
     ...portfolio,
+    courses: portfolio?.courses?.map((course: Course) => ({
+      ...course,
+      completionDate: course?.completionDate?.toDate
+        ? course.completionDate.toDate().toISOString().split("T")[0]
+        : "",
+    })),
     createdAt: portfolio.createdAt?.toDate
       ? portfolio.createdAt.toDate().toISOString()
       : portfolio.createdAt,

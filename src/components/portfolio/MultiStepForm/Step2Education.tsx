@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { YearSelect } from '@/components/ui/YearSelect';
 import { useDegree } from '@/lib/hooks/useDegree';
 import { useInstitution } from '@/lib/hooks/useInstitution';
-import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
+import { initialCertification, initialCourse, updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Award, BookOpen, GraduationCap, Plus } from 'lucide-react';
@@ -27,8 +27,9 @@ const step2Schema = z.object({
     })).min(1, 'At least one education entry is required'),
     certifications: z.array(z.object({
         name: z.string().min(1, 'Certification name is required'),
-        issuingOrganization: z.string().min(1, 'Issuing organization is required'),
+        issuer: z.string(),
         year: z.number().min(1900, 'Year must be valid').max(new Date().getFullYear() + 10, 'Year cannot be too far in the future'),
+        issuingOrganization: z.string().min(1, 'Issuing organization is required'),
         expiryDate: z.string().optional(),
         credentialId: z.string().optional(),
     })).optional(),
@@ -82,8 +83,12 @@ export function Step2Education() {
             })) : [{ degree: '', institution: '', passingYear: new Date().getFullYear() }])),
             certifications: JSON.parse(JSON.stringify(formData.certifications?.map(cert => ({
                 name: cert.name,
-                issuingOrganization: cert.issuingOrganization,
-                year: typeof cert.year === 'string' ? parseInt(cert.year) : cert.year
+                issuer: cert.issuingOrganization || '',
+                date: cert.year.toString(),
+                issuingOrganization: cert.issuingOrganization || '',
+                year: typeof cert.year === 'string' ? parseInt(cert.year) : cert.year,
+                expiryDate: cert.expiryDate || '',
+                credentialId: cert.credentialId || ''
             })) || [])),
             courses: JSON.parse(JSON.stringify(formData.courses || [])),
         },
@@ -232,7 +237,7 @@ export function Step2Education() {
                         variant="outline"
                         size="sm"
                         className='cursor-pointer'
-                        onClick={() => appendCertification({ name: '', issuingOrganization: '', year: new Date().getFullYear() })}
+                        onClick={() => appendCertification({ ...initialCertification })}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Certification
@@ -304,7 +309,7 @@ export function Step2Education() {
                         variant="outline"
                         size="sm"
                         className="cursor-pointer"
-                        onClick={() => appendCourse({ name: '', provider: '', completionDate: '', duration: '' })}
+                        onClick={() => appendCourse({ ...initialCourse })}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Course

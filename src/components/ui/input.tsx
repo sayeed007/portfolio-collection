@@ -30,25 +30,38 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         );
 
         // Check if input has value - improved to handle all cases
+        // const checkHasValue = useCallback(() => {
+        //     const input = inputRef.current;
+        //     if (input) {
+        //         setHasValue(Boolean(input.value));
+        //         setIsFocused(Boolean(input.value));
+        //     } else {
+        //         // Fallback to props if ref not available yet
+        //         setHasValue(Boolean(props.value || props.defaultValue));
+        //         setIsFocused(Boolean(props.value || props.defaultValue));
+        //     }
+        // }, [props.value, props.defaultValue]);
         const checkHasValue = useCallback(() => {
             const input = inputRef.current;
             if (input) {
                 setHasValue(Boolean(input.value));
-                setIsFocused(Boolean(input.value));
             } else {
-                // Fallback to props if ref not available yet
                 setHasValue(Boolean(props.value || props.defaultValue));
-                setIsFocused(Boolean(props.value || props.defaultValue));
             }
         }, [props.value, props.defaultValue]);
 
+
         // Check value on mount and when props change
+        // useEffect(() => {
+        //     if (!isFocused) {
+        //         checkHasValue();
+        //     }
+        //     // eslint-disable-next-line react-hooks/exhaustive-deps
+        // }, [checkHasValue, inputRef?.current?.value]);
         useEffect(() => {
-            if (!isFocused) {
-                checkHasValue();
-            }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [checkHasValue, inputRef?.current?.value]);
+            checkHasValue();
+        }, [props.value, props.defaultValue]);
+
 
         const handleFocus = (e: FocusEvent<HTMLInputElement>) => {
             setIsFocused(true);

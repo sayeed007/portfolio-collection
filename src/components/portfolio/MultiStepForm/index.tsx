@@ -37,6 +37,7 @@ import { Step1PersonalInfo } from './Step1PersonalInfo';
 import { Step2Education } from './Step2Education';
 import { Step3SkillsExperience } from './Step3SkillsExperience';
 import { Step4Projects } from './Step4Projects';
+import { Timestamp } from 'firebase/firestore';
 
 interface MultiStepFormProps {
     portfolioId?: string;
@@ -232,6 +233,18 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         }
     };
 
+    const prepareDataForFirestore = (formData: any) => {
+        return {
+            ...formData,
+            courses: formData.courses?.map((course: any) => ({
+                ...course,
+                completionDate: course.completionDate
+                    ? Timestamp.fromDate(new Date(course.completionDate))
+                    : null, // or omit if optional
+            })),
+        };
+    };
+
     const handleSaveDraft = async () => {
         if (!user) {
             toast.error('You must be logged in to save a draft');
@@ -240,7 +253,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
 
         try {
             const result = await dispatch(savePortfolioDraft({
-                portfolioData: formData,
+                portfolioData: prepareDataForFirestore(formData),
                 userId: user.uid,
                 portfolioId: mode === 'edit' ? portfolioId : undefined
             }));
@@ -259,7 +272,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
     };
 
     const renderCurrentStep = () => {
-        return <Step2Education />;
+        // return <Step2Education />;
         switch (currentStep) {
             case 1:
                 return <Step1PersonalInfo />;
