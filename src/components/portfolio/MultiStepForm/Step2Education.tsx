@@ -341,14 +341,16 @@ export function Step2Education() {
                                 />
 
                                 <div className="flex gap-2">
-                                    <Input
-                                        {...register(`courses.${index}.completionDate`)}
-                                        type="date"
-                                        label="Completion Date"
-                                        error={errors.courses?.[index]?.completionDate?.message}
-                                        required
-                                        className="flex-1"
-                                    />
+                                    <div className="flex-1">
+                                        <Input
+                                            {...register(`courses.${index}.completionDate`)}
+                                            type="date"
+                                            label="Completion Date"
+                                            error={errors.courses?.[index]?.completionDate?.message}
+                                            required
+                                        />
+                                    </div>
+
                                     <DeleteButton
                                         alignWith="floating-input"
                                         onDelete={() => removeCourse(index)}
