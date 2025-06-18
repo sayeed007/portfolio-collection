@@ -1,3 +1,4 @@
+// src\lib\hooks\useSkillCategoryRequests.ts
 import { useState, useEffect } from 'react';
 import {
     addDoc,
@@ -10,7 +11,9 @@ import {
     serverTimestamp,
     Timestamp,
     updateDoc,
+    where,
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase/config';
 
 export interface SkillCategoryRequest {
@@ -105,14 +108,12 @@ export const useSkillCategoryRequests = () => {
                 throw new Error('Request not found');
             }
 
-            // Add to categories collection
             await addDoc(collection(db, 'skillCategories'), {
                 name: request.name,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
 
-            // Update request status
             await updateDoc(doc(db, 'skillCategoryRequests', requestId), {
                 status: 'approved',
                 adminComment: 'Approved by admin',
@@ -166,33 +167,91 @@ export const useSkillRequests = () => {
     const [skillRequests, setSkillRequests] = useState<SkillRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
     useEffect(() => {
-        const skillRequestsQuery = query(
-            collection(db, 'skillRequests'),
-            orderBy('createdAt', 'desc')
-        );
+        if (!currentUser) {
+            setError('User not authenticated');
+            setLoading(false);
+            return;
+        }
 
-        const unsubscribe = onSnapshot(
-            skillRequestsQuery,
-            (snapshot) => {
-                const requestsList = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as SkillRequest));
+        const setupListener = async () => {
+            try {
+                // Check if user is admin
+                let isAdmin = false;
 
-                setSkillRequests(requestsList);
-                setLoading(false);
-            },
-            (error) => {
-                console.error('Error fetching skill requests:', error);
-                setError('Failed to fetch skill requests');
+                // Check email first (simpler check)
+                if (currentUser.email === 'admin@portfolio-collection.com') {
+                    isAdmin = true;
+                } else {
+                    // Check custom claims
+                    try {
+                        const idTokenResult = await currentUser.getIdTokenResult();
+                        isAdmin = idTokenResult.claims.admin === true;
+                    } catch (claimsError) {
+                        console.log('Could not check admin claims:', claimsError);
+                        isAdmin = false;
+                    }
+                }
+
+                let skillRequestsQuery;
+
+                if (isAdmin) {
+                    // Admins can fetch all skill requests
+                    skillRequestsQuery = query(
+                        collection(db, 'skillRequests'),
+                        orderBy('createdAt', 'desc')
+                    );
+                } else {
+                    // Non-admins can only fetch their own requests
+                    skillRequestsQuery = query(
+                        collection(db, 'skillRequests'),
+                        where('requestedBy', '==', currentUser.uid),
+                        orderBy('createdAt', 'desc')
+                    );
+                }
+
+                const unsubscribe = onSnapshot(
+                    skillRequestsQuery,
+                    (snapshot) => {
+                        const requestsList = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        } as SkillRequest));
+
+                        setSkillRequests(requestsList);
+                        setLoading(false);
+                    },
+                    (error) => {
+                        console.error('Error fetching skill requests:', error);
+                        setError('Failed to fetch skill requests');
+                        setLoading(false);
+                    }
+                );
+
+                return unsubscribe;
+            } catch (error) {
+                console.error('Error setting up skill requests listener:', error);
+                setError('Failed to setup skill requests listener');
                 setLoading(false);
             }
-        );
+        };
 
-        return unsubscribe;
-    }, []);
+        let unsubscribe: (() => void) | undefined;
+
+        setupListener().then((unsub) => {
+            unsubscribe = unsub;
+        });
+
+        // Cleanup function
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [currentUser]);
 
     const createSkillRequest = async (
         name: string,
@@ -200,25 +259,23 @@ export const useSkillRequests = () => {
         requestedBy: string,
         requestedByEmail: string
     ): Promise<void> => {
+        if (!currentUser) {
+            throw new Error('User not authenticated');
+        }
+
         if (!name.trim()) {
             throw new Error('Skill name is required');
         }
         if (!categoryId) {
             throw new Error('Category is required');
         }
-        if (!requestedBy.trim()) {
-            throw new Error('Requester name is required');
-        }
-        if (!requestedByEmail.trim()) {
-            throw new Error('Requester email is required');
-        }
 
         try {
             await addDoc(collection(db, 'skillRequests'), {
                 name: name.trim(),
                 categoryId,
-                requestedBy: requestedBy.trim(),
-                requestedByEmail: requestedByEmail.trim(),
+                requestedBy: currentUser.uid, // Use current user's UID
+                requestedByEmail: currentUser.email || requestedByEmail, // Use current user's email
                 status: 'pending',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -236,7 +293,6 @@ export const useSkillRequests = () => {
                 throw new Error('Request not found');
             }
 
-            // Add to skills collection
             await addDoc(collection(db, 'skills'), {
                 name: request.name,
                 categoryId: request.categoryId,
@@ -244,7 +300,6 @@ export const useSkillRequests = () => {
                 updatedAt: serverTimestamp(),
             });
 
-            // Update request status
             await updateDoc(doc(db, 'skillRequests', requestId), {
                 status: 'approved',
                 adminComment: 'Approved by admin',
