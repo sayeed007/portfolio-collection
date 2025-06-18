@@ -144,7 +144,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                     {/* Footer with timestamps and project count */}
                     <div className="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-100">
                         <span>
-                            Updated {formatDate(portfolio.updatedAt)}
+                            Updated {formatDate(portfolio?.updatedAt?.toString())}
                         </span>
                         {portfolio.projects && (
                             <span>

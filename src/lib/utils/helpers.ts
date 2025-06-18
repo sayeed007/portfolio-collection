@@ -95,10 +95,10 @@ export const debounce = <T extends (...args: any[]) => any>(
 export const throttle = <T extends (...args: any[]) => any>(
   func: T,
   limit: number
-): ((...args: Parameters<T>) => void) => {
+): ((this: any, ...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
 
-  return function executedFunction(...args: Parameters<T>): void {
+  return function executedFunction(this: any, ...args: Parameters<T>): void {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
@@ -159,7 +159,7 @@ export const resizeImage = (
 };
 
 export const validateImageFile = (file: File): string | null => {
-  if (!FILE_LIMITS.SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+  if (!FILE_LIMITS.SUPPORTED_IMAGE_TYPES.includes(file.type as typeof FILE_LIMITS.SUPPORTED_IMAGE_TYPES[number])) {
     return "Please select a valid image file (JPEG, PNG, or WebP)";
   }
 

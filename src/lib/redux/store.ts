@@ -31,6 +31,8 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
+        // ignoredPaths: ['payload.createdAt', 'payload.updatedAt'],
+        // ignoredActionPaths: ['payload.createdAt', 'payload.updatedAt'],
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
     }),

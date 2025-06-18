@@ -39,8 +39,8 @@ export const createUserProfile = async (
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
       emailVerified: firebaseUser.emailVerified,
-      createdAt: serverTimestamp(), // Use current timestamp
-      updatedAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     await setDoc(userRef, firestoreData);

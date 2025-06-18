@@ -1,6 +1,6 @@
 // src/lib/utils/validation.ts
 import { z } from "zod";
-import { Education, Portfolio, Reference } from "../types";
+import { Education, Portfolio } from "../types";
 
 // Zod schemas for form validation
 export const registerSchema = z
@@ -142,45 +142,52 @@ export const validatePersonalInfo = (data: Portfolio): ValidationResult => {
     errors.push("Nationality is required");
   }
 
-  if (!data.email?.trim() || !validateEmail(data.email)) {
+  // Extract values once, then validate
+  const email = data?.personalInfo?.email?.trim() || data?.email?.trim();
+  if (!email || !validateEmail(email)) {
     errors.push("Valid email is required");
   }
 
-  if (!data.mobileNo?.trim() || !validatePhoneNumber(data.mobileNo)) {
+  const mobileNo = data?.personalInfo?.mobileNo?.trim() || data?.mobileNo?.trim();
+  if (!mobileNo || !validatePhoneNumber(mobileNo)) {
     errors.push("Valid mobile number is required");
   }
 
-  if (!data.summary?.trim() || data.summary.length < 50) {
+  const summary = data?.personalInfo?.summary?.trim() || data?.summary?.trim();
+  if (!summary || summary.length < 50) {
     errors.push("Professional summary must be at least 50 characters");
+  }
+
+  const profileImage = data?.personalInfo?.profileImage || data?.profileImage;
+  if (profileImage && !validateImage(profileImage).isValid) {
+    errors.push("Valid profile image is required");
   }
 
   if (
     !data.languageProficiency ||
     data.languageProficiency.length === 0 ||
-    data.languageProficiency.every((lang: string) => !lang?.trim())
+    data.languageProficiency.every((lang) => !lang.language?.trim())
   ) {
     errors.push("At least one language proficiency is required");
   }
 
-  if (!data.references || data.references.length === 0) {
-    errors.push("At least one reference is required");
-  } else {
-    data.references.forEach((ref: Reference, index: number) => {
-      if (!ref.name?.trim()) {
-        errors.push(`Reference ${index + 1}: Name is required`);
-      }
-      if (!ref.contactInfo?.trim()) {
-        errors.push(`Reference ${index + 1}: Contact info is required`);
-      }
-      if (!ref.relationship?.trim()) {
-        errors.push(`Reference ${index + 1}: Relationship is required`);
-      }
-    });
-  }
+  // NO Need to mandatory reference
+  // if (!data.references || data.references.length === 0) {
+  //   errors.push("At least one reference is required");
+  // } else {
+  //   data.references.forEach((ref: Reference, index: number) => {
+  //     if (!ref.name?.trim()) {
+  //       errors.push(`Reference ${index + 1}: Name is required`);
+  //     }
+  //     if (!ref.contactInfo?.trim()) {
+  //       errors.push(`Reference ${index + 1}: Contact info is required`);
+  //     }
+  //     if (!ref.relationship?.trim()) {
+  //       errors.push(`Reference ${index + 1}: Relationship is required`);
+  //     }
+  //   });
+  // }
 
-  if (data.profileImage && !validateImage(data.profileImage).isValid) {
-    errors.push("Valid profile image is required");
-  }
 
   return {
     isValid: errors.length === 0,

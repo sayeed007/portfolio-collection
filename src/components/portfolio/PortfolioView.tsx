@@ -138,7 +138,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                                             key={`language-${index}`}
                                             className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
                                         >
-                                            {language}
+                                            {language?.language} - {language?.proficiency}
                                         </span>
                                     ))}
                                 </div>
@@ -325,8 +325,8 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
             {/* Footer */}
             <div className="text-center text-sm text-gray-500 py-4">
-                <p>Portfolio created on {formatDate(portfolio?.createdAt)}</p>
-                <p>Last updated on {formatDate(portfolio?.updatedAt)}</p>
+                <p>Portfolio created on {formatDate(portfolio?.createdAt?.toString())}</p>
+                <p>Last updated on {formatDate(portfolio?.updatedAt?.toString())}</p>
             </div>
         </div>
     );

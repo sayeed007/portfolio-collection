@@ -5,15 +5,14 @@ import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
-import { setUser, setLoading, clearAuth } from '@/lib/redux/slices/authSlice'; // Changed clearUser to clearAuth
+import { setUser, setLoading, clearAuth } from '@/lib/redux/slices/authSlice';
 import { RootState } from '@/lib/redux/store';
 import { User } from '@/lib/types/auth';
-import { serverTimestamp, Timestamp } from 'firebase/firestore';
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    isAdmin: boolean;
+    isAdmin?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,14 +43,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     displayName: firebaseUser.displayName || '',
                     photoURL: firebaseUser.photoURL || '',
                     isAdmin: isUserAdmin,
-                    createdAt: firebaseUser.metadata.creationTime
-                        ? Timestamp.fromDate(new Date(firebaseUser.metadata.creationTime))
-                        : serverTimestamp() as unknown as Timestamp,
+                    createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
                 };
 
                 dispatch(setUser(userData));
             } else {
-                dispatch(clearAuth()); // Changed clearUser() to clearAuth()
+                dispatch(clearAuth());
             }
 
             dispatch(setLoading(false));

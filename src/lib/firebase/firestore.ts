@@ -14,7 +14,8 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch
+  writeBatch,
+  Timestamp
 } from "firebase/firestore";
 import { CategoryRequest, Portfolio, PortfolioFilters, SkillCategory } from "../types";
 import { db } from "./config";
@@ -28,11 +29,12 @@ export const createPortfolio = async (
   >
 ) => {
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
+  const now = Timestamp.now();
   const portfolio: Portfolio = {
     ...portfolioData,
     userId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     visitCount: 0,
   };
 
@@ -49,28 +51,51 @@ export const createPortfolio = async (
 export const updatePortfolio = async (
   userId: string,
   portfolioData: Partial<Portfolio>
-) => {
+): Promise<Portfolio> => {
   const portfolioRef = doc(db, "users", userId, "portfolio", "data");
   const updatedData = {
     ...portfolioData,
-    updatedAt: new Date().toISOString(),
+    updatedAt: Timestamp.now(),
   };
 
   await updateDoc(portfolioRef, updatedData);
 
   // Get the full portfolio to check if it's public
   const fullPortfolio = await getPortfolio(userId);
-  if (fullPortfolio) {
-    if (fullPortfolio.isPublic) {
-      // Sync to public collection
-      await syncToPublicCollection(userId, { ...fullPortfolio, ...updatedData });
-    } else {
-      // Remove from public collection if it was made private
-      await removeFromPublicCollection(userId);
-    }
+  if (!fullPortfolio) {
+    throw new Error("Portfolio not found");
   }
+
+  const updatedPortfolio = { ...fullPortfolio, ...updatedData };
+
+  if (updatedPortfolio.isPublic) {
+    // Sync to public collection
+    await syncToPublicCollection(userId, updatedPortfolio);
+  } else {
+    // Remove from public collection if it was made private
+    await removeFromPublicCollection(userId);
+  }
+
+  return updatedPortfolio;
 };
 
+// export const getPortfolio = async (
+//   userId: string
+// ): Promise<Portfolio | null> => {
+//   try {
+//     const portfolioRef = doc(db, "users", userId, "portfolio", "data");
+//     const portfolioSnap = await getDoc(portfolioRef);
+
+//     if (portfolioSnap.exists()) {
+//       return portfolioSnap.data() as Portfolio;
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("Error fetching portfolio:", error);
+//     throw error;
+//   }
+// };
 export const getPortfolio = async (
   userId: string
 ): Promise<Portfolio | null> => {
@@ -82,6 +107,7 @@ export const getPortfolio = async (
       return portfolioSnap.data() as Portfolio;
     }
 
+    // Return null when no portfolio document exists
     return null;
   } catch (error) {
     console.error("Error fetching portfolio:", error);
@@ -140,15 +166,13 @@ const removeFromPublicCollection = async (userId: string) => {
     await deleteDoc(publicPortfolioRef);
   } catch (error) {
     // Document might not exist, which is fine
-    console.log("Portfolio not found in public collection:", error);
+    console.error("Portfolio not found in public collection:", error);
   }
 };
 
 // Function to migrate existing portfolios to public collection (run once)
 export const migrateExistingPortfolios = async () => {
   try {
-    console.log("Starting portfolio migration...");
-
     // This is a one-time migration function
     // You would run this once to migrate existing public portfolios
     const usersRef = collection(db, "users");
@@ -176,7 +200,7 @@ export const migrateExistingPortfolios = async () => {
     }
 
     await batch.commit();
-    console.log(`Migration completed. Migrated ${migrationCount} public portfolios.`);
+    console.info(`Migration completed. Migrated ${migrationCount} public portfolios.`);
     return migrationCount;
   } catch (error) {
     console.error("Error during migration:", error);
@@ -198,7 +222,7 @@ export const getPublicPortfolios = async (filters?: PortfolioFilters): Promise<P
     const snapshot = await getDocs(baseQuery);
 
     if (snapshot.empty) {
-      console.log('No public portfolios found');
+      console.info('No public portfolios found');
       return [];
     }
 

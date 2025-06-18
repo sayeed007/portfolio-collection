@@ -310,7 +310,7 @@ export default function HomePage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-14 px-8 text-lg border-2 border-white text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300  hover:-translate-y-1 cursor-pointer"
+                    className="h-14 px-8 text-lg border-2 border-white text-white hover:bg-blue-600 hover:text-white transition-all duration-300  hover:-translate-y-1 cursor-pointer"
                   >
                     <Search className="mr-2 w-5 h-5" />
                     Explore Community

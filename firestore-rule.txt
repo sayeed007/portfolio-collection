@@ -43,6 +43,23 @@ service cloud.firestore {
              (data.adminComment == null || data.adminComment is string);
     }
 
+    // Validate institution request data
+    function isValidInstitutionRequest() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'type', 'location', 'division', 'requestedBy', 'requestedByEmail', 'status', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.type is string && data.type.size() > 0 &&
+             data.location is string && data.location.size() > 0 &&
+             data.division is string && data.division.size() > 0 &&
+             data.requestedBy == request.auth.uid &&
+             data.requestedByEmail == request.auth.token.email &&
+             data.status == 'pending' &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (data.shortName == null || data.shortName is string) &&
+             (data.adminComment == null || data.adminComment is string);
+    }
+
     // Users
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
