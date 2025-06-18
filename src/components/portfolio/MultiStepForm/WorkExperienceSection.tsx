@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
-import { Briefcase, Plus, Trash2 } from 'lucide-react';
-import { useFieldArray, Control } from 'react-hook-form';
+import { Briefcase, Plus } from 'lucide-react';
+import { Control, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 
 // Schema for work experience only
@@ -48,15 +48,15 @@ export function WorkExperience({
     setValue,
     getValues,
     errors,
-    initialData = [{
-        company: '',
-        position: '',
-        startDate: '',
-        endDate: '',
-        isCurrentRole: false,
-        responsibilities: [''],
-        technologies: [''],
-    }]
+    // initialData = [{
+    //     company: '',
+    //     position: '',
+    //     startDate: '',
+    //     endDate: '',
+    //     isCurrentRole: false,
+    //     responsibilities: [''],
+    //     technologies: [''],
+    // }]
 }: WorkExperienceProps) {
     const {
         fields: experienceFields,
@@ -75,7 +75,7 @@ export function WorkExperience({
     const removeResponsibility = (experienceIndex: number, responsibilityIndex: number) => {
         const currentResponsibilities = getValues(`workExperience.${experienceIndex}.responsibilities`);
         if (currentResponsibilities.length > 1) {
-            const newResponsibilities = currentResponsibilities.filter((_, index) => index !== responsibilityIndex);
+            const newResponsibilities = currentResponsibilities.filter((_: string, index: number) => index !== responsibilityIndex);
             setValue(`workExperience.${experienceIndex}.responsibilities`, newResponsibilities, { shouldValidate: true });
         }
     };
@@ -88,7 +88,7 @@ export function WorkExperience({
     const removeTechnology = (experienceIndex: number, techIndex: number) => {
         const currentTechnologies = getValues(`workExperience.${experienceIndex}.technologies`) || [];
         if (currentTechnologies.length > 1) {
-            const newTechnologies = currentTechnologies.filter((_, index) => index !== techIndex);
+            const newTechnologies = currentTechnologies.filter((_: string, index: number) => index !== techIndex);
             setValue(`workExperience.${experienceIndex}.technologies`, newTechnologies, { shouldValidate: true });
         }
     };
@@ -195,7 +195,7 @@ export function WorkExperience({
                                     </div>
 
                                     <div className="space-y-2">
-                                        {currentResponsibilities.map((_, responsibilityIndex) => (
+                                        {currentResponsibilities.map((_: string, responsibilityIndex: number) => (
                                             <div key={responsibilityIndex} className="flex gap-2 items-center">
                                                 <div className="flex-1">
                                                     <Input
@@ -232,7 +232,7 @@ export function WorkExperience({
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                        {currentTechnologies.map((_, techIndex) => (
+                                        {currentTechnologies.map((_: string, techIndex: number) => (
                                             <div key={techIndex} className="flex gap-2 items-center">
                                                 <Input
                                                     {...register(`workExperience.${experienceIndex}.technologies.${techIndex}`)}

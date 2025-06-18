@@ -60,6 +60,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         // }, [checkHasValue, inputRef?.current?.value]);
         useEffect(() => {
             checkHasValue();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [props.value, props.defaultValue]);
 
 

@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { YearSelect } from '@/components/ui/YearSelect';
 import { useDegree } from '@/lib/hooks/useDegree';
 import { useInstitution } from '@/lib/hooks/useInstitution';
-import { initialCertification, initialCourse, updateFormData } from '@/lib/redux/slices/portfolioSlice';
+import { initialCourse, updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Award, BookOpen, GraduationCap, Plus } from 'lucide-react';
@@ -122,7 +122,7 @@ export function Step2Education() {
                     issuer: cert.issuingOrganization,
                     date: cert.year.toString(),
                     issuingOrganization: cert.issuingOrganization,
-                    year: cert.year,
+                    year: cert.year.toString(),
                     expiryDate: cert.expiryDate,
                     credentialId: cert.credentialId
                 })),
@@ -237,7 +237,14 @@ export function Step2Education() {
                         variant="outline"
                         size="sm"
                         className='cursor-pointer'
-                        onClick={() => appendCertification({ ...initialCertification })}
+                        onClick={() => appendCertification({
+                            name: '',
+                            issuer: '',
+                            year: new Date().getFullYear(),
+                            issuingOrganization: '',
+                            expiryDate: '',
+                            credentialId: ''
+                        })}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Certification

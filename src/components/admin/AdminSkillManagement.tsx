@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SkillCategory, useSkillCategories } from '@/lib/hooks/useSkillCategories';

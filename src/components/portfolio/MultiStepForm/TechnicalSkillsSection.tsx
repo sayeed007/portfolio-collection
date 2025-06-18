@@ -3,18 +3,19 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/Select';
 import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
+import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
 import { useSkills } from '@/lib/hooks/useSkills';
-import { useSkillRequests, useSkillCategoryRequests } from '@/lib/hooks/useSkillCategoryRequests';
-import { AlertCircle, Code, Plus, Settings, Trash2 } from 'lucide-react';
+import { AlertCircle, Code, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useFieldArray, Control } from 'react-hook-form';
+import { Control, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { SkillCategorySelector } from '../SkillCategorySelector';
-import { DeleteButton } from '@/components/ui/DeleteButton';
+import { SelectOption } from '@/components/ui/Select';
 
 // Schema for technical skills only
 export const technicalSkillsSchema = z.object({
@@ -52,15 +53,15 @@ const proficiencyOptions = [
 
 export function TechnicalSkills({
     control,
-    register,
+    // register,
     watch,
     setValue,
     getValues,
     errors,
-    initialData = [{ category: '', skills: [''], proficiency: '' }]
+    // initialData = [{ category: '', skills: [''], proficiency: '' }]
 }: TechnicalSkillsProps) {
-    const { categories, loading: categoriesLoading, getCategoryById } = useSkillCategories();
-    const { skills, loading: skillsLoading, getSkillById } = useSkills(categories);
+    const { categories, loading: categoriesLoading } = useSkillCategories();
+    const { skills, loading: skillsLoading } = useSkills(categories);
     const { createSkillRequest } = useSkillRequests();
     const { createCategoryRequest } = useSkillCategoryRequests();
 
@@ -71,7 +72,7 @@ export function TechnicalSkills({
 
     // Form states
     const [selectedSkillIndex, setSelectedSkillIndex] = useState<number>(-1);
-    const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number>(-1);
+    // const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number>(-1);
     const [newSkillName, setNewSkillName] = useState('');
     const [newSkillCategoryId, setNewSkillCategoryId] = useState('');
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -100,10 +101,10 @@ export function TechnicalSkills({
         setSelectedSkillIndex(-1);
     };
 
-    const openCategoryModal = (index: number) => {
-        setSelectedSkillIndex(index);
-        setShowCategoryModal(true);
-    };
+    // const openCategoryModal = (index: number) => {
+    //     setSelectedSkillIndex(index);
+    //     setShowCategoryModal(true);
+    // };
 
     const openSkillRequestModal = (categoryIndex: number) => {
         const categoryId = watch(`technicalSkills.${categoryIndex}.category`);
@@ -111,7 +112,7 @@ export function TechnicalSkills({
             alert('Please select a category first');
             return;
         }
-        setSelectedCategoryIndex(categoryIndex);
+        // setSelectedCategoryIndex(categoryIndex);
         setNewSkillCategoryId(categoryId);
         setShowSkillRequestModal(true);
     };
@@ -180,7 +181,7 @@ export function TechnicalSkills({
     const removeSkillFromCategory = (categoryIndex: number, skillIndex: number) => {
         const currentSkills = getValues(`technicalSkills.${categoryIndex}.skills`);
         if (currentSkills.length > 1) {
-            const newSkills = currentSkills.filter((_, index) => index !== skillIndex);
+            const newSkills = currentSkills.filter((_: any, index: number) => index !== skillIndex);
             setValue(`technicalSkills.${categoryIndex}.skills`, newSkills, { shouldValidate: true });
         }
     };
@@ -252,7 +253,8 @@ export function TechnicalSkills({
                                                 options={categoryOptions}
                                                 value={selectedCategory}
                                                 onChange={(option) => {
-                                                    setValue(`technicalSkills.${categoryIndex}.category`, option?.value || '', {
+                                                    const selectedOption = option as SelectOption;
+                                                    setValue(`technicalSkills.${categoryIndex}.category`, selectedOption?.value || '', {
                                                         shouldValidate: true,
                                                     });
                                                     // Clear skills when category changes
@@ -271,11 +273,12 @@ export function TechnicalSkills({
                                                 value={proficiencyOptions.find(
                                                     option => option.value === watch(`technicalSkills.${categoryIndex}.proficiency`)
                                                 )}
-                                                onChange={(option) =>
-                                                    setValue(`technicalSkills.${categoryIndex}.proficiency`, option?.value || '', {
+                                                onChange={(option) => {
+                                                    const selectedOption = option as SelectOption;
+                                                    setValue(`technicalSkills.${categoryIndex}.proficiency`, selectedOption?.value || '', {
                                                         shouldValidate: true,
                                                     })
-                                                }
+                                                }}
                                                 error={errors.technicalSkills?.[categoryIndex]?.proficiency?.message}
                                                 required
                                             />
@@ -317,16 +320,17 @@ export function TechnicalSkills({
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                            {currentSkills.map((skillId, skillIndex) => (
+                                            {currentSkills.map((skillId: string, skillIndex: number) => (
                                                 <div key={skillIndex} className="flex gap-2 items-center">
                                                     <Select
                                                         options={skillOptions}
                                                         value={skillOptions.find(option => option.value === skillId)}
-                                                        onChange={(option) =>
-                                                            setValue(`technicalSkills.${categoryIndex}.skills.${skillIndex}`, option?.value || '', {
+                                                        onChange={(option) => {
+                                                            const selectedOption = option as SelectOption;
+                                                            setValue(`technicalSkills.${categoryIndex}.skills.${skillIndex}`, selectedOption?.value || '', {
                                                                 shouldValidate: true,
                                                             })
-                                                        }
+                                                        }}
                                                         placeholder="Select a skill..."
                                                         error={errors.technicalSkills?.[categoryIndex]?.skills?.[skillIndex]?.message}
                                                         isLoading={skillsLoading}
@@ -397,7 +401,10 @@ export function TechnicalSkills({
                                 label: category.name,
                             }))
                             .find(option => option.value === newSkillCategoryId)}
-                        onChange={(option) => setNewSkillCategoryId(option?.value || '')}
+                        onChange={(option) => {
+                            const selectedOption = option as SelectOption;
+                            setNewSkillCategoryId(selectedOption?.value || '')
+                        }}
                         placeholder="Select a category"
                         required
                     />
@@ -436,8 +443,8 @@ export function TechnicalSkills({
                     />
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p className="text-sm text-yellow-800">
-                            <strong>Note:</strong> Your category request will be reviewed by an administrator.
-                            You'll be notified once it's approved or if more information is needed.
+                            <strong>Note:</strong> {`Your category request will be reviewed by an administrator.
+                            You'll be notified once it's approved or if more information is needed.`}
                         </p>
                     </div>
                     <div className="flex justify-end gap-2">

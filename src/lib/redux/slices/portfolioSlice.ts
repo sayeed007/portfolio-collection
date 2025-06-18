@@ -148,9 +148,9 @@ const serializePortfolio = (portfolio: any): Portfolio => {
     ...portfolio,
     courses: portfolio?.courses?.map((course: Course) => ({
       ...course,
-      completionDate: course?.completionDate?.toDate
-        ? course.completionDate.toDate().toISOString().split("T")[0]
-        : "",
+      completionDate: course?.completionDate && typeof course.completionDate === 'object' && 'toDate' in course.completionDate
+        ? (course.completionDate as any).toDate().toISOString().split("T")[0]
+        : course.completionDate || "",
     })),
     createdAt: portfolio.createdAt?.toDate
       ? portfolio.createdAt.toDate().toISOString()

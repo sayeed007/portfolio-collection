@@ -1,6 +1,7 @@
 // YearSelect.tsx - Updated version
 import { Select, SelectOption } from '@/components/ui/Select';
 import { useMemo } from 'react';
+import { SingleValue, MultiValue } from 'react-select';
 
 interface YearSelectProps {
     label: string;
@@ -46,9 +47,11 @@ export function YearSelect({
 
     const selectedOption = value ? yearOptions.find(option => parseInt(option.value) === value) : null;
 
-    const handleChange = (selectedOption: SelectOption | null) => {
+    const handleChange = (selectedOption: SingleValue<SelectOption> | MultiValue<SelectOption>) => {
+        // Handle both single and multi-value cases, but we only use single value
+        const singleOption = Array.isArray(selectedOption) ? selectedOption[0] || null : selectedOption;
         // Convert string value back to number or null
-        const yearValue = selectedOption ? parseInt(selectedOption.value) : null;
+        const yearValue = singleOption ? parseInt(singleOption.value) : null;
         onChange(yearValue);
     };
 

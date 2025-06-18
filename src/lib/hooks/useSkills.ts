@@ -1,5 +1,5 @@
 // src\lib\hooks\useSkills.ts
-import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase/config';
 import {
     addDoc,
     collection,
@@ -13,7 +13,7 @@ import {
     updateDoc,
     writeBatch,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { useEffect, useState } from 'react';
 import { SkillCategory } from './useSkillCategories';
 
 export interface Skill {
@@ -88,6 +88,7 @@ export const useSkills = (categories: SkillCategory[] = []) => {
         );
 
         return unsubscribe;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [categories.length]);
 
     const prefillSkills = async (availableCategories: SkillCategory[]) => {
