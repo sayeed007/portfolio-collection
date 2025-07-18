@@ -1,22 +1,23 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Institution, InstitutionFormData, useInstitution } from '@/lib/hooks/useInstitution';
 import {
     AlertCircle,
+    Building,
     CheckCircle,
-    School,
+    MapPin,
     Plus,
     Save,
-    X,
-    CheckSquare,
-    XSquare,
-    MapPin,
-    Building,
+    School,
+    X
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { ApproveButton } from '../ui/ApproveButton';
 import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
+import { RejectButton } from '../ui/RejectButton';
 import { EditButton } from '../ui/edit-button';
-import { useInstitution, Institution, InstitutionFormData } from '@/lib/hooks/useInstitution';
 
 const INSTITUTION_TYPES = [
     'University',
@@ -125,16 +126,14 @@ const AdminInstitutionManagement = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <LoadingSpinner />
         );
     }
 
     const pendingRequests = getPendingRequestsCount();
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -159,14 +158,14 @@ const AdminInstitutionManagement = () => {
             <div className="flex space-x-1 mb-6">
                 <button
                     onClick={() => setActiveTab('institutions')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'institutions' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                    className={`cursor-pointer px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'institutions' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
                         }`}
                 >
                     Institutions ({institutions.length})
                 </button>
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors relative ${activeTab === 'requests' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
+                    className={`cursor-pointer px-4 py-2 rounded-lg font-medium transition-colors relative ${activeTab === 'requests' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'
                         }`}
                 >
                     Requests ({institutionRequests.length})
@@ -524,27 +523,14 @@ const AdminInstitutionManagement = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 {request.status === 'pending' && (
                                                     <div className="flex items-center gap-2 justify-end">
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                handleInstitutionRequest(request.id, 'approve', 'Approved by admin')
-                                                            }
-                                                            className="bg-green-600 hover:bg-green-700"
-                                                        >
-                                                            <CheckSquare className="w-4 h-4 mr-2" />
-                                                            Approve
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() =>
-                                                                handleInstitutionRequest(request.id, 'reject', 'Rejected by admin')
-                                                            }
-                                                            className="text-red-600 hover:text-red-800"
-                                                        >
-                                                            <XSquare className="w-4 h-4 mr-2" />
-                                                            Reject
-                                                        </Button>
+                                                        <ApproveButton
+                                                            onApprove={async () => { await handleInstitutionRequest(request.id, 'approve', 'Approved by admin'); }}
+                                                            tooltip="Approve request"
+                                                        />
+                                                        <RejectButton
+                                                            onReject={async () => { await handleInstitutionRequest(request.id, 'reject', 'Rejected by admin'); }}
+                                                            tooltip="Reject request"
+                                                        />
                                                     </div>
                                                 )}
                                             </td>

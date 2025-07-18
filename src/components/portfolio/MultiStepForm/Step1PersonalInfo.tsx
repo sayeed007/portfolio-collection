@@ -430,7 +430,7 @@ export function Step1PersonalInfo() {
                                 </div>
                                 {languageFields.length > 1 && (
                                     <DeleteButton
-                                        alignWith="select"
+                                        alignWith="auto"
                                         onDelete={() => removeLanguage(index)}
                                     />
                                 )}

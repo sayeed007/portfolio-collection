@@ -272,7 +272,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
     };
 
     const renderCurrentStep = () => {
-        return <Step3SkillsExperience />;
+        return <Step2Education />;
         switch (currentStep) {
             case 1:
                 return <Step1PersonalInfo />;

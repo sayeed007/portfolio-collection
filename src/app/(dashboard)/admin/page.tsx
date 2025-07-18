@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { AdminPanel } from '@/components/admin/AdminPanel';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+// import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 export default function AdminPage() {
     const { user, loading, isAdmin } = useAuth();
@@ -17,9 +17,9 @@ export default function AdminPage() {
         }
     }, [user, isAdmin, loading, router]);
 
-    if (loading) {
-        return <LoadingSpinner />;
-    }
+    // if (loading) {
+    //     return <LoadingSpinner />;
+    // }
 
     if (!user || !isAdmin) {
         return null;
