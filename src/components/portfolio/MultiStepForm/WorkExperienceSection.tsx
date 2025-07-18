@@ -48,15 +48,6 @@ export function WorkExperience({
     setValue,
     getValues,
     errors,
-    // initialData = [{
-    //     company: '',
-    //     position: '',
-    //     startDate: '',
-    //     endDate: '',
-    //     isCurrentRole: false,
-    //     responsibilities: [''],
-    //     technologies: [''],
-    // }]
 }: WorkExperienceProps) {
     const {
         fields: experienceFields,
@@ -69,7 +60,7 @@ export function WorkExperience({
 
     const addResponsibility = (experienceIndex: number) => {
         const currentResponsibilities = getValues(`workExperience.${experienceIndex}.responsibilities`);
-        setValue(`workExperience.${experienceIndex}.responsibilities`, [...currentResponsibilities, ''], { shouldValidate: true });
+        setValue(`workExperience.${experienceIndex}.responsibilities`, [...currentResponsibilities, ''], { shouldValidate: false });
     };
 
     const removeResponsibility = (experienceIndex: number, responsibilityIndex: number) => {
@@ -206,7 +197,7 @@ export function WorkExperience({
                                                 </div>
                                                 {currentResponsibilities.length > 1 && (
                                                     <DeleteButton
-                                                        alignWith="floating-input"
+                                                        alignWith={errors.workExperience?.[experienceIndex]?.responsibilities?.[responsibilityIndex]?.message ? "error" : "auto"}
                                                         onDelete={() => removeResponsibility(experienceIndex, responsibilityIndex)}
                                                     />
                                                 )}
@@ -231,18 +222,20 @@ export function WorkExperience({
                                         </Button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {currentTechnologies.map((_: string, techIndex: number) => (
-                                            <div key={techIndex} className="flex gap-2 items-center">
-                                                <Input
-                                                    {...register(`workExperience.${experienceIndex}.technologies.${techIndex}`)}
-                                                    placeholder="e.g., React, Node.js, PostgreSQL"
-                                                    error={errors.workExperience?.[experienceIndex]?.technologies?.[techIndex]?.message}
-                                                    className="flex-1"
-                                                />
+                                            <div key={techIndex} className="flex gap-1 items-center">
+                                                <div className="flex-1">
+                                                    <Input
+                                                        {...register(`workExperience.${experienceIndex}.technologies.${techIndex}`)}
+                                                        placeholder="e.g., React, Node.js, PostgreSQL"
+                                                        error={errors.workExperience?.[experienceIndex]?.technologies?.[techIndex]?.message}
+                                                        className="flex-1"
+                                                    />
+                                                </div>
                                                 {currentTechnologies.length > 1 && (
                                                     <DeleteButton
-                                                        alignWith="floating-input"
+                                                        alignWith={errors.workExperience?.[experienceIndex]?.technologies?.[techIndex]?.message ? 'error' : 'auto'}
                                                         onDelete={() => removeTechnology(experienceIndex, techIndex)}
                                                     />
                                                 )}

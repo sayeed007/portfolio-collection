@@ -18,17 +18,9 @@ import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
 import { RejectButton } from '../ui/RejectButton';
 import { EditButton } from '../ui/edit-button';
+import { INSTITUTION_TYPES } from '@/lib/staticData/institutionTypes';
 
-const INSTITUTION_TYPES = [
-    'University',
-    'Medical College',
-    'Engineering College',
-    'College',
-    'School',
-    'Institute',
-    'Madrasa',
-    'Technical Institute',
-];
+
 
 const BANGLADESH_DIVISIONS = [
     'Dhaka',

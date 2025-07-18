@@ -23,7 +23,7 @@ export interface DeleteButtonProps extends React.ButtonHTMLAttributes<HTMLButton
     /** Callback function when delete is confirmed */
     onDelete?: () => void | Promise<void>;
     /** Alignment context - helps with proper positioning */
-    alignWith?: 'input' | 'floating-input' | 'auto' | 'select';
+    alignWith?: 'input' | 'floating-input' | 'auto' | 'select' | 'error';
 }
 
 const DeleteButton = forwardRef<HTMLButtonElement, DeleteButtonProps>(
@@ -133,7 +133,8 @@ const DeleteButton = forwardRef<HTMLButtonElement, DeleteButtonProps>(
             'input': 'mb-2',
             'floating-input': '',
             'auto': '',
-            'select': 'mt-6'
+            'select': 'mt-6',
+            'error': 'mb-6'
         };
 
         const buttonHolder = cn(

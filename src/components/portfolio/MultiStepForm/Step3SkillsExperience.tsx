@@ -96,7 +96,6 @@ export function Step3SkillsExperience() {
                 setValue={setValue}
                 getValues={getValues}
                 errors={errors}
-            // initialData={formData?.workExperience}
             />
 
             {/* Tips Card */}
