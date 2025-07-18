@@ -232,7 +232,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                                             key={skillIndex}
                                             className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                                         >
-                                            {skill}
+                                            {skill.skillId} ({skill.proficiency})
                                         </span>
                                     ))}
                                 </div>

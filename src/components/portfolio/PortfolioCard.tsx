@@ -117,7 +117,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                                                     key={skillIndex}
                                                     className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
                                                 >
-                                                    {skill}
+                                                    {skill.skillId} ({skill.proficiency})
                                                 </span>
                                             ))}
                                         </div>

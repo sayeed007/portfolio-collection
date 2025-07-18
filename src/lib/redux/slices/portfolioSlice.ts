@@ -184,7 +184,7 @@ const initialFormData: PortfolioFormData = {
   ],
   certifications: [],
   courses: [],
-  technicalSkills: [{ category: '', skills: [{ skillId: '', proficiency: '' }] }],
+  technicalSkills: [{ category: '', skills: [{ skillId: '', proficiency: 'Beginner' }] }],
   workExperience: [],
   projects: [],
 };

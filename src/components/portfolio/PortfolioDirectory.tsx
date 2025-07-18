@@ -67,7 +67,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
         portfolios.forEach(portfolio => {
             if (portfolio.technicalSkills) {
                 portfolio.technicalSkills.forEach(skillCategory => {
-                    skillCategory.skills.forEach(skill => skills.add(skill));
+                    skillCategory.skills.forEach(skill => skills.add(skill.skillId));
                 });
             }
             if (portfolio.nationality) nationalities.add(portfolio.nationality);
@@ -93,7 +93,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     portfolio.summary?.toLowerCase().includes(searchLower) ||
                     portfolio.technicalSkills?.some(skillCategory =>
                         skillCategory.skills.some(skill =>
-                            skill.toLowerCase().includes(searchLower)
+                            skill.skillId.toLowerCase().includes(searchLower)
                         )
                     );
 
@@ -112,7 +112,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     skillCategory => skillCategory.skills
                 ) || [];
                 const hasRequiredSkills = filters.skills.some(skill =>
-                    portfolioSkills.includes(skill)
+                    portfolioSkills.some(s => s.skillId === skill)
                 );
                 if (!hasRequiredSkills) return false;
             }

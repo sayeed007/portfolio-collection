@@ -272,7 +272,7 @@ const applyClientSideFilters = (portfolios: Portfolio[], filters: PortfolioFilte
       ) || [];
       const hasRequiredSkills = filters.skills.some(skill =>
         portfolioSkills.some(portfolioSkill =>
-          portfolioSkill.toLowerCase().includes(skill.toLowerCase())
+          portfolioSkill.skillId.toLowerCase().includes(skill.toLowerCase())
         )
       );
       if (!hasRequiredSkills) return false;
