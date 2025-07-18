@@ -45,8 +45,10 @@ export interface Course {
 
 export interface TechnicalSkill {
   category: string;
-  skills: string[];
-  proficiency: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  skills: Array<{
+    skillId: string;
+    proficiency: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  }>;
 }
 
 export interface WorkExperience {
@@ -182,7 +184,7 @@ const initialFormData: PortfolioFormData = {
   ],
   certifications: [],
   courses: [],
-  technicalSkills: [],
+  technicalSkills: [{ category: '', skills: [{ skillId: '', proficiency: '' }] }],
   workExperience: [],
   projects: [],
 };

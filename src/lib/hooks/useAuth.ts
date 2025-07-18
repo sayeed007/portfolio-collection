@@ -24,6 +24,7 @@ export const useAuth = () => {
   const authState = useSelector((state: RootState) => state.auth);
   const [loading, setLocalLoading] = useState(false);
   const [error, setLocalError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Check if current user is admin
   const isAdmin = authState.user?.email ? ADMIN_EMAILS.includes(authState.user.email) : false;
@@ -45,11 +46,24 @@ export const useAuth = () => {
         dispatch(setUser(null));
       } finally {
         dispatch(setLoading(false));
+        setIsInitialized(true); // Mark as initialized
       }
     });
 
-    return () => unsubscribe();
-  }, [dispatch]);
+    // Fallback: if onAuthStateChanged doesn't fire within 5 seconds, set loading to false
+    const fallbackTimer = setTimeout(() => {
+      if (!isInitialized) {
+        console.warn("Auth state change timeout - setting loading to false");
+        dispatch(setLoading(false));
+        setIsInitialized(true);
+      }
+    }, 5000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
+  }, [dispatch, isInitialized]);
 
   const register = async (
     email: string,
@@ -153,7 +167,8 @@ export const useAuth = () => {
     ...authState,
     loading: authState.loading || loading,
     error: authState.error || error,
-    isAdmin, // Add isAdmin to the return object
+    isAdmin,
+    isInitialized, // Expose initialization state
     register,
     login,
     loginWithGoogle,

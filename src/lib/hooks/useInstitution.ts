@@ -16,6 +16,7 @@ import {
 import { db } from "@/lib/firebase/config";
 import { getAuth } from "firebase/auth";
 import { useAuth } from "./useAuth";
+import { POPULAR_INSTITUTIONS } from "../staticData/popularInstitutions";
 
 export interface Institution {
   id: string;
@@ -65,742 +66,6 @@ export interface InstitutionRequestFormData {
   requestedByEmail: string;
 }
 
-const POPULAR_INSTITUTIONS = [
-  // Public Universities
-  {
-    name: "University of Dhaka",
-    shortName: "DU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Bangladesh University of Engineering and Technology",
-    shortName: "BUET",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "University of Chittagong",
-    shortName: "CU",
-    type: "University",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "University of Rajshahi",
-    shortName: "RU",
-    type: "University",
-    location: "Rajshahi",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Jahangirnagar University",
-    shortName: "JU",
-    type: "University",
-    location: "Savar",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Bangladesh Agricultural University",
-    shortName: "BAU",
-    type: "University",
-    location: "Mymensingh",
-    division: "Mymensingh",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Khulna University",
-    shortName: "KU",
-    type: "University",
-    location: "Khulna",
-    division: "Khulna",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Shahjalal University of Science and Technology",
-    shortName: "SUST",
-    type: "University",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Islamic University",
-    shortName: "IU",
-    type: "University",
-    location: "Kushtia",
-    division: "Khulna",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Jagannath University",
-    shortName: "JnU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Barisal University",
-    shortName: "BU",
-    type: "University",
-    location: "Barisal",
-    division: "Barisal",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Comilla University",
-    shortName: "CoU",
-    type: "University",
-    location: "Comilla",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Jatiya Kabi Kazi Nazrul Islam University",
-    shortName: "JKKNIU",
-    type: "University",
-    location: "Mymensingh",
-    division: "Mymensingh",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Begum Rokeya University",
-    shortName: "BRUR",
-    type: "University",
-    location: "Rangpur",
-    division: "Rangpur",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Hajee Mohammad Danesh Science and Technology University",
-    shortName: "HSTU",
-    type: "University",
-    location: "Dinajpur",
-    division: "Rangpur",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Mawlana Bhashani Science and Technology University",
-    shortName: "MBSTU",
-    type: "University",
-    location: "Tangail",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Noakhali Science and Technology University",
-    shortName: "NSTU",
-    type: "University",
-    location: "Noakhali",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Jessore University of Science and Technology",
-    shortName: "JUST",
-    type: "University",
-    location: "Jessore",
-    division: "Khulna",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Pabna University of Science and Technology",
-    shortName: "PUST",
-    type: "University",
-    location: "Pabna",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Patuakhali Science and Technology University",
-    shortName: "PSTU",
-    type: "University",
-    location: "Patuakhali",
-    division: "Barisal",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rangamati Science and Technology University",
-    shortName: "RMSTU",
-    type: "University",
-    location: "Rangamati",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sylhet Agricultural University",
-    shortName: "SAU",
-    type: "University",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sher-e-Bangla Agricultural University",
-    shortName: "SBAU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Bangabandhu Sheikh Mujibur Rahman Agricultural University",
-    shortName: "BSMRAU",
-    type: "University",
-    location: "Gazipur",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Private Universities
-  {
-    name: "North South University",
-    shortName: "NSU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "BRAC University",
-    shortName: "VU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Independent University, Bangladesh",
-    shortName: "IUB",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "American International University-Bangladesh",
-    shortName: "AIU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "United International University",
-    shortName: "UIU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "East West University",
-    shortName: "EWU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Daffodil International University",
-    shortName: "DIU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Ahsanullah University of Science and Technology",
-    shortName: "AUST",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Southeast University",
-    shortName: "SEU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "University of Asia Pacific",
-    shortName: "UAP",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Stamford University Bangladesh",
-    shortName: "SUB",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Bangladesh University of Business and Technology",
-    shortName: "BUBT",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Metropolitan University",
-    shortName: "MU",
-    type: "University",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Premier University",
-    shortName: "PU",
-    type: "University",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "International University of Business Agriculture and Technology",
-    shortName: "IUBAT",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Eastern University",
-    shortName: "EU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Green University of Bangladesh",
-    shortName: "GUB",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "World University of Bangladesh",
-    shortName: "WUB",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Medical Colleges
-  {
-    name: "Dhaka Medical College",
-    shortName: "DMC",
-    type: "Medical College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Chittagong Medical College",
-    shortName: "CMC",
-    type: "Medical College",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rajshahi Medical College",
-    shortName: "RMC",
-    type: "Medical College",
-    location: "Rajshahi",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sylhet MAG Osmani Medical College",
-    shortName: "SOMC",
-    type: "Medical College",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Mymensingh Medical College",
-    shortName: "MMC",
-    type: "Medical College",
-    location: "Mymensingh",
-    division: "Mymensingh",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sir Salimullah Medical College",
-    shortName: "SSMC",
-    type: "Medical College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sher-E-Bangla Medical College",
-    shortName: "SBMC",
-    type: "Medical College",
-    location: "Barisal",
-    division: "Barisal",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rangpur Medical College",
-    shortName: "RpMC",
-    type: "Medical College",
-    location: "Rangpur",
-    division: "Rangpur",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Dinajpur Medical College",
-    shortName: "DjMC",
-    type: "Medical College",
-    location: "Dinajpur",
-    division: "Rangpur",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Engineering Colleges
-  {
-    name: "Chittagong University of Engineering & Technology",
-    shortName: "CUET",
-    type: "Engineering College",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rajshahi University of Engineering & Technology",
-    shortName: "RUET",
-    type: "Engineering College",
-    location: "Rajshahi",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Khulna University of Engineering & Technology",
-    shortName: "KUET",
-    type: "Engineering College",
-    location: "Khulna",
-    division: "Khulna",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Dhaka University of Engineering & Technology",
-    shortName: "DUET",
-    type: "Engineering College",
-    location: "Gazipur",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Military Institute of Science and Technology",
-    shortName: "MIST",
-    type: "Engineering College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Colleges
-  {
-    name: "Dhaka College",
-    shortName: "DC",
-    type: "College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Notre Dame College",
-    shortName: "NDC",
-    type: "College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Holy Cross College",
-    shortName: "HCC",
-    type: "College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Adamjee Cantonment College",
-    shortName: "ACC",
-    type: "College",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Chittagong College",
-    shortName: "CC",
-    type: "College",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rajshahi College",
-    shortName: "RC",
-    type: "College",
-    location: "Rajshahi",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Government Edward College",
-    shortName: "GEC",
-    type: "College",
-    location: "Pabna",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "MC College",
-    shortName: "MCC",
-    type: "College",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Ananda Mohan College",
-    shortName: "AMC",
-    type: "College",
-    location: "Mymensingh",
-    division: "Mymensingh",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Carmichael College",
-    shortName: "CC",
-    type: "College",
-    location: "Rangpur",
-    division: "Rangpur",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Schools
-  {
-    name: "Dhaka Residential Model College",
-    shortName: "DRMC",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Viqarunnisa Noon School and College",
-    shortName: "VNS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Holy Cross Girls High School",
-    shortName: "HCGHS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "St. Gregory's High School",
-    shortName: "SGHS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Scholastica School",
-    shortName: "SS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Maple Leaf International School",
-    shortName: "MLIS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Chittagong Grammar School",
-    shortName: "CGS",
-    type: "School",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Ideal School and College",
-    shortName: "ISC",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Motijheel Government Boys' High School",
-    shortName: "MGBHS",
-    type: "School",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Sylhet Government Pilot High School",
-    shortName: "SGPHS",
-    type: "School",
-    location: "Sylhet",
-    division: "Sylhet",
-    isActive: true,
-    isVerified: true,
-  },
-
-  // Technical Institutes
-  {
-    name: "Dhaka Polytechnic Institute",
-    shortName: "DPI",
-    type: "Technical Institute",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Chittagong Polytechnic Institute",
-    shortName: "CPI",
-    type: "Technical Institute",
-    location: "Chittagong",
-    division: "Chittagong",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Rajshahi Polytechnic Institute",
-    shortName: "RPI",
-    type: "Technical Institute",
-    location: "Rajshahi",
-    division: "Rajshahi",
-    isActive: true,
-    isVerified: true,
-  },
-  {
-    name: "Khulna Polytechnic Institute",
-    shortName: "KPI",
-    type: "Technical Institute",
-    location: "Khulna",
-    division: "Khulna",
-    isActive: true,
-    isVerified: true,
-  },
-];
-
 export const useInstitution = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [institutionRequests, setInstitutionRequests] = useState<
@@ -809,11 +74,13 @@ export const useInstitution = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [institutionsInitialized, setInstitutionsInitialized] = useState(false);
+  const [requestsInitialized, setRequestsInitialized] = useState(false);
 
   // Get the current user
   const auth = getAuth();
   const currentUser = auth.currentUser;
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
 
   // Fetch institutions
   useEffect(() => {
@@ -823,103 +90,155 @@ export const useInstitution = () => {
       orderBy("name", "asc")
     );
 
+    // Set a timeout to ensure loading doesn't stay true forever
+    const timeoutId = setTimeout(() => {
+      if (!institutionsInitialized) {
+        console.warn("Institutions loading timeout - setting to false");
+        setInstitutionsInitialized(true);
+      }
+    }, 10000); // 10 second timeout
+
     const unsubscribe = onSnapshot(
       institutionsQuery,
       async (snapshot) => {
-        const institutionsList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Institution[];
+        try {
+          const institutionsList = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Institution[];
 
-        setInstitutions(institutionsList);
-        setLoading(false);
+          setInstitutions(institutionsList);
+          setInstitutionsInitialized(true);
 
-        // Prefill popular institutions if empty
-        if (institutionsList.length === 0) {
-          try {
-            const batch = writeBatch(db);
-            POPULAR_INSTITUTIONS.forEach((institution) => {
-              const institutionRef = doc(collection(db, "institutions"));
-              batch.set(institutionRef, {
-                name: institution.name,
-                shortName: institution.shortName,
-                type: institution.type,
-                location: institution.location,
-                division: institution.division,
-                isActive: institution.isActive,
-                isVerified: institution.isVerified,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+          // Prefill popular institutions if empty
+          if (institutionsList.length === 0) {
+            try {
+              const batch = writeBatch(db);
+              POPULAR_INSTITUTIONS.forEach((institution) => {
+                const institutionRef = doc(collection(db, "institutions"));
+                batch.set(institutionRef, {
+                  name: institution.name,
+                  shortName: institution.shortName,
+                  type: institution.type,
+                  location: institution.location,
+                  division: institution.division,
+                  isActive: institution.isActive,
+                  isVerified: institution.isVerified,
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+                });
               });
-            });
-            await batch.commit();
-            setSuccess("Popular institutions added successfully");
-            setTimeout(() => setSuccess(""), 3000);
-          } catch (error) {
-            console.error("Error prefilling institutions:", error);
-            setError("Failed to prefill institutions");
+              await batch.commit();
+              setSuccess("Popular institutions added successfully");
+              setTimeout(() => setSuccess(""), 3000);
+            } catch (error) {
+              console.error("Error prefilling institutions:", error);
+              setError("Failed to prefill institutions");
+            }
           }
+        } catch (error) {
+          console.error("Error processing institutions snapshot:", error);
+          setError("Failed to process institutions data");
+          setInstitutionsInitialized(true);
         }
       },
       (error) => {
         console.error("Error fetching institutions:", error);
         setError("Failed to fetch institutions");
-        setLoading(false);
+        setInstitutionsInitialized(true);
       }
     );
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [institutionsInitialized]);
 
-
+  // Fetch institution requests
   useEffect(() => {
-    if (!currentUser) {
-      setError("User must be signed in to view institution requests");
-      setLoading(false);
+    // Don't start fetching requests until auth is loaded
+    if (authLoading) {
       return;
+    }
+
+    // Set a timeout to ensure loading doesn't stay true forever
+    const timeoutId = setTimeout(() => {
+      if (!requestsInitialized) {
+        console.warn("Institution requests loading timeout - setting to false");
+        setRequestsInitialized(true);
+      }
+    }, 10000); // 10 second timeout
+
+    if (!currentUser) {
+      // If no user, just mark as initialized
+      setRequestsInitialized(true);
+      setInstitutionRequests([]);
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     }
 
     let requestsQuery;
 
-    if (isAdmin) {
-      // For admins, we still need to ensure the rule passes
-      // Option A: Query all documents (if your rules allow it)
-      requestsQuery = query(
-        collection(db, "institutionRequests"),
-        orderBy("createdAt", "desc")
-      );
-    } else {
-      // For regular users, filter by their UID
-      requestsQuery = query(
-        collection(db, "institutionRequests"),
-        where("requestedBy", "==", currentUser.uid),
-        where("status", "==", "pending"),
-        orderBy("createdAt", "desc")
-      );
-    }
-
-    const unsubscribe = onSnapshot(
-      requestsQuery,
-      (snapshot) => {
-        const requestsList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as InstitutionRequest[];
-
-        debugger
-        setInstitutionRequests(requestsList);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching institution requests:", error);
-        setError("Failed to fetch institution requests");
-        setLoading(false);
+    try {
+      if (isAdmin) {
+        requestsQuery = query(
+          collection(db, "institutionRequests"),
+          orderBy("createdAt", "desc")
+        );
+      } else {
+        requestsQuery = query(
+          collection(db, "institutionRequests"),
+          where("requestedBy", "==", currentUser.uid),
+          where("status", "==", "pending"),
+          orderBy("createdAt", "desc")
+        );
       }
-    );
 
-    return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+      const unsubscribe = onSnapshot(
+        requestsQuery,
+        (snapshot) => {
+          try {
+            const requestsList = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as InstitutionRequest[];
+
+            setInstitutionRequests(requestsList);
+            setRequestsInitialized(true);
+          } catch (error) {
+            console.error("Error processing requests snapshot:", error);
+            setError("Failed to process institution requests data");
+            setRequestsInitialized(true);
+          }
+        },
+        (error) => {
+          console.error("Error fetching institution requests:", error);
+          setError("Failed to fetch institution requests");
+          setRequestsInitialized(true);
+        }
+      );
+
+      return () => {
+        unsubscribe();
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    } catch (error) {
+      console.error("Error setting up requests query:", error);
+      setError("Failed to setup institution requests query");
+      setRequestsInitialized(true);
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
+  }, [currentUser, isAdmin, authLoading, requestsInitialized]);
+
+  // Update loading state based on both subscriptions
+  useEffect(() => {
+    const isLoading = !institutionsInitialized || (!authLoading && !requestsInitialized);
+    setLoading(isLoading);
+  }, [institutionsInitialized, requestsInitialized, authLoading]);
 
   // Add new institution (Admin function)
   const addInstitution = async (formData: InstitutionFormData) => {
@@ -1125,7 +444,7 @@ export const useInstitution = () => {
         updatedAt: serverTimestamp(),
       };
 
-      console.log("Submitting institution request with data:", requestData);
+      console.info("Submitting institution request with data:", requestData);
 
       await addDoc(collection(db, "institutionRequests"), requestData);
 
@@ -1235,6 +554,7 @@ export const useInstitution = () => {
     loading,
     error,
     success,
+    isInitialized: institutionsInitialized && requestsInitialized,
     addInstitution,
     updateInstitution,
     deleteInstitution,

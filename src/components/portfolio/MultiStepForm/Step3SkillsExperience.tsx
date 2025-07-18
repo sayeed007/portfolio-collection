@@ -82,12 +82,10 @@ export function Step3SkillsExperience() {
             {/* Technical Skills Section */}
             <TechnicalSkills
                 control={control}
-                register={register}
                 watch={watch}
                 setValue={setValue}
                 getValues={getValues}
                 errors={errors}
-                initialData={formData?.technicalSkills}
             />
 
             {/* Work Experience Section */}

@@ -3,10 +3,12 @@ import { Card } from '@/components/ui/card';
 import { SkillCategory, useSkillCategories } from '@/lib/hooks/useSkillCategories';
 import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
 import { Skill, useSkills } from '@/lib/hooks/useSkills';
-import { AlertCircle, CheckCircle, CheckSquare, Plus, Save, X, XSquare } from 'lucide-react';
+import { AlertCircle, CheckCircle, Plus, Save, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { ApproveButton } from '../ui/ApproveButton';
 import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
+import { RejectButton } from '../ui/RejectButton';
 import { EditButton } from '../ui/edit-button';
 
 const AdminSkillManagement = () => {
@@ -166,7 +168,7 @@ const AdminSkillManagement = () => {
   const pendingSkillRequests = getPendingSkillRequests();
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Skill Management</h1>
         {!showAddForm && (
@@ -392,20 +394,14 @@ const AdminSkillManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {request.status === 'pending' && (
                           <div className="flex items-center gap-2 justify-end">
-                            <Button
-                              onClick={() => handleCategoryRequestAction(request.id, 'approve')}
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckSquare className="w-4 h-4 mr-1" /> Approve
-                            </Button>
-                            <Button
-                              onClick={() => handleCategoryRequestAction(request.id, 'reject')}
-                              size="sm"
-                              variant="destructive"
-                            >
-                              <XSquare className="w-4 h-4 mr-1" /> Reject
-                            </Button>
+                            <ApproveButton
+                              onApprove={async () => { await handleCategoryRequestAction(request.id, 'approve'); }}
+                              tooltip="Approve request"
+                            />
+                            <RejectButton
+                              onReject={async () => { await handleCategoryRequestAction(request.id, 'reject'); }}
+                              tooltip="Reject request"
+                            />
                           </div>
                         )}
                       </td>
@@ -458,20 +454,14 @@ const AdminSkillManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {request.status === 'pending' && (
                           <div className="flex items-center gap-2 justify-end">
-                            <Button
-                              onClick={() => handleSkillRequestAction(request.id, 'approve')}
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckSquare className="w-4 h-4 mr-1" /> Approve
-                            </Button>
-                            <Button
-                              onClick={() => handleSkillRequestAction(request.id, 'reject')}
-                              size="sm"
-                              variant="destructive"
-                            >
-                              <XSquare className="w-4 h-4 mr-1" /> Reject
-                            </Button>
+                            <ApproveButton
+                              onApprove={async () => { await handleSkillRequestAction(request.id, 'approve'); }}
+                              tooltip="Approve request"
+                            />
+                            <RejectButton
+                              onReject={async () => { await handleSkillRequestAction(request.id, 'reject'); }}
+                              tooltip="Reject request"
+                            />
                           </div>
                         )}
                       </td>

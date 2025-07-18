@@ -10,9 +10,13 @@ import {
   serverTimestamp,
   Timestamp,
   updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { getAuth } from "firebase/auth";
+import { useAuth } from "./useAuth";
+import { POPULAR_INSTITUTIONS } from "../staticData/popularInstitutions";
 
 export interface Institution {
   id: string;
@@ -61,18 +65,7 @@ export interface InstitutionRequestFormData {
   requestedBy: string;
   requestedByEmail: string;
 }
-const POPULAR_INSTITUTIONS = [
-  // LIST OF INSTITUTION - I WILL ADD
-  {
-    name: "University of Dhaka",
-    shortName: "DU",
-    type: "University",
-    location: "Dhaka",
-    division: "Dhaka",
-    isActive: true,
-    isVerified: true,
-  },
-];
+
 
 export const useInstitution = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -82,6 +75,11 @@ export const useInstitution = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Get the current user
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+  const { isAdmin } = useAuth();
 
   // Fetch institutions
   useEffect(() => {
@@ -139,12 +137,32 @@ export const useInstitution = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch institution requests
+
   useEffect(() => {
-    const requestsQuery = query(
-      collection(db, "institutionRequests"),
-      orderBy("createdAt", "desc")
-    );
+    if (!currentUser) {
+      setError("User must be signed in to view institution requests");
+      setLoading(false);
+      return;
+    }
+
+    let requestsQuery;
+
+    if (isAdmin) {
+      // For admins, we still need to ensure the rule passes
+      // Option A: Query all documents (if your rules allow it)
+      requestsQuery = query(
+        collection(db, "institutionRequests"),
+        orderBy("createdAt", "desc")
+      );
+    } else {
+      // For regular users, filter by their UID
+      requestsQuery = query(
+        collection(db, "institutionRequests"),
+        where("requestedBy", "==", currentUser.uid),
+        where("status", "==", "pending"),
+        orderBy("createdAt", "desc")
+      );
+    }
 
     const unsubscribe = onSnapshot(
       requestsQuery,
@@ -155,15 +173,18 @@ export const useInstitution = () => {
         })) as InstitutionRequest[];
 
         setInstitutionRequests(requestsList);
+        setLoading(false);
       },
       (error) => {
         console.error("Error fetching institution requests:", error);
         setError("Failed to fetch institution requests");
+        setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
   // Add new institution (Admin function)
   const addInstitution = async (formData: InstitutionFormData) => {
@@ -313,18 +334,21 @@ export const useInstitution = () => {
     }
   };
 
-  // Request new institution (User function)
+  // Fixed requestInstitution function
   const requestInstitution = async (formData: InstitutionRequestFormData) => {
     setError("");
     setSuccess("");
 
+    // Validate required fields
     if (
       !formData.name.trim() ||
+      !formData.type.trim() ||
       !formData.location.trim() ||
       !formData.division.trim() ||
+      !formData.requestedBy.trim() ||
       !formData.requestedByEmail.trim()
     ) {
-      setError("Institution name, location, division, and email are required");
+      setError("All required fields must be filled");
       return false;
     }
 
@@ -352,18 +376,24 @@ export const useInstitution = () => {
     }
 
     try {
-      await addDoc(collection(db, "institutionRequests"), {
+      // Prepare the data object with all required fields
+      const requestData = {
         name: formData.name.trim(),
         shortName: formData.shortName?.trim() || null,
-        type: formData.type,
+        type: formData.type.trim(),
         location: formData.location.trim(),
-        division: formData.division,
+        division: formData.division.trim(),
         requestedBy: formData.requestedBy.trim(),
         requestedByEmail: formData.requestedByEmail.trim(),
         status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      console.info("Submitting institution request with data:", requestData);
+
+      await addDoc(collection(db, "institutionRequests"), requestData);
+
       setSuccess(
         "Institution request submitted successfully. It will be reviewed by our admin team."
       );
@@ -371,7 +401,7 @@ export const useInstitution = () => {
       return true;
     } catch (error) {
       console.error("Error submitting institution request:", error);
-      setError("Failed to submit institution request");
+      setError("Failed to submit institution request. Please try again.");
       return false;
     }
   };
@@ -387,6 +417,7 @@ export const useInstitution = () => {
       if (!request) return false;
 
       if (action === "approve") {
+        // Add to main institutions collection
         await addDoc(collection(db, "institutions"), {
           name: request.name,
           shortName: request.shortName || null,

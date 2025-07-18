@@ -239,19 +239,18 @@ export const validateSkills = (data: any): ValidationResult => {
     if (!skillCategory.category?.trim()) {
       errors.push(`Technical Skill ${index + 1}: Category is required`);
     }
-
-    if (!skillCategory.proficiency?.trim()) {
-      errors.push(`Technical Skill ${index + 1}: Proficiency level is required`);
-    }
-
     if (!skillCategory.skills || skillCategory.skills.length === 0) {
       errors.push(`Technical Skill ${index + 1}: At least one skill is required`);
     } else {
-      // Check if all skills in the category are non-empty
-      const validSkills = skillCategory.skills.filter((skill: string) => skill?.trim());
-      if (validSkills.length === 0) {
-        errors.push(`Technical Skill ${index + 1}: At least one non-empty skill is required`);
-      }
+      // Check if all skills in the category are valid objects with skillId and proficiency
+      skillCategory.skills.forEach((skill: any, skillIdx: number) => {
+        if (!skill.skillId?.trim()) {
+          errors.push(`Technical Skill ${index + 1}, Skill ${skillIdx + 1}: Skill is required`);
+        }
+        if (!skill.proficiency?.trim()) {
+          errors.push(`Technical Skill ${index + 1}, Skill ${skillIdx + 1}: Proficiency is required`);
+        }
+      });
     }
   });
 

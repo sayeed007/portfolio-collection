@@ -42,7 +42,10 @@ export interface Course {
 
 export interface TechnicalSkill {
   category: string;
-  skills: string[];
+  skills: Array<{
+    skillId: string;
+    proficiency: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  }>;
 }
 
 export interface WorkExperience {

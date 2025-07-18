@@ -22,9 +22,13 @@ const step3Schema = z.object({
             z.object({
                 category: z.string().min(1, 'Category is required'),
                 skills: z
-                    .array(z.string().min(1, 'Skill cannot be empty'))
+                    .array(
+                        z.object({
+                            skillId: z.string().min(1, 'Skill cannot be empty'),
+                            proficiency: z.string().min(1, 'Proficiency level is required'),
+                        })
+                    )
                     .min(1, 'At least one skill is required'),
-                proficiency: z.string().min(1, 'Proficiency level is required'),
             })
         )
         .min(1, 'At least one technical skill category is required'),
@@ -72,7 +76,7 @@ export function Step3SkillsExperience() {
             ? {
                 technicalSkills: formData.technicalSkills?.length
                     ? deepCopyJSON(formData.technicalSkills)
-                    : [{ category: '', skills: [''], proficiency: '' }],
+                    : [{ category: '', skills: [{ skillId: '', proficiency: '' }] }],
                 workExperience: formData.workExperience?.length
                     ? deepCopyJSON(formData.workExperience)
                     : [{
@@ -86,7 +90,7 @@ export function Step3SkillsExperience() {
                     }],
             }
             : {
-                technicalSkills: [{ category: '', skills: [''], proficiency: '' }],
+                technicalSkills: [{ category: '', skills: [{ skillId: '', proficiency: '' }] }],
                 workExperience: [{
                     company: '',
                     position: '',
@@ -144,7 +148,7 @@ export function Step3SkillsExperience() {
 
     const addSkillToCategory = (categoryIndex: number) => {
         const currentSkills = getValues(`technicalSkills.${categoryIndex}.skills`);
-        setValue(`technicalSkills.${categoryIndex}.skills`, [...currentSkills, ''], { shouldValidate: true });
+        setValue(`technicalSkills.${categoryIndex}.skills`, [...currentSkills, { skillId: '', proficiency: '' }], { shouldValidate: true });
     };
 
     const removeSkillFromCategory = (categoryIndex: number, skillIndex: number) => {
@@ -194,7 +198,7 @@ export function Step3SkillsExperience() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => appendSkill({ category: '', skills: [''], proficiency: '' })}
+                        onClick={() => appendSkill({ category: '', skills: [{ skillId: '', proficiency: '' }] })}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Skill Category
@@ -203,7 +207,7 @@ export function Step3SkillsExperience() {
 
                 <div className="space-y-6">
                     {skillFields.map((field, categoryIndex) => {
-                        const currentSkills = watch(`technicalSkills.${categoryIndex}.skills`) || [''];
+                        const currentSkills = watch(`technicalSkills.${categoryIndex}.skills`) || [{ skillId: '', proficiency: '' }];
 
                         return (
                             <div key={field.id} className="p-4 border border-gray-200 rounded-lg">
@@ -278,14 +282,26 @@ export function Step3SkillsExperience() {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                            {currentSkills.map((_, skillIndex) => (
+                                            {currentSkills.map((skill, skillIndex) => (
                                                 <div key={skillIndex} className="flex gap-2 items-center">
                                                     <Input
-                                                        {...register(`technicalSkills.${categoryIndex}.skills.${skillIndex}`)}
+                                                        {...register(`technicalSkills.${categoryIndex}.skills.${skillIndex}.skillId`)}
                                                         placeholder="e.g., JavaScript, React"
-                                                        error={errors.technicalSkills?.[categoryIndex]?.skills?.[skillIndex]?.message}
+                                                        error={errors.technicalSkills?.[categoryIndex]?.skills?.[skillIndex]?.skillId?.message}
                                                         className="flex-1"
                                                     />
+                                                    <div className="flex-1 min-w-[120px]">
+                                                        <select
+                                                            {...register(`technicalSkills.${categoryIndex}.skills.${skillIndex}.proficiency`)}
+                                                            className="p-2 border border-gray-300 rounded-lg w-full h-12"
+                                                        >
+                                                            <option value="">Select Proficiency</option>
+                                                            <option value="Beginner">Beginner</option>
+                                                            <option value="Intermediate">Intermediate</option>
+                                                            <option value="Advanced">Advanced</option>
+                                                            <option value="Expert">Expert</option>
+                                                        </select>
+                                                    </div>
                                                     {currentSkills.length > 1 && (
                                                         <Button
                                                             type="button"

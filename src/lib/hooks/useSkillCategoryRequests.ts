@@ -209,6 +209,7 @@ export const useSkillRequests = () => {
                     skillRequestsQuery = query(
                         collection(db, 'skillRequests'),
                         where('requestedBy', '==', currentUser.uid),
+                        where('status', '==', 'pending'),
                         orderBy('createdAt', 'desc')
                     );
                 }
@@ -256,9 +257,9 @@ export const useSkillRequests = () => {
     const createSkillRequest = async (
         name: string,
         categoryId: string,
-        requestedBy: string,
-        requestedByEmail: string
     ): Promise<void> => {
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
         if (!currentUser) {
             throw new Error('User not authenticated');
         }
@@ -274,8 +275,8 @@ export const useSkillRequests = () => {
             await addDoc(collection(db, 'skillRequests'), {
                 name: name.trim(),
                 categoryId,
-                requestedBy: currentUser.uid, // Use current user's UID
-                requestedByEmail: currentUser.email || requestedByEmail, // Use current user's email
+                requestedBy: currentUser.uid,
+                requestedByEmail: currentUser.email,
                 status: 'pending',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),

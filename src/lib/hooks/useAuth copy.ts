@@ -14,11 +14,19 @@ import { auth } from "../firebase/config";
 import { setError, setLoading, setUser } from "../redux/slices/authSlice";
 import { AppDispatch, RootState } from "../redux/store";
 
+// Admin emails list - should match your Firestore security rules
+const ADMIN_EMAILS = [
+  'admin@portfolio-collection.com',
+];
+
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const authState = useSelector((state: RootState) => state.auth);
   const [loading, setLocalLoading] = useState(false);
   const [error, setLocalError] = useState<string | null>(null);
+
+  // Check if current user is admin
+  const isAdmin = authState.user?.email ? ADMIN_EMAILS.includes(authState.user.email) : false;
 
   useEffect(() => {
     dispatch(setLoading(true));
@@ -145,6 +153,7 @@ export const useAuth = () => {
     ...authState,
     loading: authState.loading || loading,
     error: authState.error || error,
+    isAdmin, // Add isAdmin to the return object
     register,
     login,
     loginWithGoogle,
