@@ -86,7 +86,7 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
     const { categories, loading: categoriesLoading } = useSkillCategories();
     const { skills, loading: skillsLoading } = useSkills(categories);
     const { skillRequests, createSkillRequest } = useSkillRequests();
-    const { createCategoryRequest } = useSkillCategoryRequests();
+    const { categoryRequests, createCategoryRequest } = useSkillCategoryRequests();
 
     // Skill request form
     const {
@@ -157,12 +157,13 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
         setIsSubmittingCategoryRequest(true);
         setCategoryRequestMessage(null);
         setCategoryRequestError(null);
+
+
+        // name: data.name,
+        // requestedBy: currentUser.uid,
+        // requestedByEmail: currentUser.email || ''
         try {
-            await createCategoryRequest(
-                data.name,
-                currentUser.displayName || 'Current User',
-                currentUser.email || ''
-            );
+            await createCategoryRequest(data.name, currentUser.uid, (currentUser.email || ''));
             setCategoryRequestMessage('Category request submitted successfully!');
             resetCategoryRequestForm();
             setShowCategoryRequest(false);
@@ -174,7 +175,7 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
 
     // Helper functions
     const getCategoryOptions = () => {
-        return categories.map(category => ({
+        return [...categoryRequests, ...categories].map(category => ({
             value: category.id,
             label: category.name,
         }));

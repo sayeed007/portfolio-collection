@@ -3,11 +3,12 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DeleteButton } from '@/components/ui/DeleteButton';
 import { Input } from '@/components/ui/input';
 import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
 import { RootState } from '@/lib/redux/store';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Code, FolderOpen, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertCircle, Code, FolderOpen, Plus, Star } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
@@ -210,16 +211,10 @@ export function Step4Projects() {
                                             </h4>
                                         </div>
                                         {projectFields.length > 1 && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => removeProject(projectIndex)}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                            >
-                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                Remove
-                                            </Button>
+                                            <DeleteButton
+                                                alignWith="auto"
+                                                onDelete={() => removeProject(projectIndex)}
+                                            />
                                         )}
                                     </div>
 
@@ -312,15 +307,10 @@ export function Step4Projects() {
                                                         ))}
                                                     </datalist>
                                                     {currentTechnologies.length > 1 && (
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => removeTechnology(projectIndex, techIndex)}
-                                                            className="my-auto h-12 cursor-pointer hover:bg-red-400"
-                                                        >
-                                                            <Trash2 className="w-3 h-3" />
-                                                        </Button>
+                                                        <DeleteButton
+                                                            alignWith="auto"
+                                                            onDelete={() => removeTechnology(projectIndex, techIndex)}
+                                                        />
                                                     )}
                                                 </div>
                                             ))}

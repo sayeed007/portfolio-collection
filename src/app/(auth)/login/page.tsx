@@ -24,7 +24,7 @@ export default function LoginPage() {
                     </Link>
                 </div>
 
-                <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
                     {/* Left side - Marketing content */}
                     <div className="space-y-8 lg:pr-8">
                         <div className="space-y-4">

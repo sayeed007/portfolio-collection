@@ -272,6 +272,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
     };
 
     const renderCurrentStep = () => {
+        // return <Step4Projects />;
         switch (currentStep) {
             case 1:
                 return <Step1PersonalInfo />;
@@ -336,7 +337,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
             <BackgroundDecoration />
 
             <div className="relative z-10 py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-6xl mx-auto">
+                <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur rounded-full border border-purple-200">
@@ -385,7 +386,7 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                     </div>
 
                     {/* Main Form Content */}
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-6xl mx-auto">
                         <Card className="bg-white/80 backdrop-blur border-0 shadow-2xl">
                             <div className="p-6 sm:p-8 lg:p-12">
                                 {/* Current Step Header */}

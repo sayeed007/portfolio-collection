@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase/config';
+import { useAuth } from './useAuth';
 
 export interface SkillCategoryRequest {
     id: string;
@@ -44,32 +45,56 @@ export const useSkillCategoryRequests = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Get the current user
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    const { isAdmin } = useAuth();
+
     useEffect(() => {
-        const categoryRequestsQuery = query(
-            collection(db, 'skillCategoryRequests'),
-            orderBy('createdAt', 'desc')
-        );
+        // const categoryRequestsQuery = query(
+        //     collection(db, 'skillCategoryRequests'),
+        //     orderBy('createdAt', 'desc')
+        // );
 
-        const unsubscribe = onSnapshot(
-            categoryRequestsQuery,
-            (snapshot) => {
-                const requestsList = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as SkillCategoryRequest));
-
-                setCategoryRequests(requestsList);
-                setLoading(false);
-            },
-            (error) => {
-                console.error('Error fetching category requests:', error);
-                setError('Failed to fetch category requests');
-                setLoading(false);
+        let requestsQuery;
+        if (isAdmin || currentUser) {
+            if (isAdmin) {
+                requestsQuery = query(
+                    collection(db, "skillCategoryRequests"),
+                    orderBy("createdAt", "desc")
+                );
+            } else {
+                requestsQuery = query(
+                    collection(db, "skillCategoryRequests"),
+                    where("requestedBy", "==", currentUser?.uid),
+                    where("status", "==", "pending"),
+                    orderBy("createdAt", "desc")
+                );
             }
-        );
 
-        return unsubscribe;
-    }, []);
+            const unsubscribe = onSnapshot(
+                requestsQuery,
+                (snapshot) => {
+                    const requestsList = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    } as SkillCategoryRequest));
+
+                    setCategoryRequests(requestsList);
+                    setLoading(false);
+                },
+                (error) => {
+                    console.error('Error fetching category requests:', error);
+                    setError('Failed to fetch category requests');
+                    setLoading(false);
+                }
+            );
+
+            return unsubscribe;
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUser, isAdmin]);
 
     const createCategoryRequest = async (
         name: string,

@@ -306,7 +306,7 @@ const AdminSkillManagement = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Skill Management</h1>
         {!showAddForm && (

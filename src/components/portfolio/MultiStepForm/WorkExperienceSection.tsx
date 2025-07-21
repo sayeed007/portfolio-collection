@@ -189,11 +189,18 @@ export function WorkExperience({
                                         {currentResponsibilities.map((_: string, responsibilityIndex: number) => (
                                             <div key={responsibilityIndex} className="flex gap-2 items-center">
                                                 <div className="flex-1">
-                                                    <Input
+                                                    <textarea
                                                         {...register(`workExperience.${experienceIndex}.responsibilities.${responsibilityIndex}`)}
-                                                        placeholder="e.g., Developed and maintained web applications using React and Node.js"
-                                                        error={errors.workExperience?.[experienceIndex]?.responsibilities?.[responsibilityIndex]?.message}
+                                                        rows={4}
+                                                        maxLength={1000}
+                                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
+                                                        placeholder="Provide a detailed description of the project, including its purpose, target audience, and key features. Mention the problem it solves and the value it provides. Include project scope, challenges faced, and outcomes achieved..."
                                                     />
+                                                    {errors.workExperience?.[experienceIndex]?.responsibilities?.[responsibilityIndex]?.message && (
+                                                        <p className="text-red-500 text-sm mt-1">
+                                                            {errors.workExperience?.[experienceIndex]?.responsibilities?.[responsibilityIndex]?.message}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 {currentResponsibilities.length > 1 && (
                                                     <DeleteButton

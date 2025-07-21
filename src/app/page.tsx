@@ -258,7 +258,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {testimonials.map((testimonial, index) => (
                 <Card key={index} className="p-8 border-0 bg-white/80 backdrop-blur hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                   <div className="flex mb-4">
