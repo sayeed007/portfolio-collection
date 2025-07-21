@@ -1,27 +1,31 @@
 'use client';
 
-import React from 'react';
 import { Card } from '@/components/ui';
+import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
+import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
+import { useSkills } from '@/lib/hooks/useSkills';
+import { Portfolio } from '@/lib/types';
+import { formatFirebaseTImestampDate } from '@/lib/utils/formatters';
 import {
-    User,
-    Mail,
-    Phone,
-    MapPin,
-    Calendar,
-    GraduationCap,
     Award,
     BookOpen,
-    Code,
     Briefcase,
-    FolderOpen,
-    Users,
+    Calendar,
+    Code,
     Download,
     Edit,
-    Eye
+    Eye,
+    FolderOpen,
+    GraduationCap,
+    Mail,
+    MapPin,
+    Phone,
+    User,
+    Users
 } from 'lucide-react';
-import { Portfolio } from '@/lib/types';
-import { formatDate } from '@/lib/utils/formatters';
 import Image from 'next/image';
+import React from 'react';
+
 
 interface PortfolioViewProps {
     portfolio: Portfolio;
@@ -41,6 +45,21 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
     const { profileImage, employeeCode, designation, email, mobileNo, nationality, yearsOfExperience, languageProficiency, summary } = portfolio?.personalInfo;
     const { visitCount } = portfolio;
+
+    // For Data View
+    const { categories } = useSkillCategories();
+    const { skills } = useSkills(categories);
+    const { skillRequests } = useSkillRequests();
+    const { categoryRequests } = useSkillCategoryRequests();
+
+    const allCategories = [...categoryRequests, ...categories].map(category => ({
+        value: category.id,
+        label: category.name,
+    }));
+    const allSkills = [...skillRequests, ...skills].map(skill => ({
+        value: skill.id,
+        label: skill.name,
+    }));
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -224,7 +243,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                         {portfolio?.technicalSkills?.map((skillCategory, index) => (
                             <div key={`technicalSkills-${index}`}>
                                 <h3 className="font-semibold text-gray-800 mb-2">
-                                    {skillCategory.category}
+                                    {allCategories?.filter(category => category?.value === skillCategory.category)?.[0]?.label}
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {skillCategory.skills.map((skill, skillIndex) => (
@@ -232,7 +251,8 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                                             key={skillIndex}
                                             className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                                         >
-                                            {skill.skillId} ({skill.proficiency})
+                                            {allSkills?.filter(a_skill => a_skill?.value === skill.skillId)?.[0]?.label}
+                                            ({skill.proficiency})
                                         </span>
                                     ))}
                                 </div>
@@ -325,8 +345,8 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
             {/* Footer */}
             <div className="text-center text-sm text-gray-500 py-4">
-                <p>Portfolio created on {formatDate(portfolio?.createdAt?.toString())}</p>
-                <p>Last updated on {formatDate(portfolio?.updatedAt?.toString())}</p>
+                <p>Portfolio created on {formatFirebaseTImestampDate(portfolio?.createdAt)}</p>
+                <p>Last updated on {formatFirebaseTImestampDate(portfolio?.updatedAt)}</p>
             </div>
         </div>
     );

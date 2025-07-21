@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Portfolio } from '@/lib/types/portfolio';
 import BackgroundDecoration from '@/components/common/BackgroundDecoration';
 
+
 export default function PortfolioPage() {
     const params = useParams();
     const { user } = useAuth();
@@ -21,6 +22,7 @@ export default function PortfolioPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const portfolioId = params.id as string;
+
 
     useEffect(() => {
         const fetchPortfolio = async () => {

@@ -10,6 +10,17 @@ export const formatDate = (date: Date | string | number): string => {
   });
 };
 
+// Format Firebase timestamp to normal date
+export const formatFirebaseTImestampDate = (timestamp: { seconds: number, nanoseconds: number }): string => {
+  const milliseconds = timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000;
+  const dateObj = new Date(milliseconds);
+  return dateObj.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 export const formatDateShort = (date: Date | string | number): string => {
   const dateObj = new Date(date);
   return dateObj.toLocaleDateString("en-US", {
