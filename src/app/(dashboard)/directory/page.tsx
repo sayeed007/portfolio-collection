@@ -4,7 +4,11 @@
 
 import { PortfolioDirectory } from '@/components/portfolio/PortfolioDirectory';
 import { usePortfolio } from '@/lib/hooks/usePortfolio';
+import { generatePortfolioPDF } from '@/lib/utils/pdf-generator';
 import { useEffect } from 'react';
+import { useAllCategories } from "@/lib/hooks/useAllCategories";
+import { useAllSkills } from "@/lib/hooks/useAllSkills";
+
 
 export default function DirectoryPage() {
     const {
@@ -14,6 +18,11 @@ export default function DirectoryPage() {
         fetchPortfolios, // Function to fetch all public portfolios
         // filters,
     } = usePortfolio();
+
+
+    // For Data View
+    const allCategories = useAllCategories();
+    const allSkills = useAllSkills();
 
     // Fetch all public portfolios when component mounts
     useEffect(() => {
@@ -36,8 +45,7 @@ export default function DirectoryPage() {
                 loading={loading}
                 error={!!error}
                 onPDFExport={(portfolio) => {
-                    // Implement PDF export functionality
-                    console.log('Exporting PDF for:', portfolio.employeeCode);
+                    generatePortfolioPDF(portfolio, allCategories, allSkills);
                 }}
             />
         </div>
