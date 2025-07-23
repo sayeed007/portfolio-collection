@@ -9,8 +9,8 @@ import PortfolioManagementCard from "@/components/dashboard/PortfolioManagementC
 import PortfolioOverviewCard from "@/components/dashboard/PortfolioOverviewCard";
 import StatsCard from "@/components/dashboard/StatsCard";
 import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
-import { useAllCategories } from "@/lib/hooks/useAllCategories";
-import { useAllSkills } from "@/lib/hooks/useAllSkills";
+// import { useAllCategories } from "@/lib/hooks/useAllCategories";
+// import { useAllSkills } from "@/lib/hooks/useAllSkills";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 // import { createPortfolioHTML } from "@/lib/utils/pdf-generator";

@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
 import { Button } from '@/components/ui';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { useAllCategories } from "@/lib/hooks/useAllCategories";
+import { useAllSkills } from "@/lib/hooks/useAllSkills";
 import { Portfolio } from '@/lib/types';
+import { getJobDuration } from '@/lib/utils/helpers';
 import { generatePortfolioPDF } from '@/lib/utils/pdf-generator';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import React, { useState } from 'react';
+
 
 interface PDFExportProps {
     portfolio: Portfolio;
@@ -23,12 +27,16 @@ export const PDFExport: React.FC<PDFExportProps> = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // For Data View
+    const allCategories = useAllCategories();
+    const allSkills = useAllSkills();
+
     const handleExport = async () => {
         try {
             setIsGenerating(true);
             setError(null);
 
-            await generatePortfolioPDF(portfolio);
+            await generatePortfolioPDF(portfolio, allCategories, allSkills);
         } catch (err) {
             console.error('PDF generation failed:', err);
             setError('Failed to generate PDF. Please try again.');
@@ -171,7 +179,7 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
                             {portfolio.workExperience.map((work, index) => (
                                 <div key={index}>
                                     <h3 className="font-medium text-gray-900 text-sm">{work.position}</h3>
-                                    <p className="text-gray-600 text-sm">{work.company} • {work.duration}</p>
+                                    <p className="text-gray-600 text-sm">{work.company} • {getJobDuration(work)}</p>
                                     {work.responsibilities && work.responsibilities.length > 0 && (
                                         <ul className="list-disc list-inside text-gray-700 text-xs mt-1 space-y-1">
                                             {work.responsibilities.map((resp, respIndex) => (
