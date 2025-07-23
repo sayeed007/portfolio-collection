@@ -1,4 +1,4 @@
-// components/common/BackgroundDecoration.tsx
+// components/common/BackgroundDecoration.tsx => Old only for viewport 100vh
 'use client';
 
 import React from 'react';
