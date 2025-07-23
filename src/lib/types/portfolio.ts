@@ -48,11 +48,21 @@ export interface TechnicalSkill {
   }>;
 }
 
+// export interface WorkExperience {
+//   company: string;
+//   position: string;
+//   duration: string;
+//   responsibilities: string[];
+// }
 export interface WorkExperience {
-  company: string;
   position: string;
-  duration: string;
-  responsibility: string[];
+  company: string;
+  responsibilities: string[];
+  startDate: string;
+  endDate?: string;
+  isCurrentRole?: boolean;
+  technologies?: string[];
+  // ...any other fields
 }
 
 export interface Project {

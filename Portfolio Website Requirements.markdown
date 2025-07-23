@@ -72,7 +72,7 @@ The Portfolio Collection Website is a web application designed to allow users to
   - **Company**: Employer name (string).
   - **Role**: Job role (string).
   - **Duration**: Employment period (string, e.g., "Jan 2020 - Dec 2022").
-  - **Responsibility**: List of responsibilities (array of strings).
+  - **responsibilities**: List of responsibilities (array of strings).
 
 #### Step 4: Projects
 - **Projects**:
@@ -161,7 +161,7 @@ The Portfolio Collection Website is a web application designed to allow users to
       "company": "string",
       "role": "string",
       "duration": "string",
-      "responsibility": ["string"]
+      "responsibilities": ["string"]
     }
   ],
   "projects": [

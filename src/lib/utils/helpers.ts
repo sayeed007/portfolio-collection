@@ -2,6 +2,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { FILE_LIMITS, VALIDATION_MESSAGES } from "./constants";
+import { WorkExperience } from "../types";
 
 // Utility function to merge class names
 export function cn(...inputs: ClassValue[]): string {
@@ -483,3 +484,33 @@ export const trapFocus = (element: HTMLElement): (() => void) => {
     document.removeEventListener("keydown", handleTabKey);
   };
 };
+
+
+/**
+ * Calculate job duration in years and months
+ * @param {Object} job - Job object with startDate, endDate, isCurrentRole
+ * @returns {string} - Duration like "1 year 2 months"
+ */
+export const getJobDuration = (job: WorkExperience) => {
+  const start = new Date(job.startDate);
+  // const end = job.isCurrentRole ? new Date() : job?.endDate ? new Date(job.endDate) : new Date() ;
+  const end = job?.endDate ? new Date(job.endDate) : new Date();
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return "Invalid dates";
+  }
+
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  const parts = [];
+  if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+
+  return parts.length > 0 ? parts.join(' ') : 'Less than a month';
+}

@@ -55,7 +55,7 @@ export interface WorkExperience {
   company: string;
   position: string;
   duration: string;
-  responsibility: string[];
+  responsibilities: string[];
   technologies: string[];
 }
 

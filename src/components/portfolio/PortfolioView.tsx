@@ -6,6 +6,7 @@ import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkill
 import { useSkills } from '@/lib/hooks/useSkills';
 import { Portfolio } from '@/lib/types';
 import { formatFirebaseTImestampDate } from '@/lib/utils/formatters';
+import { getJobDuration } from '@/lib/utils/helpers';
 import {
     Award,
     BookOpen,
@@ -48,14 +49,15 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
 
     // For Data View
     const { categories } = useSkillCategories();
-    const { skills } = useSkills(categories);
-    const { skillRequests } = useSkillRequests();
     const { categoryRequests } = useSkillCategoryRequests();
-
     const allCategories = [...categoryRequests, ...categories].map(category => ({
         value: category.id,
         label: category.name,
     }));
+
+
+    const { skills } = useSkills(categories);
+    const { skillRequests } = useSkillRequests();
     const allSkills = [...skillRequests, ...skills].map(skill => ({
         value: skill.id,
         label: skill.name,
@@ -274,10 +276,10 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
                             <div key={`workExperience-${index}`} className="border-l-4 border-green-500 pl-4">
                                 <h3 className="font-semibold text-gray-900">{work.position}</h3>
                                 <p className="text-gray-600 font-medium">{work.company}</p>
-                                <p className="text-sm text-gray-500 mb-2">{work.duration}</p>
-                                {work.responsibility && work.responsibility.length > 0 && (
+                                <p className="text-sm text-gray-500 mb-2">{getJobDuration(work)} ({work.startDate} - {work.endDate || 'Present'})</p>
+                                {work.responsibilities && work.responsibilities.length > 0 && (
                                     <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                        {work.responsibility.map((resp, respIndex) => (
+                                        {work.responsibilities.map((resp, respIndex) => (
                                             <li key={respIndex} className="text-sm">{resp}</li>
                                         ))}
                                     </ul>
@@ -325,7 +327,7 @@ export const PortfolioView: React.FC<PortfolioViewProps> = ({
             )}
 
             {/* References */}
-            {portfolio?.references && portfolio?.references.length > 0 && (
+            {portfolio?.references && portfolio?.references.length > 0 && portfolio?.references?.[0]?.['name'] && (
                 <Card className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Users className="w-5 h-5" />

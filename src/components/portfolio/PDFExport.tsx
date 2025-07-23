@@ -172,9 +172,9 @@ export const PDFPreview: React.FC<PDFPreviewProps> = ({ portfolio }) => {
                                 <div key={index}>
                                     <h3 className="font-medium text-gray-900 text-sm">{work.position}</h3>
                                     <p className="text-gray-600 text-sm">{work.company} • {work.duration}</p>
-                                    {work.responsibility && work.responsibility.length > 0 && (
+                                    {work.responsibilities && work.responsibilities.length > 0 && (
                                         <ul className="list-disc list-inside text-gray-700 text-xs mt-1 space-y-1">
-                                            {work.responsibility.map((resp, respIndex) => (
+                                            {work.responsibilities.map((resp, respIndex) => (
                                                 <li key={respIndex}>{resp}</li>
                                             ))}
                                         </ul>

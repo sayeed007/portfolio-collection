@@ -2,6 +2,7 @@
 
 import { Portfolio } from "../types/portfolio";
 import { formatDate, formatExperience, formatList } from "./formatters";
+import { getJobDuration } from './helpers';
 
 // PDF generation using html2pdf.js
 // Note: Make sure to install html2pdf.js: npm install html2pdf.js @types/html2pdf.js
@@ -15,7 +16,11 @@ interface PDFOptions {
 }
 
 // Create HTML template for PDF
-const createPortfolioHTML = (portfolio: Portfolio): string => {
+export const createPortfolioHTML = (
+  portfolio: Portfolio,
+  allCategories: { value: string; label: string }[],
+  allSkills: { value: string; label: string }[]
+): string => {
   const {
     employeeCode,
     designation,
@@ -32,6 +37,7 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
     references,
   } = portfolio;
   const { email, mobileNo, profileImage, } = portfolio?.personalInfo;
+  console.log(references);
 
   return `
     <!DOCTYPE html>
@@ -269,12 +275,12 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
           <h2 class="section-title">Technical Skills</h2>
           ${technicalSkills
         .map(
-          (category) => `
+          (skillCategory) => `
             <div class="skills-category">
-              <h4>${category.category}</h4>
+              <h4>${allCategories?.filter(category => category?.value === skillCategory.category)?.[0]?.label}</h4>
               <div class="skills-list">
-                ${category.skills
-              .map((skill) => `<span class="skill-tag">${skill}</span>`)
+                ${skillCategory.skills
+              .map((skill) => `<span class="skill-tag">${allSkills?.filter(a_skill => a_skill?.value === skill.skillId)?.[0]?.label}(${skill.proficiency}))</span>`)
               .join("")}
               </div>
             </div>
@@ -297,11 +303,11 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
             <div class="card">
               <h4>${exp.position}</h4>
               <p><strong>${exp.company}</strong></p>
-              <p class="meta">${exp.duration}</p>
-              ${exp.responsibility && exp.responsibility.length > 0
+              <p class="meta">${getJobDuration(exp)} (${exp.startDate} - ${exp.endDate || 'Present'})</p>
+              ${exp.responsibilities && exp.responsibilities.length > 0
               ? `
                 <ul class="responsibilities">
-                  ${exp.responsibility
+                  ${exp.responsibilities
                 .map((resp) => `<li>${resp}</li>`)
                 .join("")}
                 </ul>
@@ -412,7 +418,7 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
     }
 
         <!-- References Section -->
-        ${references && references.length > 0
+        ${references && references.length > 0 && references?.[0]?.name
       ? `
         <div class="section">
           <h2 class="section-title">References</h2>
@@ -447,6 +453,8 @@ const createPortfolioHTML = (portfolio: Portfolio): string => {
 // Generate PDF using html2pdf.js
 export const generatePortfolioPDF = async (
   portfolio: Portfolio,
+  allCategories: { value: string; label: string }[],
+  allSkills: { value: string; label: string }[],
   options: PDFOptions = {}
 ): Promise<void> => {
   try {
@@ -464,7 +472,7 @@ export const generatePortfolioPDF = async (
     const pdfOptions = { ...defaultOptions, ...options };
 
     // Create HTML content
-    const htmlContent = createPortfolioHTML(portfolio);
+    const htmlContent = createPortfolioHTML(portfolio, allCategories, allSkills);
 
     // Create temporary element
     const element = document.createElement("div");
@@ -504,8 +512,12 @@ export const generatePortfolioPDF = async (
 };
 
 // Preview portfolio HTML (for testing)
-export const previewPortfolioHTML = (portfolio: Portfolio): void => {
-  const htmlContent = createPortfolioHTML(portfolio);
+export const previewPortfolioHTML = (
+  portfolio: Portfolio,
+  allCategories: { value: string; label: string }[],
+  allSkills: { value: string; label: string }[]
+): void => {
+  const htmlContent = createPortfolioHTML(portfolio, allCategories, allSkills);
   const newWindow = window.open("", "_blank");
   if (newWindow) {
     newWindow.document.write(htmlContent);
@@ -516,6 +528,8 @@ export const previewPortfolioHTML = (portfolio: Portfolio): void => {
 // Generate PDF blob (for server-side processing if needed)
 export const generatePortfolioPDFBlob = async (
   portfolio: Portfolio,
+  allCategories: { value: string; label: string }[],
+  allSkills: { value: string; label: string }[],
   options: PDFOptions = {}
 ): Promise<Blob> => {
   try {
@@ -530,7 +544,7 @@ export const generatePortfolioPDFBlob = async (
 
     const pdfOptions = { ...defaultOptions, ...options };
 
-    const htmlContent = createPortfolioHTML(portfolio);
+    const htmlContent = createPortfolioHTML(portfolio, allCategories, allSkills);
 
     const element = document.createElement("div");
     element.innerHTML = htmlContent;

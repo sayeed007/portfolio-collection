@@ -15,6 +15,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { PortfolioCard } from './PortfolioCard';
+import { getTimestampValue } from '@/lib/utils/formatters';
 
 interface PortfolioDirectoryProps {
     portfolios: Portfolio[];
@@ -146,8 +147,8 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     bValue = b.yearsOfExperience;
                     break;
                 case 'updated':
-                    aValue = new Date(a.updatedAt.toDate()).getTime();
-                    bValue = new Date(b.updatedAt.toDate()).getTime();
+                    aValue = getTimestampValue(a?.updatedAt);
+                    bValue = getTimestampValue(b?.updatedAt);
                     break;
                 case 'visits':
                     aValue = a.visitCount || 0;

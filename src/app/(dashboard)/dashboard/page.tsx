@@ -9,8 +9,11 @@ import PortfolioManagementCard from "@/components/dashboard/PortfolioManagementC
 import PortfolioOverviewCard from "@/components/dashboard/PortfolioOverviewCard";
 import StatsCard from "@/components/dashboard/StatsCard";
 import WelcomeHeader from "@/components/dashboard/WelcomeHeader";
+import { useAllCategories } from "@/lib/hooks/useAllCategories";
+import { useAllSkills } from "@/lib/hooks/useAllSkills";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
+// import { createPortfolioHTML } from "@/lib/utils/pdf-generator";
 import { Award, Eye, FileText, User } from "lucide-react";
 
 export default function DashboardPage() {
@@ -23,6 +26,11 @@ export default function DashboardPage() {
         isPortfolioNotFound,
         retryFetch,
     } = usePortfolio();
+
+    // For Data View
+    // const allCategories = useAllCategories();
+    // const allSkills = useAllSkills();
+
 
     // If portfolio not found, show the friendly "No Portfolio Yet" UI immediately (no loading)
     if (isPortfolioNotFound) {
@@ -84,50 +92,60 @@ export default function DashboardPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            <BackgroundDecoration />
+        <>
+            {/* <>
+                {portfolio &&
+                    <div dangerouslySetInnerHTML={{ __html: createPortfolioHTML(portfolio, allCategories, allSkills) }} />
+                }
+            </> */}
 
-            <div className="relative z-10 container mx-auto px-4 py-8">
-                {/* Welcome Header */}
-                <WelcomeHeader
-                    userName={user?.displayName || ''}
-                    userEmail={user?.email || ''}
-                />
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                    {stats.map((stat, index) => (
-                        <StatsCard
-                            key={index}
-                            icon={stat.icon}
-                            label={stat.label}
-                            value={stat.value}
-                            color={stat.color}
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+                <BackgroundDecoration />
+
+                <div className="relative z-10 container mx-auto px-4 py-8">
+                    {/* Welcome Header */}
+                    <WelcomeHeader
+                        userName={user?.displayName || ''}
+                        userEmail={user?.email || ''}
+                    />
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                        {stats.map((stat, index) => (
+                            <StatsCard
+                                key={index}
+                                icon={stat.icon}
+                                label={stat.label}
+                                value={stat.value}
+                                color={stat.color}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Main Action Cards */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                        {/* Portfolio Management */}
+                        <PortfolioManagementCard
+                            hasPortfolio={!!portfolio}
+                            userId={user?.uid}
                         />
-                    ))}
+
+                        {/* Explore & Connect */}
+                        <ExploreConnectCard />
+                    </div>
+
+                    {/* Portfolio Overview - Only show if portfolio exists */}
+                    {portfolio && (
+                        <PortfolioOverviewCard
+                            portfolio={portfolio}
+                            userId={user?.uid}
+                            loading={loading}
+                        />
+                    )}
                 </div>
-
-                {/* Main Action Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                    {/* Portfolio Management */}
-                    <PortfolioManagementCard
-                        hasPortfolio={!!portfolio}
-                        userId={user?.uid}
-                    />
-
-                    {/* Explore & Connect */}
-                    <ExploreConnectCard />
-                </div>
-
-                {/* Portfolio Overview - Only show if portfolio exists */}
-                {portfolio && (
-                    <PortfolioOverviewCard
-                        portfolio={portfolio}
-                        userId={user?.uid}
-                        loading={loading}
-                    />
-                )}
             </div>
-        </div>
-    );
+        </>
+    )
+
 }

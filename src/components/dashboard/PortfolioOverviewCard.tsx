@@ -1,7 +1,10 @@
 // components/dashboard/PortfolioOverviewCard.tsx
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useAllCategories } from "@/lib/hooks/useAllCategories";
+import { useAllSkills } from "@/lib/hooks/useAllSkills";
 import { Portfolio } from '@/lib/types';
+import { generatePortfolioPDF } from '@/lib/utils/pdf-generator';
 import {
     Award,
     Calendar,
@@ -18,6 +21,7 @@ import {
 import Link from 'next/link';
 import React from 'react';
 
+
 interface PortfolioOverviewCardProps {
     portfolio: Portfolio;
     userId?: string;
@@ -27,10 +31,14 @@ interface PortfolioOverviewCardProps {
 const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
     portfolio,
     userId,
-    loading
+    loading,
 }) => {
 
     const { designation, yearsOfExperience, nationality } = portfolio?.personalInfo;
+
+    // For Data View
+    const allCategories = useAllCategories();
+    const allSkills = useAllSkills();
 
     return (
         <Card className="p-8 border-0 bg-white/80 backdrop-blur hover:shadow-xl transition-all duration-300">
@@ -153,7 +161,7 @@ const PortfolioOverviewCard: React.FC<PortfolioOverviewCardProps> = ({
                             size="sm"
                             className="w-full justify-start h-12 border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300"
                             onClick={() => {
-                                console.log("Export PDF clicked");
+                                generatePortfolioPDF(portfolio, allCategories, allSkills);
                             }}
                         >
                             <Download className="w-4 h-4 mr-3" />

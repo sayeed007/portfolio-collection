@@ -7,6 +7,9 @@ import { User, MapPin, Calendar, Eye, Download } from 'lucide-react';
 import { Portfolio } from '@/lib/types';
 import { formatDate } from '@/lib/utils/formatters';
 import Image from 'next/image';
+import { useSkills } from '@/lib/hooks/useSkills';
+import { useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
+import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
 
 interface PortfolioCardProps {
     portfolio: Portfolio;
@@ -29,8 +32,16 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
 
     const { profileImage, employeeCode, designation, yearsOfExperience, nationality, summary } = portfolio?.personalInfo;
 
+    const { categories } = useSkillCategories();
+    const { skills } = useSkills(categories);
+    const { skillRequests } = useSkillRequests();
+    const allSkills = [...skillRequests, ...skills].map(skill => ({
+        value: skill.id,
+        label: skill.name,
+    }));
+
     return (
-        <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <Card className="group hover:shadow-lg hover:border-blue-600 transition-all duration-300 overflow-hidden">
             <Link href={`/portfolio/${portfolio.userId}`}>
                 <div className="p-6">
                     {/* Header with Profile Image and Basic Info */}
@@ -106,7 +117,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                     {/* Technical Skills Preview */}
                     {portfolio.technicalSkills && portfolio.technicalSkills.length > 0 && (
                         <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Top Skills</h4>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Top Technical Skills</h4>
                             <div className="flex flex-wrap gap-2">
                                 {portfolio.technicalSkills
                                     .slice(0, 2)
@@ -117,7 +128,8 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                                                     key={skillIndex}
                                                     className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
                                                 >
-                                                    {skill.skillId} ({skill.proficiency})
+                                                    {allSkills?.filter(a_skill => a_skill?.value === skill.skillId)?.[0]?.label}
+                                                    ({skill.proficiency})
                                                 </span>
                                             ))}
                                         </div>
