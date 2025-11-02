@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { db } from '@/lib/firebase/config';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { SkillCategory, useSkillCategories } from '@/lib/hooks/useSkillCategories';
 import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
 import { Skill, useSkills } from '@/lib/hooks/useSkills';
@@ -10,6 +12,15 @@ import { DeleteButton } from '../ui/DeleteButton';
 import PrimaryButton from '../ui/PrimaryButton';
 import { RejectButton } from '../ui/RejectButton';
 import { EditButton } from '../ui/edit-button';
+
+interface BulkCategoryItem {
+  name: string;
+}
+
+interface BulkSkillItem {
+  name: string;
+  categoryId: string;
+}
 
 const AdminSkillManagement = () => {
   // Use custom hooks
@@ -50,6 +61,17 @@ const AdminSkillManagement = () => {
   const [formData, setFormData] = useState({ name: '', categoryId: '' });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showBulkForm, setShowBulkForm] = useState(false);
+  const [bulkCategories, setBulkCategories] = useState<BulkCategoryItem[]>([
+    { name: '' },
+    { name: '' },
+    { name: '' },
+  ]);
+  const [bulkSkills, setBulkSkills] = useState<BulkSkillItem[]>([
+    { name: '', categoryId: '' },
+    { name: '', categoryId: '' },
+    { name: '', categoryId: '' },
+  ]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -61,6 +83,111 @@ const AdminSkillManagement = () => {
     setShowAddForm(false);
     setError('');
     setSuccess('');
+  };
+
+  const resetBulkForm = () => {
+    setBulkCategories([{ name: '' }, { name: '' }, { name: '' }]);
+    setBulkSkills([
+      { name: '', categoryId: '' },
+      { name: '', categoryId: '' },
+      { name: '', categoryId: '' },
+    ]);
+    setShowBulkForm(false);
+    setError('');
+    setSuccess('');
+  };
+
+  const addBulkCategoryRow = () => {
+    setBulkCategories([...bulkCategories, { name: '' }]);
+  };
+
+  const removeBulkCategoryRow = (index: number) => {
+    if (bulkCategories.length > 1) {
+      setBulkCategories(bulkCategories.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateBulkCategory = (index: number, value: string) => {
+    const updatedItems = [...bulkCategories];
+    updatedItems[index] = { name: value };
+    setBulkCategories(updatedItems);
+  };
+
+  const addBulkSkillRow = () => {
+    setBulkSkills([...bulkSkills, { name: '', categoryId: '' }]);
+  };
+
+  const removeBulkSkillRow = (index: number) => {
+    if (bulkSkills.length > 1) {
+      setBulkSkills(bulkSkills.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateBulkSkill = (index: number, field: 'name' | 'categoryId', value: string) => {
+    const updatedItems = [...bulkSkills];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    setBulkSkills(updatedItems);
+  };
+
+  const handleBulkCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validItems = bulkCategories.filter(item => item.name.trim());
+
+    if (validItems.length === 0) {
+      showMessage('Please fill in at least one category name', true);
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+
+      validItems.forEach((item) => {
+        const categoryRef = doc(collection(db, 'skillCategories'));
+        batch.set(categoryRef, {
+          name: item.name.trim(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      await batch.commit();
+      showMessage(`Successfully added ${validItems.length} categor${validItems.length > 1 ? 'ies' : 'y'}`);
+      resetBulkForm();
+    } catch (error) {
+      console.error('Error bulk adding categories:', error);
+      showMessage('Failed to add categories', true);
+    }
+  };
+
+  const handleBulkSkillSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validItems = bulkSkills.filter(item => item.name.trim() && item.categoryId);
+
+    if (validItems.length === 0) {
+      showMessage('Please fill in at least one skill with name and category', true);
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db);
+
+      validItems.forEach((item) => {
+        const skillRef = doc(collection(db, 'skills'));
+        batch.set(skillRef, {
+          name: item.name.trim(),
+          categoryId: item.categoryId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      await batch.commit();
+      showMessage(`Successfully added ${validItems.length} skill${validItems.length > 1 ? 's' : ''}`);
+      resetBulkForm();
+    } catch (error) {
+      console.error('Error bulk adding skills:', error);
+      showMessage('Failed to add skills', true);
+    }
   };
 
   const showMessage = (message: string, isError = false) => {
@@ -171,10 +298,21 @@ const AdminSkillManagement = () => {
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Skill Management</h1>
-        {!showAddForm && (
-          <PrimaryButton onClick={() => { setShowAddForm(true); setActiveTab('categories'); }}>
-            <Plus className="w-4 h-4 mr-2" /> Add Category
-          </PrimaryButton>
+        {!showAddForm && !showBulkForm && (
+          <div className="flex gap-3">
+            <PrimaryButton onClick={() => { setShowAddForm(true); setActiveTab('categories'); }}>
+              <Plus className="w-4 h-4 mr-2" /> Add Category
+            </PrimaryButton>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowBulkForm(true)}
+              className="border-blue-500 text-blue-600 hover:bg-blue-50"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Bulk Create
+            </Button>
+          </div>
         )}
       </div>
 
@@ -226,6 +364,149 @@ const AdminSkillManagement = () => {
           <AlertCircle className="w-5 h-5 text-red-600" />
           <span className="text-red-800">{error}</span>
         </div>
+      )}
+
+      {showBulkForm && (
+        <Card className="mb-8 p-6">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Bulk Create {activeTab === 'categories' ? 'Categories' : 'Skills'}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Add multiple items at once. Empty rows will be ignored.</p>
+              </div>
+              <Button type="button" variant="outline" onClick={resetBulkForm}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {activeTab === 'categories' ? (
+              <form onSubmit={handleBulkCategorySubmit}>
+                <div className="space-y-4 mb-6">
+                  <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                    <div className="col-span-10">Category Name *</div>
+                    <div className="col-span-2">Actions</div>
+                  </div>
+
+                  {bulkCategories.map((item, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-4 items-center">
+                      <div className="col-span-10">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => updateBulkCategory(index, e.target.value)}
+                          placeholder="e.g., Programming Languages"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeBulkCategoryRow(index)}
+                          disabled={bulkCategories.length === 1}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addBulkCategoryRow}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Row
+                  </Button>
+                  <div className="flex-1"></div>
+                  <Button type="button" variant="outline" onClick={resetBulkForm}>
+                    Cancel
+                  </Button>
+                  <PrimaryButton type="submit">
+                    <Save className="w-4 h-4 mr-2" />
+                    Create All Categories
+                  </PrimaryButton>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleBulkSkillSubmit}>
+                <div className="space-y-4 mb-6">
+                  <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                    <div className="col-span-5">Skill Name *</div>
+                    <div className="col-span-5">Category *</div>
+                    <div className="col-span-2">Actions</div>
+                  </div>
+
+                  {bulkSkills.map((item, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-4 items-center">
+                      <div className="col-span-5">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => updateBulkSkill(index, 'name', e.target.value)}
+                          placeholder="e.g., JavaScript"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="col-span-5">
+                        <select
+                          value={item.categoryId}
+                          onChange={(e) => updateBulkSkill(index, 'categoryId', e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="">Select Category</option>
+                          {categories.map(category => (
+                            <option key={category.id} value={category.id}>{category.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeBulkSkillRow(index)}
+                          disabled={bulkSkills.length === 1}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addBulkSkillRow}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Row
+                  </Button>
+                  <div className="flex-1"></div>
+                  <Button type="button" variant="outline" onClick={resetBulkForm}>
+                    Cancel
+                  </Button>
+                  <PrimaryButton type="submit">
+                    <Save className="w-4 h-4 mr-2" />
+                    Create All Skills
+                  </PrimaryButton>
+                </div>
+              </form>
+            )}
+          </div>
+        </Card>
       )}
 
       {showAddForm && (

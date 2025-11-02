@@ -7,7 +7,7 @@ import { Select } from '@/components/ui/Select';
 import { YearSelect } from '@/components/ui/YearSelect';
 import { useDegree } from '@/lib/hooks/useDegree';
 import { useInstitution } from '@/lib/hooks/useInstitution';
-import { GraduationCap, Plus, Building2, Send } from 'lucide-react';
+import { GraduationCap, Plus, Building2, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { Controller, useFieldArray, Control, FieldErrors, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -66,9 +66,25 @@ interface EducationSectionProps {
     errors: FieldErrors<any>;
 }
 
+interface BulkInstitutionRequest {
+    name: string;
+    shortName: string;
+    type: string;
+    location: string;
+    division: string;
+}
+
 export function EducationSection({ control, errors }: EducationSectionProps) {
     const [showInstitutionRequest, setShowInstitutionRequest] = useState(false);
+    const [showBulkRequest, setShowBulkRequest] = useState(false);
     const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+    const [expandedEducations, setExpandedEducations] = useState<Set<number>>(new Set());
+    const [previousFieldsLength, setPreviousFieldsLength] = useState(0);
+    const [bulkRequests, setBulkRequests] = useState<BulkInstitutionRequest[]>([
+        { name: '', shortName: '', type: '', location: '', division: '' },
+        { name: '', shortName: '', type: '', location: '', division: '' },
+        { name: '', shortName: '', type: '', location: '', division: '' },
+    ]);
 
     // Get current user
     const auth = getAuth();
@@ -130,6 +146,36 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
         name: 'education',
     });
 
+    // Handle expansion: collapse all initially, but expand newly added items
+    useEffect(() => {
+        const currentLength = educationFields.length;
+
+        // If a new item was added (length increased)
+        if (currentLength > previousFieldsLength && previousFieldsLength > 0) {
+            // Expand only the newly added item (last one)
+            setExpandedEducations(prev => {
+                const newSet = new Set(prev);
+                newSet.add(currentLength - 1);
+                return newSet;
+            });
+        }
+
+        setPreviousFieldsLength(currentLength);
+    }, [educationFields.length, previousFieldsLength]);
+
+    // Toggle education expansion
+    const toggleEducationExpansion = (index: number) => {
+        setExpandedEducations(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
+            return newSet;
+        });
+    };
+
     // Handle institution request submission
     const onSubmitInstitutionRequest = async (data: InstitutionRequestFormData) => {
         if (!currentUser) {
@@ -159,6 +205,67 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
         setIsSubmittingRequest(false);
     };
 
+    // Bulk request handlers
+    const addBulkRow = () => {
+        setBulkRequests([...bulkRequests, { name: '', shortName: '', type: '', location: '', division: '' }]);
+    };
+
+    const removeBulkRow = (index: number) => {
+        if (bulkRequests.length > 1) {
+            setBulkRequests(bulkRequests.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkRequest = (index: number, field: keyof BulkInstitutionRequest, value: string) => {
+        const updated = [...bulkRequests];
+        updated[index] = { ...updated[index], [field]: value };
+        setBulkRequests(updated);
+    };
+
+    const handleBulkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentUser) {
+            alert('You must be logged in to request institutions');
+            return;
+        }
+
+        setIsSubmittingRequest(true);
+        clearMessages();
+
+        const validRequests = bulkRequests.filter(req => req.name.trim() && req.type && req.location.trim() && req.division);
+
+        if (validRequests.length === 0) {
+            alert('Please fill in at least one institution with all required fields');
+            setIsSubmittingRequest(false);
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            for (const req of validRequests) {
+                const success = await requestInstitution({
+                    ...req,
+                    requestedBy: currentUser.uid,
+                    requestedByEmail: currentUser.email || '',
+                });
+                if (success) successCount++;
+            }
+
+            if (successCount > 0) {
+                setBulkRequests([
+                    { name: '', shortName: '', type: '', location: '', division: '' },
+                    { name: '', shortName: '', type: '', location: '', division: '' },
+                    { name: '', shortName: '', type: '', location: '', division: '' },
+                ]);
+                setShowBulkRequest(false);
+            }
+        } catch (error) {
+            console.error('Bulk request error:', error);
+        }
+
+        setIsSubmittingRequest(false);
+    };
+
     // Clear messages when component unmounts or success/error changes
     useEffect(() => {
         if (institutionSuccess || institutionError) {
@@ -181,6 +288,155 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
                 <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
                     {institutionError}
                 </div>
+            )}
+
+            {/* Bulk Institution Request Form */}
+            {showBulkRequest && (
+                <Card className="p-6 border-2 border-purple-200 bg-purple-50">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center">
+                                <Building2 className="w-5 h-5 mr-2" />
+                                Bulk Request Institutions
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">Request multiple institutions at once. Empty rows will be ignored.</p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setShowBulkRequest(false);
+                                setBulkRequests([
+                                    { name: '', shortName: '', type: '', location: '', division: '' },
+                                    { name: '', shortName: '', type: '', location: '', division: '' },
+                                    { name: '', shortName: '', type: '', location: '', division: '' },
+                                ]);
+                                clearMessages();
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+
+                    <form onSubmit={handleBulkSubmit} className="space-y-4">
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 uppercase px-2">
+                                <div className="col-span-3">Institution Name *</div>
+                                <div className="col-span-2">Short Name</div>
+                                <div className="col-span-2">Type *</div>
+                                <div className="col-span-2">Location *</div>
+                                <div className="col-span-2">Division *</div>
+                                <div className="col-span-1">Action</div>
+                            </div>
+
+                            {bulkRequests.map((req, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                                    <div className="col-span-3">
+                                        <input
+                                            type="text"
+                                            value={req.name}
+                                            onChange={(e) => updateBulkRequest(index, 'name', e.target.value)}
+                                            placeholder="e.g., ABC University"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <input
+                                            type="text"
+                                            value={req.shortName}
+                                            onChange={(e) => updateBulkRequest(index, 'shortName', e.target.value)}
+                                            placeholder="e.g., ABC"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <select
+                                            value={req.type}
+                                            onChange={(e) => updateBulkRequest(index, 'type', e.target.value)}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        >
+                                            <option value="">Select...</option>
+                                            {INSTITUTION_TYPES.map(type => (
+                                                <option key={type.value} value={type.value}>{type.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <input
+                                            type="text"
+                                            value={req.location}
+                                            onChange={(e) => updateBulkRequest(index, 'location', e.target.value)}
+                                            placeholder="e.g., Dhaka"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <select
+                                            value={req.division}
+                                            onChange={(e) => updateBulkRequest(index, 'division', e.target.value)}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                        >
+                                            <option value="">Select...</option>
+                                            {DIVISIONS.map(div => (
+                                                <option key={div.value} value={div.value}>{div.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-1">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => removeBulkRow(index)}
+                                            disabled={bulkRequests.length === 1}
+                                            className="text-red-600 hover:text-red-800 hover:bg-red-50 w-full"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-300">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={addBulkRow}
+                                className="text-purple-600 hover:text-purple-800"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Row
+                            </Button>
+                            <div className="flex-1"></div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowBulkRequest(false);
+                                    setBulkRequests([
+                                        { name: '', shortName: '', type: '', location: '', division: '' },
+                                        { name: '', shortName: '', type: '', location: '', division: '' },
+                                        { name: '', shortName: '', type: '', location: '', division: '' },
+                                    ]);
+                                    clearMessages();
+                                }}
+                                disabled={isSubmittingRequest}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmittingRequest}
+                                className="flex items-center"
+                            >
+                                <Send className="w-4 h-4 mr-2" />
+                                {isSubmittingRequest ? 'Submitting...' : 'Submit All Requests'}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
             )}
 
             {/* Institution Request Modal/Form */}
@@ -303,10 +559,24 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
                             variant="ghost"
                             size="sm"
                             className="text-blue-600 hover:text-blue-800"
-                            onClick={() => setShowInstitutionRequest(true)}
+                            onClick={() => {
+                                setShowInstitutionRequest(true);
+                            }}
                         >
                             <Building2 className="w-4 h-4 mr-2" />
                             Request Institution
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-purple-600 hover:text-purple-800"
+                            onClick={() => {
+                                setShowBulkRequest(true);
+                            }}
+                        >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Bulk Request
                         </Button>
                         <Button
                             type="button"
@@ -322,73 +592,106 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
                 </div>
 
                 <div className="space-y-4">
-                    {educationFields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
-                            <Controller
-                                name={`education.${index}.degree`}
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                    <Select
-                                        label="Degree"
-                                        placeholder="Select a degree..."
-                                        options={degreeOptions || []}
-                                        value={degreeOptions?.find(option => option.value === value) || null}
-                                        onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
-                                        loading={degreesLoading}
-                                        searchable={true}
-                                        clearable={true}
-                                        error={(errors.education as any)?.[index]?.degree?.message}
-                                        required
-                                    />
-                                )}
-                            />
+                    {educationFields.map((field, index) => {
+                        const isExpanded = expandedEducations.has(index);
 
-                            <Controller
-                                name={`education.${index}.institution`}
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                    <Select
-                                        label="Institution"
-                                        placeholder="Select an institution..."
-                                        options={institutionOptions || []}
-                                        value={institutionOptions?.find(option => option.value === value) || null}
-                                        onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
-                                        loading={institutionsLoading}
-                                        searchable={true}
-                                        clearable={true}
-                                        error={(errors.education as any)?.[index]?.institution?.message}
-                                        required
-                                    />
-                                )}
-                            />
-
-                            <div className="flex gap-2">
-                                <Controller
-                                    name={`education.${index}.passingYear`}
-                                    control={control}
-                                    render={({ field: { onChange, value } }) => (
-                                        <YearSelect
-                                            label="Passing Year"
-                                            placeholder="e.g., 2020"
-                                            value={value}
-                                            onChange={onChange}
-                                            startYear={80}
-                                            endYear={0}
-                                            error={(errors.education as any)?.[index]?.passingYear?.message}
-                                            required
-                                            className="flex-1"
+                        return (
+                            <div key={field.id} className="p-4 border border-gray-200 rounded-lg">
+                                {/* Education Header with Expand/Collapse */}
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleEducationExpansion(index)}
+                                        className="p-1 h-8 w-8 text-gray-600 hover:text-gray-800 shrink-0"
+                                        title={isExpanded ? 'Collapse' : 'Expand'}
+                                    >
+                                        {isExpanded ? (
+                                            <ChevronDown className="w-5 h-5" />
+                                        ) : (
+                                            <ChevronUp className="w-5 h-5" />
+                                        )}
+                                    </Button>
+                                    <div className="flex-1">
+                                        <h4 className="font-semibold text-gray-900">
+                                            {(field as any).degree || 'New Education Entry'}
+                                        </h4>
+                                        {(field as any).institution && (
+                                            <p className="text-sm text-gray-600">{(field as any).institution}</p>
+                                        )}
+                                    </div>
+                                    {educationFields.length > 1 && (
+                                        <DeleteButton
+                                            alignWith="auto"
+                                            onDelete={() => removeEducation(index)}
                                         />
                                     )}
-                                />
-                                {educationFields.length > 1 && (
-                                    <DeleteButton
-                                        alignWith="floating-input"
-                                        onDelete={() => removeEducation(index)}
-                                    />
+                                </div>
+
+                                {/* Education Details - Collapsible */}
+                                {isExpanded && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <Controller
+                                            name={`education.${index}.degree`}
+                                            control={control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Select
+                                                    label="Degree"
+                                                    placeholder="Select a degree..."
+                                                    options={degreeOptions || []}
+                                                    value={degreeOptions?.find(option => option.value === value) || null}
+                                                    onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
+                                                    loading={degreesLoading}
+                                                    searchable={true}
+                                                    clearable={true}
+                                                    error={(errors.education as any)?.[index]?.degree?.message}
+                                                    required
+                                                />
+                                            )}
+                                        />
+
+                                        <Controller
+                                            name={`education.${index}.institution`}
+                                            control={control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Select
+                                                    label="Institution"
+                                                    placeholder="Select an institution..."
+                                                    options={institutionOptions || []}
+                                                    value={institutionOptions?.find(option => option.value === value) || null}
+                                                    onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
+                                                    loading={institutionsLoading}
+                                                    searchable={true}
+                                                    clearable={true}
+                                                    error={(errors.education as any)?.[index]?.institution?.message}
+                                                    required
+                                                />
+                                            )}
+                                        />
+
+                                        <Controller
+                                            name={`education.${index}.passingYear`}
+                                            control={control}
+                                            render={({ field: { onChange, value } }) => (
+                                                <YearSelect
+                                                    label="Passing Year"
+                                                    placeholder="e.g., 2020"
+                                                    value={value}
+                                                    onChange={onChange}
+                                                    startYear={80}
+                                                    endYear={0}
+                                                    error={(errors.education as any)?.[index]?.passingYear?.message}
+                                                    required
+                                                    className="flex-1"
+                                                />
+                                            )}
+                                        />
+                                    </div>
                                 )}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </Card>
         </div>

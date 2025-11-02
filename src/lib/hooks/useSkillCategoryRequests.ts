@@ -92,8 +92,6 @@ export const useSkillCategoryRequests = () => {
 
             return unsubscribe;
         }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentUser, isAdmin]);
 
     const createCategoryRequest = async (

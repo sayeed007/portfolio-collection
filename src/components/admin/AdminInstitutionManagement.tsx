@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { db } from '@/lib/firebase/config';
 import { Institution, InstitutionFormData, useInstitution } from '@/lib/hooks/useInstitution';
 import {
     AlertCircle,
@@ -19,8 +20,17 @@ import PrimaryButton from '../ui/PrimaryButton';
 import { RejectButton } from '../ui/RejectButton';
 import { EditButton } from '../ui/edit-button';
 import { INSTITUTION_TYPES } from '@/lib/staticData/institutionTypes';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 
-
+interface BulkInstitutionItem {
+    name: string;
+    shortName: string;
+    type: string;
+    location: string;
+    division: string;
+    isActive: boolean;
+    isVerified: boolean;
+}
 
 const BANGLADESH_DIVISIONS = [
     'Dhaka',
@@ -52,6 +62,7 @@ const AdminInstitutionManagement = () => {
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showBulkForm, setShowBulkForm] = useState(false);
     const [activeTab, setActiveTab] = useState<'institutions' | 'requests'>('institutions');
     const [formData, setFormData] = useState<InstitutionFormData>({
         name: '',
@@ -62,6 +73,11 @@ const AdminInstitutionManagement = () => {
         isActive: true,
         isVerified: true,
     });
+    const [bulkItems, setBulkItems] = useState<BulkInstitutionItem[]>([
+        { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+        { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+        { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+    ]);
 
     const resetForm = () => {
         setFormData({
@@ -76,6 +92,86 @@ const AdminInstitutionManagement = () => {
         setEditingId(null);
         setShowAddForm(false);
         clearMessages();
+    };
+
+    const resetBulkForm = () => {
+        setBulkItems([
+            { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+            { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+            { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true },
+        ]);
+        setShowBulkForm(false);
+        clearMessages();
+    };
+
+    const addBulkRow = () => {
+        setBulkItems([...bulkItems, { name: '', shortName: '', type: 'University', location: '', division: 'Dhaka', isActive: true, isVerified: true }]);
+    };
+
+    const removeBulkRow = (index: number) => {
+        if (bulkItems.length > 1) {
+            setBulkItems(bulkItems.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkItem = (index: number, field: keyof BulkInstitutionItem, value: string | boolean) => {
+        const updatedItems = [...bulkItems];
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+        setBulkItems(updatedItems);
+    };
+
+    const handleBulkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        clearMessages();
+
+        // Filter out empty rows
+        const validItems = bulkItems.filter(item => item.name.trim() && item.location.trim());
+
+        if (validItems.length === 0) {
+            return;
+        }
+
+        // Validate for duplicates within the bulk items
+        const names = validItems.map(item => item.name.toLowerCase());
+        const hasDuplicates = names.some((name, index) => names.indexOf(name) !== index);
+
+        if (hasDuplicates) {
+            return;
+        }
+
+        // Check for existing institutions
+        const existingNames = institutions.map(inst => inst.name.toLowerCase());
+        const conflictingItems = validItems.filter(item =>
+            existingNames.includes(item.name.toLowerCase())
+        );
+
+        if (conflictingItems.length > 0) {
+            return;
+        }
+
+        try {
+            const batch = writeBatch(db);
+
+            validItems.forEach((item) => {
+                const institutionRef = doc(collection(db, 'institutions'));
+                batch.set(institutionRef, {
+                    name: item.name.trim(),
+                    shortName: item.shortName.trim() || null,
+                    type: item.type,
+                    location: item.location.trim(),
+                    division: item.division,
+                    isActive: item.isActive,
+                    isVerified: item.isVerified,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+            resetBulkForm();
+        } catch (error) {
+            console.error('Error bulk adding institutions:', error);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -138,11 +234,22 @@ const AdminInstitutionManagement = () => {
                     </div>
                 </div>
 
-                {!showAddForm && (
-                    <PrimaryButton onClick={() => setShowAddForm(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Institution
-                    </PrimaryButton>
+                {!showAddForm && !showBulkForm && (
+                    <div className="flex gap-3">
+                        <PrimaryButton onClick={() => setShowAddForm(true)}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Institution
+                        </PrimaryButton>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={() => setShowBulkForm(true)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Bulk Create
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -182,6 +289,136 @@ const AdminInstitutionManagement = () => {
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <span className="text-red-800">{error}</span>
                 </div>
+            )}
+
+            {/* Bulk Create Form */}
+            {showBulkForm && (
+                <Card className="mb-8 p-6">
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900">Bulk Create Institutions</h2>
+                                <p className="text-sm text-gray-500 mt-1">Add multiple institutions at once. Empty rows will be ignored.</p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetBulkForm}
+                                className="text-gray-600 hover:text-gray-800"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleBulkSubmit}>
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-12 gap-3 text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                                    <div className="col-span-3">Name *</div>
+                                    <div className="col-span-2">Short Name</div>
+                                    <div className="col-span-2">Type *</div>
+                                    <div className="col-span-2">Location *</div>
+                                    <div className="col-span-1">Division *</div>
+                                    <div className="col-span-1">Active</div>
+                                    <div className="col-span-1">Actions</div>
+                                </div>
+
+                                {bulkItems.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-12 gap-3 items-start">
+                                        <div className="col-span-3">
+                                            <input
+                                                type="text"
+                                                value={item.name}
+                                                onChange={(e) => updateBulkItem(index, 'name', e.target.value)}
+                                                placeholder="e.g., University of Dhaka"
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <input
+                                                type="text"
+                                                value={item.shortName}
+                                                onChange={(e) => updateBulkItem(index, 'shortName', e.target.value)}
+                                                placeholder="e.g., DU"
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <select
+                                                value={item.type}
+                                                onChange={(e) => updateBulkItem(index, 'type', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                {INSTITUTION_TYPES.map(type => (
+                                                    <option key={type} value={type}>{type}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <input
+                                                type="text"
+                                                value={item.location}
+                                                onChange={(e) => updateBulkItem(index, 'location', e.target.value)}
+                                                placeholder="e.g., Dhaka"
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1">
+                                            <select
+                                                value={item.division}
+                                                onChange={(e) => updateBulkItem(index, 'division', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                {BANGLADESH_DIVISIONS.map(division => (
+                                                    <option key={division} value={division}>{division}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-span-1 flex items-center justify-center pt-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.isActive}
+                                                onChange={(e) => updateBulkItem(index, 'isActive', e.target.checked)}
+                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeBulkRow(index)}
+                                                disabled={bulkItems.length === 1}
+                                                className="text-red-600 hover:text-red-800 hover:bg-red-50 w-full"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addBulkRow}
+                                    className="text-blue-600 hover:text-blue-800"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Row
+                                </Button>
+                                <div className="flex-1"></div>
+                                <Button size='lg' type="button" variant="outline" onClick={resetBulkForm}>
+                                    Cancel
+                                </Button>
+                                <PrimaryButton type="submit">
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Create All Institutions
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </Card>
             )}
 
             {/* Add/Edit Form */}
@@ -362,9 +599,11 @@ const AdminInstitutionManagement = () => {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {institutions.map(institution => (
                                         <tr key={institution.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div>
-                                                    <div className="font-medium text-gray-900">{institution.name}</div>
+                                            <td className="px-6 py-4">
+                                                <div className="max-w-xs">
+                                                    <div className="font-medium text-gray-900 truncate" title={institution.name}>
+                                                        {institution.name}
+                                                    </div>
                                                     {institution.shortName && (
                                                         <div className="text-sm text-gray-500">{institution.shortName}</div>
                                                     )}
@@ -471,9 +710,11 @@ const AdminInstitutionManagement = () => {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {institutionRequests.map(request => (
                                         <tr key={request.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div>
-                                                    <div className="font-medium text-gray-900">{request.name}</div>
+                                            <td className="px-6 py-4">
+                                                <div className="max-w-xs">
+                                                    <div className="font-medium text-gray-900 truncate" title={request.name}>
+                                                        {request.name}
+                                                    </div>
                                                     {request.shortName && (
                                                         <div className="text-sm text-gray-500">{request.shortName}</div>
                                                     )}

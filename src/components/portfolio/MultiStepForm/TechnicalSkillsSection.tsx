@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
 import { useSkillCategoryRequests, useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
 import { useSkills } from '@/lib/hooks/useSkills';
-import { Code, Plus, Lightbulb, Tag } from 'lucide-react';
+import { Code, Plus, Lightbulb, Tag, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Controller, useFieldArray, Control, FieldErrors, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -53,6 +53,15 @@ const categoryRequestSchema = z.object({
 type SkillRequestFormData = z.infer<typeof skillRequestSchema>;
 type CategoryRequestFormData = z.infer<typeof categoryRequestSchema>;
 
+interface BulkSkillRequest {
+    name: string;
+    categoryId: string;
+}
+
+interface BulkCategoryRequest {
+    name: string;
+}
+
 const proficiencyOptions = [
     { value: 'Beginner', label: 'Beginner' },
     { value: 'Intermediate', label: 'Intermediate' },
@@ -71,12 +80,26 @@ interface TechnicalSkillsSectionProps {
 export function TechnicalSkills({ control, errors, watch, setValue, getValues }: TechnicalSkillsSectionProps) {
     const [showSkillRequest, setShowSkillRequest] = useState(false);
     const [showCategoryRequest, setShowCategoryRequest] = useState(false);
+    const [showBulkSkillRequest, setShowBulkSkillRequest] = useState(false);
+    const [showBulkCategoryRequest, setShowBulkCategoryRequest] = useState(false);
     const [isSubmittingSkillRequest, setIsSubmittingSkillRequest] = useState(false);
     const [isSubmittingCategoryRequest, setIsSubmittingCategoryRequest] = useState(false);
     const [skillRequestMessage, setSkillRequestMessage] = useState<string | null>(null);
     const [categoryRequestMessage, setCategoryRequestMessage] = useState<string | null>(null);
     const [skillRequestError, setSkillRequestError] = useState<string | null>(null);
     const [categoryRequestError, setCategoryRequestError] = useState<string | null>(null);
+    const [bulkSkillRequests, setBulkSkillRequests] = useState<BulkSkillRequest[]>([
+        { name: '', categoryId: '' },
+        { name: '', categoryId: '' },
+        { name: '', categoryId: '' },
+    ]);
+    const [bulkCategoryRequests, setBulkCategoryRequests] = useState<BulkCategoryRequest[]>([
+        { name: '' },
+        { name: '' },
+        { name: '' },
+    ]);
+    const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+    const [previousFieldsLength, setPreviousFieldsLength] = useState(0);
 
     // Get current user
     const auth = getAuth();
@@ -125,6 +148,36 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
         name: 'technicalSkills',
     });
 
+    // Handle expansion: collapse all initially, but expand newly added items
+    useEffect(() => {
+        const currentLength = skillFields.length;
+
+        // If a new item was added (length increased)
+        if (currentLength > previousFieldsLength && previousFieldsLength > 0) {
+            // Expand only the newly added item (last one)
+            setExpandedCategories(prev => {
+                const newSet = new Set(prev);
+                newSet.add(currentLength - 1);
+                return newSet;
+            });
+        }
+
+        setPreviousFieldsLength(currentLength);
+    }, [skillFields.length, previousFieldsLength]);
+
+    // Toggle category expansion
+    const toggleCategoryExpansion = (index: number) => {
+        setExpandedCategories(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
+            return newSet;
+        });
+    };
+
     // Handle skill request submission
     const onSubmitSkillRequest = async (data: SkillRequestFormData) => {
         if (!currentUser) {
@@ -170,6 +223,124 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
         } catch (err: any) {
             setCategoryRequestError(err.message || 'Failed to submit category request');
         }
+        setIsSubmittingCategoryRequest(false);
+    };
+
+    // Bulk skill request handlers
+    const addBulkSkillRow = () => {
+        setBulkSkillRequests([...bulkSkillRequests, { name: '', categoryId: '' }]);
+    };
+
+    const removeBulkSkillRow = (index: number) => {
+        if (bulkSkillRequests.length > 1) {
+            setBulkSkillRequests(bulkSkillRequests.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkSkillRequest = (index: number, field: keyof BulkSkillRequest, value: string) => {
+        const updated = [...bulkSkillRequests];
+        updated[index] = { ...updated[index], [field]: value };
+        setBulkSkillRequests(updated);
+    };
+
+    const handleBulkSkillSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentUser) {
+            alert('You must be logged in to request skills');
+            return;
+        }
+
+        setIsSubmittingSkillRequest(true);
+        setSkillRequestMessage(null);
+        setSkillRequestError(null);
+
+        const validRequests = bulkSkillRequests.filter(req => req.name.trim() && req.categoryId);
+
+        if (validRequests.length === 0) {
+            alert('Please fill in at least one skill with name and category');
+            setIsSubmittingSkillRequest(false);
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            for (const req of validRequests) {
+                await createSkillRequest(req.name, req.categoryId);
+                successCount++;
+            }
+
+            if (successCount > 0) {
+                setSkillRequestMessage(`Successfully submitted ${successCount} skill request(s)!`);
+                setBulkSkillRequests([
+                    { name: '', categoryId: '' },
+                    { name: '', categoryId: '' },
+                    { name: '', categoryId: '' },
+                ]);
+                setShowBulkSkillRequest(false);
+            }
+        } catch (err: any) {
+            setSkillRequestError(err.message || 'Failed to submit skill requests');
+        }
+
+        setIsSubmittingSkillRequest(false);
+    };
+
+    // Bulk category request handlers
+    const addBulkCategoryRow = () => {
+        setBulkCategoryRequests([...bulkCategoryRequests, { name: '' }]);
+    };
+
+    const removeBulkCategoryRow = (index: number) => {
+        if (bulkCategoryRequests.length > 1) {
+            setBulkCategoryRequests(bulkCategoryRequests.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkCategoryRequest = (index: number, value: string) => {
+        const updated = [...bulkCategoryRequests];
+        updated[index] = { name: value };
+        setBulkCategoryRequests(updated);
+    };
+
+    const handleBulkCategorySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentUser) {
+            alert('You must be logged in to request categories');
+            return;
+        }
+
+        setIsSubmittingCategoryRequest(true);
+        setCategoryRequestMessage(null);
+        setCategoryRequestError(null);
+
+        const validRequests = bulkCategoryRequests.filter(req => req.name.trim());
+
+        if (validRequests.length === 0) {
+            alert('Please fill in at least one category name');
+            setIsSubmittingCategoryRequest(false);
+            return;
+        }
+
+        try {
+            let successCount = 0;
+            for (const req of validRequests) {
+                await createCategoryRequest(req.name, currentUser.uid, currentUser.email || '');
+                successCount++;
+            }
+
+            if (successCount > 0) {
+                setCategoryRequestMessage(`Successfully submitted ${successCount} category request(s)!`);
+                setBulkCategoryRequests([
+                    { name: '' },
+                    { name: '' },
+                    { name: '' },
+                ]);
+                setShowBulkCategoryRequest(false);
+            }
+        } catch (err: any) {
+            setCategoryRequestError(err.message || 'Failed to submit category requests');
+        }
+
         setIsSubmittingCategoryRequest(false);
     };
 
@@ -333,6 +504,229 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
                 </Card>
             )}
 
+            {/* Bulk Skill Request Form */}
+            {showBulkSkillRequest && (
+                <Card className="p-6 border-2 border-green-200 bg-green-50">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center">
+                                <Lightbulb className="w-5 h-5 mr-2" />
+                                Bulk Request Skills
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">Request multiple skills at once. Empty rows will be ignored.</p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setShowBulkSkillRequest(false);
+                                setBulkSkillRequests([
+                                    { name: '', categoryId: '' },
+                                    { name: '', categoryId: '' },
+                                    { name: '', categoryId: '' },
+                                ]);
+                                setSkillRequestMessage(null);
+                                setSkillRequestError(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+
+                    <form onSubmit={handleBulkSkillSubmit} className="space-y-4">
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase px-2">
+                                <div className="col-span-5">Skill Name *</div>
+                                <div className="col-span-5">Category *</div>
+                                <div className="col-span-2">Action</div>
+                            </div>
+
+                            {bulkSkillRequests.map((req, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-4 items-start">
+                                    <div className="col-span-5">
+                                        <input
+                                            type="text"
+                                            value={req.name}
+                                            onChange={(e) => updateBulkSkillRequest(index, 'name', e.target.value)}
+                                            placeholder="e.g., React.js, Python"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        />
+                                    </div>
+                                    <div className="col-span-5">
+                                        <select
+                                            value={req.categoryId}
+                                            onChange={(e) => updateBulkSkillRequest(index, 'categoryId', e.target.value)}
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        >
+                                            <option value="">Select Category...</option>
+                                            {getCategoryOptions().map(cat => (
+                                                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => removeBulkSkillRow(index)}
+                                            disabled={bulkSkillRequests.length === 1}
+                                            className="text-red-600 hover:text-red-800 hover:bg-red-50 w-full"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-300">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={addBulkSkillRow}
+                                className="text-green-600 hover:text-green-800"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Row
+                            </Button>
+                            <div className="flex-1"></div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowBulkSkillRequest(false);
+                                    setBulkSkillRequests([
+                                        { name: '', categoryId: '' },
+                                        { name: '', categoryId: '' },
+                                        { name: '', categoryId: '' },
+                                    ]);
+                                    setSkillRequestMessage(null);
+                                    setSkillRequestError(null);
+                                }}
+                                disabled={isSubmittingSkillRequest}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmittingSkillRequest}
+                                className="flex items-center"
+                            >
+                                <Lightbulb className="w-4 h-4 mr-2" />
+                                {isSubmittingSkillRequest ? 'Submitting...' : 'Submit All Requests'}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+            )}
+
+            {/* Bulk Category Request Form */}
+            {showBulkCategoryRequest && (
+                <Card className="p-6 border-2 border-orange-200 bg-orange-50">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 className="text-lg font-semibold flex items-center">
+                                <Tag className="w-5 h-5 mr-2" />
+                                Bulk Request Categories
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">Request multiple categories at once. Empty rows will be ignored.</p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setShowBulkCategoryRequest(false);
+                                setBulkCategoryRequests([
+                                    { name: '' },
+                                    { name: '' },
+                                    { name: '' },
+                                ]);
+                                setCategoryRequestMessage(null);
+                                setCategoryRequestError(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+
+                    <form onSubmit={handleBulkCategorySubmit} className="space-y-4">
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase px-2">
+                                <div className="col-span-10">Category Name *</div>
+                                <div className="col-span-2">Action</div>
+                            </div>
+
+                            {bulkCategoryRequests.map((req, index) => (
+                                <div key={index} className="grid grid-cols-12 gap-4 items-start">
+                                    <div className="col-span-10">
+                                        <input
+                                            type="text"
+                                            value={req.name}
+                                            onChange={(e) => updateBulkCategoryRequest(index, e.target.value)}
+                                            placeholder="e.g., Web Development, Data Science"
+                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => removeBulkCategoryRow(index)}
+                                            disabled={bulkCategoryRequests.length === 1}
+                                            className="text-red-600 hover:text-red-800 hover:bg-red-50 w-full"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-4 border-t border-gray-300">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={addBulkCategoryRow}
+                                className="text-orange-600 hover:text-orange-800"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Row
+                            </Button>
+                            <div className="flex-1"></div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowBulkCategoryRequest(false);
+                                    setBulkCategoryRequests([
+                                        { name: '' },
+                                        { name: '' },
+                                        { name: '' },
+                                    ]);
+                                    setCategoryRequestMessage(null);
+                                    setCategoryRequestError(null);
+                                }}
+                                disabled={isSubmittingCategoryRequest}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmittingCategoryRequest}
+                                className="flex items-center"
+                            >
+                                <Tag className="w-4 h-4 mr-2" />
+                                {isSubmittingCategoryRequest ? 'Submitting...' : 'Submit All Requests'}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+            )}
+
             {/* Category Request Modal/Form */}
             {showCategoryRequest && (
                 <Card className="p-6 border-2 border-purple-200 bg-purple-50">
@@ -419,6 +813,16 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
                         </Button>
                         <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-orange-600 hover:text-orange-800"
+                            onClick={() => setShowBulkCategoryRequest(true)}
+                        >
+                            <Tag className="w-4 h-4 mr-2" />
+                            Bulk Request Categories
+                        </Button>
+                        <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             className="cursor-pointer"
@@ -437,114 +841,151 @@ export function TechnicalSkills({ control, errors, watch, setValue, getValues }:
                         const categoryOptions = getCategoryOptions();
                         const currentSkills = watch(`technicalSkills.${categoryIndex}.skills`) || [{ skillId: '', proficiency: '' }];
 
+                        const isExpanded = expandedCategories.has(categoryIndex);
+
                         return (
                             <div key={field.id} className="grid grid-cols-1 gap-4 p-4 border border-gray-200 rounded-lg">
-                                {/* Category and Proficiency Row */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Controller
-                                        name={`technicalSkills.${categoryIndex}.category`}
-                                        control={control}
-                                        render={({ field: { onChange, value } }) => (
-                                            <Select
-                                                label="Skill Category"
-                                                placeholder="Select a category..."
-                                                options={categoryOptions}
-                                                value={categoryOptions.find(option => option.value === value) || null}
-                                                onChange={(selectedOption: any) => {
-                                                    onChange(selectedOption?.value || '');
-                                                    setValue(`technicalSkills.${categoryIndex}.skills`, [{ skillId: '', proficiency: '' }]);
-                                                }}
-                                                loading={categoriesLoading}
-                                                searchable={true}
-                                                clearable={true}
-                                                error={(errors.technicalSkills as any)?.[categoryIndex]?.category?.message}
-                                                required
-                                            />
+                                {/* Category Header with Expand/Collapse */}
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleCategoryExpansion(categoryIndex)}
+                                        className="p-1 h-8 w-8 text-gray-600 hover:text-gray-800 shrink-0"
+                                        title={isExpanded ? 'Collapse' : 'Expand'}
+                                    >
+                                        {isExpanded ? (
+                                            <ChevronDown className="w-5 h-5" />
+                                        ) : (
+                                            <ChevronUp className="w-5 h-5" />
                                         )}
-                                    />
-                                    {skillFields.length > 1 && (
-                                        <DeleteButton
-                                            alignWith="floating-input"
-                                            onDelete={() => removeSkill(categoryIndex)}
-                                        />
-                                    )}
-                                </div>
-
-                                {/* Skills Section */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-sm font-medium text-gray-700">Skills</label>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-blue-600 hover:text-blue-800"
-                                                onClick={() => openSkillRequestModal(categoryId)}
-                                                disabled={!categoryId}
-                                            >
-                                                <Lightbulb className="w-4 h-4 mr-2" />
-                                                Request Skill
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => addSkillToCategory(categoryIndex)}
-                                                disabled={!categoryId}
-                                            >
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Add Skill
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1">
-                                        {currentSkills.map((skill: any, skillIndex: number) => (
-                                            <div key={skillIndex} className="flex items-center my-2 gap-2">
-                                                <Controller
-                                                    name={`technicalSkills.${categoryIndex}.skills.${skillIndex}.skillId`}
-                                                    control={control}
-                                                    render={({ field: { onChange, value } }) => (
-                                                        <Select
-                                                            label="Skill"
-                                                            placeholder="Select a skill..."
-                                                            options={skillOptions}
-                                                            value={skillOptions.find(option => option.value === value) || null}
-                                                            onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
-                                                            loading={skillsLoading}
-                                                            searchable={true}
-                                                            clearable={true}
-                                                            error={(errors.technicalSkills as any)?.[categoryIndex]?.skills?.[skillIndex]?.skillId?.message}
-                                                            className="flex-1"
-                                                        />
-                                                    )}
-                                                />
-                                                <Controller
-                                                    name={`technicalSkills.${categoryIndex}.skills.${skillIndex}.proficiency`}
-                                                    control={control}
-                                                    render={({ field: { onChange, value } }) => (
-                                                        <Select
-                                                            label="Proficiency"
-                                                            placeholder="Select proficiency..."
-                                                            options={proficiencyOptions}
-                                                            value={proficiencyOptions.find(option => option.value === value) || null}
-                                                            onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
-                                                            error={(errors.technicalSkills as any)?.[categoryIndex]?.skills?.[skillIndex]?.proficiency?.message}
-                                                            className="flex-1"
-                                                        />
-                                                    )}
-                                                />
-                                                {currentSkills.length > 1 && (
-                                                    <DeleteButton
-                                                        alignWith="floating-input"
-                                                        onDelete={() => removeSkillFromCategory(categoryIndex, skillIndex)}
+                                    </Button>
+                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <Controller
+                                                name={`technicalSkills.${categoryIndex}.category`}
+                                                control={control}
+                                                render={({ field: { onChange, value } }) => (
+                                                    <Select
+                                                        label="Skill Category"
+                                                        placeholder="Select a category..."
+                                                        options={categoryOptions}
+                                                        value={categoryOptions.find(option => option.value === value) || null}
+                                                        onChange={(selectedOption: any) => {
+                                                            onChange(selectedOption?.value || '');
+                                                            setValue(`technicalSkills.${categoryIndex}.skills`, [{ skillId: '', proficiency: '' }]);
+                                                        }}
+                                                        loading={categoriesLoading}
+                                                        searchable={true}
+                                                        clearable={true}
+                                                        error={(errors.technicalSkills as any)?.[categoryIndex]?.category?.message}
+                                                        required
                                                     />
                                                 )}
-                                            </div>
-                                        ))}
+                                            />
+                                            {!isExpanded && currentSkills.length > 0 && (
+                                                <span className="text-xs text-gray-500 mt-6 whitespace-nowrap">
+                                                    ({currentSkills.length} skill{currentSkills.length !== 1 ? 's' : ''})
+                                                </span>
+                                            )}
+                                        </div>
+                                        {skillFields.length > 1 && (
+                                            <DeleteButton
+                                                alignWith="floating-input"
+                                                onDelete={() => removeSkill(categoryIndex)}
+                                            />
+                                        )}
                                     </div>
                                 </div>
+
+                                {/* Skills Section - Collapsible */}
+                                {isExpanded && (
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-sm font-medium text-gray-700">Skills</label>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                    onClick={() => openSkillRequestModal(categoryId)}
+                                                    disabled={!categoryId}
+                                                >
+                                                    <Lightbulb className="w-4 h-4 mr-2" />
+                                                    Request Skill
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-green-600 hover:text-green-800"
+                                                    onClick={() => setShowBulkSkillRequest(true)}
+                                                >
+                                                    <Lightbulb className="w-4 h-4 mr-2" />
+                                                    Bulk Request Skills
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => addSkillToCategory(categoryIndex)}
+                                                    disabled={!categoryId}
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Add Skill
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1">
+                                            {currentSkills.map((skill: any, skillIndex: number) => (
+                                                <div key={skillIndex} className="flex items-center my-2 gap-2">
+                                                    <Controller
+                                                        name={`technicalSkills.${categoryIndex}.skills.${skillIndex}.skillId`}
+                                                        control={control}
+                                                        render={({ field: { onChange, value } }) => (
+                                                            <Select
+                                                                label="Skill"
+                                                                placeholder="Select a skill..."
+                                                                options={skillOptions}
+                                                                value={skillOptions.find(option => option.value === value) || null}
+                                                                onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
+                                                                loading={skillsLoading}
+                                                                searchable={true}
+                                                                clearable={true}
+                                                                error={(errors.technicalSkills as any)?.[categoryIndex]?.skills?.[skillIndex]?.skillId?.message}
+                                                                className="flex-1"
+                                                            />
+                                                        )}
+                                                    />
+                                                    <Controller
+                                                        name={`technicalSkills.${categoryIndex}.skills.${skillIndex}.proficiency`}
+                                                        control={control}
+                                                        render={({ field: { onChange, value } }) => (
+                                                            <Select
+                                                                label="Proficiency"
+                                                                placeholder="Select proficiency..."
+                                                                options={proficiencyOptions}
+                                                                value={proficiencyOptions.find(option => option.value === value) || null}
+                                                                onChange={(selectedOption: any) => onChange(selectedOption?.value || '')}
+                                                                error={(errors.technicalSkills as any)?.[categoryIndex]?.skills?.[skillIndex]?.proficiency?.message}
+                                                                className="flex-1"
+                                                            />
+                                                        )}
+                                                    />
+                                                    {currentSkills.length > 1 && (
+                                                        <DeleteButton
+                                                            alignWith="floating-input"
+                                                            onDelete={() => removeSkillFromCategory(categoryIndex, skillIndex)}
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

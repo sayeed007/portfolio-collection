@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { db } from '@/lib/firebase/config';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import {
     AlertCircle,
     CheckCircle,
@@ -14,6 +16,14 @@ import PrimaryButton from '../ui/PrimaryButton';
 import { EditButton } from '../ui/edit-button';
 import { useDegree, type Degree, type DegreeFormData, DEGREE_LEVELS } from '@/lib/hooks/useDegree';
 // import { useDegree, type Degree, type DegreeFormData, DEGREE_LEVELS } from '@/hooks/useDegree';
+
+interface BulkDegreeItem {
+    name: string;
+    shortName: string;
+    level: string;
+    description: string;
+    isActive: boolean;
+}
 
 const AdminDegreeManagement = () => {
     const {
@@ -30,6 +40,7 @@ const AdminDegreeManagement = () => {
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showBulkForm, setShowBulkForm] = useState(false);
     const [formData, setFormData] = useState<DegreeFormData>({
         name: '',
         shortName: '',
@@ -37,6 +48,11 @@ const AdminDegreeManagement = () => {
         description: '',
         isActive: true
     });
+    const [bulkItems, setBulkItems] = useState<BulkDegreeItem[]>([
+        { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+        { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+        { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+    ]);
 
     const resetForm = () => {
         setFormData({
@@ -49,6 +65,88 @@ const AdminDegreeManagement = () => {
         setEditingId(null);
         setShowAddForm(false);
         clearMessages();
+    };
+
+    const resetBulkForm = () => {
+        setBulkItems([
+            { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+            { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+            { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true },
+        ]);
+        setShowBulkForm(false);
+        clearMessages();
+    };
+
+    const addBulkRow = () => {
+        setBulkItems([...bulkItems, { name: '', shortName: '', level: 'Undergraduate', description: '', isActive: true }]);
+    };
+
+    const removeBulkRow = (index: number) => {
+        if (bulkItems.length > 1) {
+            setBulkItems(bulkItems.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkItem = (index: number, field: keyof BulkDegreeItem, value: string | boolean) => {
+        const updatedItems = [...bulkItems];
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+        setBulkItems(updatedItems);
+    };
+
+    const handleBulkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        clearMessages();
+
+        // Filter out empty rows
+        const validItems = bulkItems.filter(item => item.name.trim() && item.shortName.trim());
+
+        if (validItems.length === 0) {
+            return;
+        }
+
+        // Validate for duplicates within the bulk items
+        const names = validItems.map(item => item.name.toLowerCase());
+        const shortNames = validItems.map(item => item.shortName.toLowerCase());
+        const hasDuplicates = names.some((name, index) => names.indexOf(name) !== index) ||
+                             shortNames.some((shortName, index) => shortNames.indexOf(shortName) !== index);
+
+        if (hasDuplicates) {
+            return;
+        }
+
+        // Check for existing degrees
+        const existingNames = degrees.map(deg => deg.name.toLowerCase());
+        const existingShortNames = degrees.map(deg => deg.shortName.toLowerCase());
+        const conflictingItems = validItems.filter(item =>
+            existingNames.includes(item.name.toLowerCase()) ||
+            existingShortNames.includes(item.shortName.toLowerCase())
+        );
+
+        if (conflictingItems.length > 0) {
+            return;
+        }
+
+        try {
+            const batch = writeBatch(db);
+
+            validItems.forEach((item) => {
+                const degreeRef = doc(collection(db, 'degrees'));
+                batch.set(degreeRef, {
+                    name: item.name.trim(),
+                    shortName: item.shortName.trim(),
+                    level: item.level,
+                    description: item.description.trim(),
+                    isActive: item.isActive,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+            resetBulkForm();
+        } catch (error) {
+            console.error('Error bulk adding degrees:', error);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -123,13 +221,24 @@ const AdminDegreeManagement = () => {
                     </div>
                 </div>
 
-                {!showAddForm && (
-                    <PrimaryButton
-                        onClick={() => setShowAddForm(true)}
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Degree
-                    </PrimaryButton>
+                {!showAddForm && !showBulkForm && (
+                    <div className="flex gap-3">
+                        <PrimaryButton
+                            onClick={() => setShowAddForm(true)}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Degree
+                        </PrimaryButton>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={() => setShowBulkForm(true)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Bulk Create
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -146,6 +255,124 @@ const AdminDegreeManagement = () => {
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <span className="text-red-800">{error}</span>
                 </div>
+            )}
+
+            {/* Bulk Create Form */}
+            {showBulkForm && (
+                <Card className="mb-8 p-6">
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900">Bulk Create Degrees</h2>
+                                <p className="text-sm text-gray-500 mt-1">Add multiple degrees at once. Empty rows will be ignored.</p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetBulkForm}
+                                className="text-gray-600 hover:text-gray-800"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleBulkSubmit}>
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                                    <div className="col-span-3">Degree Name *</div>
+                                    <div className="col-span-2">Short Name *</div>
+                                    <div className="col-span-2">Level *</div>
+                                    <div className="col-span-3">Description</div>
+                                    <div className="col-span-1">Active</div>
+                                    <div className="col-span-1">Actions</div>
+                                </div>
+
+                                {bulkItems.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-12 gap-4 items-start">
+                                        <div className="col-span-3">
+                                            <input
+                                                type="text"
+                                                value={item.name}
+                                                onChange={(e) => updateBulkItem(index, 'name', e.target.value)}
+                                                placeholder="e.g., Bachelor of Science"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <input
+                                                type="text"
+                                                value={item.shortName}
+                                                onChange={(e) => updateBulkItem(index, 'shortName', e.target.value)}
+                                                placeholder="e.g., BSc"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <select
+                                                value={item.level}
+                                                onChange={(e) => updateBulkItem(index, 'level', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                {DEGREE_LEVELS.map(level => (
+                                                    <option key={level} value={level}>{level}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-span-3">
+                                            <input
+                                                type="text"
+                                                value={item.description}
+                                                onChange={(e) => updateBulkItem(index, 'description', e.target.value)}
+                                                placeholder="Optional description"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1 flex items-center justify-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.isActive}
+                                                onChange={(e) => updateBulkItem(index, 'isActive', e.target.checked)}
+                                                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-1">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeBulkRow(index)}
+                                                disabled={bulkItems.length === 1}
+                                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addBulkRow}
+                                    className="text-blue-600 hover:text-blue-800"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Row
+                                </Button>
+                                <div className="flex-1"></div>
+                                <Button size='lg' type="button" variant="outline" onClick={resetBulkForm}>
+                                    Cancel
+                                </Button>
+                                <PrimaryButton type="submit">
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Create All Degrees
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </Card>
             )}
 
             {/* Add/Edit Form */}

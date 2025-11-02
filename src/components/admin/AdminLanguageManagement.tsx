@@ -56,16 +56,28 @@ const POPULAR_LANGUAGES = [
     { name: 'Marathi', code: 'mr', isActive: true }
 ];
 
+interface BulkLanguageItem {
+    name: string;
+    code: string;
+    isActive: boolean;
+}
+
 const AdminLanguageManagement = () => {
     const [languages, setLanguages] = useState<Language[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showBulkForm, setShowBulkForm] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         code: '',
         isActive: true
     });
+    const [bulkItems, setBulkItems] = useState<BulkLanguageItem[]>([
+        { name: '', code: '', isActive: true },
+        { name: '', code: '', isActive: true },
+        { name: '', code: '', isActive: true },
+    ]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
@@ -119,6 +131,90 @@ const AdminLanguageManagement = () => {
         setShowAddForm(false);
         setError('');
         setSuccess('');
+    };
+
+    const resetBulkForm = () => {
+        setBulkItems([
+            { name: '', code: '', isActive: true },
+            { name: '', code: '', isActive: true },
+            { name: '', code: '', isActive: true },
+        ]);
+        setShowBulkForm(false);
+        setError('');
+        setSuccess('');
+    };
+
+    const addBulkRow = () => {
+        setBulkItems([...bulkItems, { name: '', code: '', isActive: true }]);
+    };
+
+    const removeBulkRow = (index: number) => {
+        if (bulkItems.length > 1) {
+            setBulkItems(bulkItems.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateBulkItem = (index: number, field: keyof BulkLanguageItem, value: string | boolean) => {
+        const updatedItems = [...bulkItems];
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+        setBulkItems(updatedItems);
+    };
+
+    const handleBulkSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+
+        // Filter out empty rows
+        const validItems = bulkItems.filter(item => item.name.trim() && item.code.trim());
+
+        if (validItems.length === 0) {
+            setError('Please fill in at least one language with name and code');
+            return;
+        }
+
+        // Validate for duplicates within the bulk items
+        const codes = validItems.map(item => item.code.toLowerCase());
+        const hasDuplicates = codes.some((code, index) => codes.indexOf(code) !== index);
+
+        if (hasDuplicates) {
+            setError('Duplicate language codes found in your entries');
+            return;
+        }
+
+        // Check for existing languages
+        const existingCodes = languages.map(lang => lang.code.toLowerCase());
+        const conflictingItems = validItems.filter(item =>
+            existingCodes.includes(item.code.toLowerCase())
+        );
+
+        if (conflictingItems.length > 0) {
+            setError(`Language codes already exist: ${conflictingItems.map(i => i.code).join(', ')}`);
+            return;
+        }
+
+        try {
+            const batch = writeBatch(db);
+
+            validItems.forEach((item) => {
+                const langRef = doc(collection(db, 'languages'));
+                batch.set(langRef, {
+                    name: item.name.trim(),
+                    code: item.code.toLowerCase().trim(),
+                    isActive: item.isActive,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+            setSuccess(`Successfully added ${validItems.length} language(s)`);
+            resetBulkForm();
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+            console.error('Error bulk adding languages:', error);
+            setError('Failed to add languages');
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -233,13 +329,24 @@ const AdminLanguageManagement = () => {
                     </div>
                 </div>
 
-                {!showAddForm && (
-                    <PrimaryButton
-                        onClick={() => setShowAddForm(true)}
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Language
-                    </PrimaryButton>
+                {!showAddForm && !showBulkForm && (
+                    <div className="flex gap-3">
+                        <PrimaryButton
+                            onClick={() => setShowAddForm(true)}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Language
+                        </PrimaryButton>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={() => setShowBulkForm(true)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Bulk Create
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -256,6 +363,105 @@ const AdminLanguageManagement = () => {
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <span className="text-red-800">{error}</span>
                 </div>
+            )}
+
+            {/* Bulk Create Form */}
+            {showBulkForm && (
+                <Card className="mb-8 p-6">
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900">Bulk Create Languages</h2>
+                                <p className="text-sm text-gray-500 mt-1">Add multiple languages at once. Empty rows will be ignored.</p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetBulkForm}
+                                className="text-gray-600 hover:text-gray-800"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleBulkSubmit}>
+                            <div className="space-y-4 mb-6">
+                                <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                                    <div className="col-span-5">Language Name *</div>
+                                    <div className="col-span-3">Code *</div>
+                                    <div className="col-span-2">Active</div>
+                                    <div className="col-span-2">Actions</div>
+                                </div>
+
+                                {bulkItems.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-12 gap-4 items-center">
+                                        <div className="col-span-5">
+                                            <input
+                                                type="text"
+                                                value={item.name}
+                                                onChange={(e) => updateBulkItem(index, 'name', e.target.value)}
+                                                placeholder="e.g., English"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-3">
+                                            <input
+                                                type="text"
+                                                value={item.code}
+                                                onChange={(e) => updateBulkItem(index, 'code', e.target.value)}
+                                                placeholder="e.g., en"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.isActive}
+                                                    onChange={(e) => updateBulkItem(index, 'isActive', e.target.checked)}
+                                                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-700">Active</span>
+                                            </label>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeBulkRow(index)}
+                                                disabled={bulkItems.length === 1}
+                                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addBulkRow}
+                                    className="text-blue-600 hover:text-blue-800"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Row
+                                </Button>
+                                <div className="flex-1"></div>
+                                <Button size='lg' type="button" variant="outline" onClick={resetBulkForm}>
+                                    Cancel
+                                </Button>
+                                <PrimaryButton type="submit">
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Create All Languages
+                                </PrimaryButton>
+                            </div>
+                        </form>
+                    </div>
+                </Card>
             )}
 
             {/* Add/Edit Form */}
