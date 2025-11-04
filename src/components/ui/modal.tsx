@@ -9,20 +9,26 @@ interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     title?: string;
+    subtitle?: string;
     children: React.ReactNode;
+    footer?: React.ReactNode;
     className?: string;
-    size?: "sm" | "md" | "lg" | "xl" | "2xl";
+    size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
     portalTarget?: Element | null;
+    showCloseButton?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
     isOpen,
     onClose,
     title,
+    subtitle,
     children,
+    footer,
     className,
     size = "md",
-    portalTarget
+    portalTarget,
+    showCloseButton = true
 }) => {
     const [isVisible, setIsVisible] = React.useState(false);
     const [mountNode, setMountNode] = React.useState<Element | null>(null);
@@ -78,7 +84,10 @@ const Modal: React.FC<ModalProps> = ({
         md: "max-w-md",
         lg: "max-w-lg",
         xl: "max-w-xl",
-        "2xl": "max-w-2xl"
+        "2xl": "max-w-2xl",
+        "3xl": "max-w-3xl",
+        "4xl": "max-w-4xl",
+        "5xl": "max-w-5xl"
     };
 
     if (!isVisible || !mountNode) return null;
@@ -107,7 +116,7 @@ const Modal: React.FC<ModalProps> = ({
             )}>
                 {/* Modal Content */}
                 <div className={cn(
-                    "relative overflow-hidden rounded-3xl shadow-2xl",
+                    "relative flex flex-col max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl",
                     "bg-gradient-to-br from-white via-white/95 to-blue-50/50",
                     "backdrop-blur-xl border border-white/20",
                     "transform transition-all duration-300",
@@ -117,56 +126,55 @@ const Modal: React.FC<ModalProps> = ({
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600" />
 
                     {/* Close button - always visible */}
-                    <div className="absolute top-2 right-4 z-10">
-                        <Button
-                            onClick={onClose}
-                            className={cn(
-                                "w-10 h-10 rounded-full p-0 transition-all duration-300",
-                                "bg-white/80 backdrop-blur-sm text-gray-500",
-                                "hover:bg-red-500 hover:text-white hover:shadow-lg",
-                                "focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
-                                "transform hover:scale-110 active:scale-95"
-                            )}
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
-                    </div>
+                    {showCloseButton && (
+                        <div className="absolute top-2 right-4 z-10">
+                            <Button
+                                onClick={onClose}
+                                className={cn(
+                                    "w-10 h-10 rounded-full p-0 transition-all duration-300",
+                                    "bg-white/80 backdrop-blur-sm text-gray-500",
+                                    "hover:bg-red-500 hover:text-white hover:shadow-lg",
+                                    "focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
+                                    "transform hover:scale-110 active:scale-95"
+                                )}
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    )}
 
-                    {/* Header */}
+                    {/* Header - Fixed */}
                     {title && (
-                        <div className="px-8 py-3 border-b border-gray-300">
-                            <div className="flex justify-center">
-                                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
-                                    {title.split(' ').map((word, index) => {
-                                        // Check if word should be highlighted (common words to highlight)
-                                        const highlightWords = ['New', 'Request', 'Add', 'Edit', 'Delete', 'Create', 'Update'];
-                                        const shouldHighlight = highlightWords.some(hw =>
-                                            word.toLowerCase().includes(hw.toLowerCase())
-                                        );
-
-                                        return (
-                                            <span key={index}>
-                                                {shouldHighlight ? (
-                                                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                                        {word}
-                                                    </span>
-                                                ) : word}
-                                                {index < title.split(' ').length - 1 ? ' ' : ''}
-                                            </span>
-                                        );
-                                    })}
-                                </h2>
+                        <div className="flex-shrink-0 px-6 py-3 border-b border-gray-200">
+                            <div className="flex justify-start items-start">
+                                <div>
+                                    <h2 className="text-left text-2xl font-bold text-gray-900">
+                                        {title}
+                                    </h2>
+                                    {subtitle && (
+                                        <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Content */}
-                    <div className={"relative p-8 max-h-[95vh] overflow-y-auto"}>
+                    {/* Content - Scrollable */}
+                    <div className="flex-1 overflow-y-auto p-6">
                         {children}
                     </div>
 
+                    {/* Footer - Fixed */}
+                    {footer && (
+                        <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 rounded-b-3xl">
+                            {footer}
+                        </div>
+                    )}
+
                     {/* Subtle bottom gradient for depth */}
-                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+                    {!footer && (
+                        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+                    )}
                 </div>
 
                 {/* Floating shadow effect */}

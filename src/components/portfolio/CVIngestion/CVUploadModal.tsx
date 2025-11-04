@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { ingestCV, CVIngestionResult } from '@/lib/cv-ingestion';
 import { DatabaseEntityResolver } from '@/lib/cv-ingestion/services/entity-resolver';
+import { Modal } from '@/components/ui/modal';
 
 interface CVUploadModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export default function CVUploadModal({
   const [error, setError] = useState<string | null>(null);
   const [useLLM, setUseLLM] = useState(true);
   const [llmProvider, setLlmProvider] = useState<'openai' | 'anthropic' | 'gemini'>('gemini');
-  const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_API_KEYCV);
+  const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
   // Handle file selection
   const handleFileSelect = useCallback((file: File) => {
@@ -961,195 +962,16 @@ export default function CVUploadModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Upload Your CV</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {"We'll automatically extract your information"}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            disabled={isProcessing}
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* File Upload Area */}
-          {!selectedFile ? (
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`
-                border-2 border-dashed rounded-xl p-12 text-center transition-all
-                ${isDragging
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
-                }
-              `}
-            >
-              <Upload
-                className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'
-                  }`}
-              />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {isDragging ? 'Drop your CV here' : 'Drag & drop your CV'}
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                or click to browse from your computer
-              </p>
-
-              <label className="inline-block">
-                <input
-                  type="file"
-                  accept={ACCEPTED_FILE_TYPES.join(',')}
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
-                <span className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-block">
-                  Choose File
-                </span>
-              </label>
-
-              <p className="text-xs text-gray-400 mt-4">
-                Supported formats: PDF, DOCX, DOC, TXT (Max 10MB)
-              </p>
-            </div>
-          ) : (
-            // Selected File Preview
-            <div className="border border-gray-200 rounded-xl p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <FileText className="w-8 h-8 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{selectedFile.name}</h4>
-                  <p className="text-sm text-gray-500">
-                    {(selectedFile.size / 1024).toFixed(2)} KB
-                  </p>
-                </div>
-                {!isProcessing && (
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
-                )}
-              </div>
-
-              {/* Processing Progress */}
-              {isProcessing && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Processing...</span>
-                    <span className="text-sm text-gray-500">{progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* LLM Option (Advanced) */}
-          <div className="border border-gray-200 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <input
-                type="checkbox"
-                id="use-llm"
-                checked={useLLM}
-                onChange={e => setUseLLM(e.target.checked)}
-                disabled={isProcessing}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="use-llm" className="font-medium text-gray-900">
-                Use AI Enhancement (Optional)
-              </label>
-            </div>
-            <p className="text-sm text-gray-500 mb-3">
-              Enable AI-powered parsing for better accuracy with complex CVs
-            </p>
-
-            {useLLM && (
-              <div className="space-y-3">
-                <div>
-                  <label htmlFor="llm-provider" className="block text-sm font-medium text-gray-700 mb-2">
-                    AI Provider
-                  </label>
-                  <select
-                    id="llm-provider"
-                    value={llmProvider}
-                    onChange={e => setLlmProvider(e.target.value as 'openai' | 'anthropic' | 'gemini')}
-                    disabled={isProcessing}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="gemini">Google Gemini (Recommended)</option>
-                    <option value="openai">OpenAI GPT</option>
-                    <option value="anthropic">Anthropic Claude</option>
-                  </select>
-                </div>
-                <input
-                  type="password"
-                  placeholder={
-                    llmProvider === 'gemini'
-                      ? 'Google Gemini API Key'
-                      : llmProvider === 'openai'
-                        ? 'OpenAI API Key'
-                        : 'Anthropic API Key'
-                  }
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  disabled={isProcessing}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-red-900">Error</h4>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Info Message */}
-          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-900">Privacy First</h4>
-              <p className="text-sm text-blue-700 mt-1">
-                Your CV is processed securely and never stored on our servers.
-                {useLLM
-                  ? ' AI processing uses your API key for enhanced privacy.'
-                  : ' All parsing happens locally in your browser.'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Upload Your CV"
+      subtitle="We'll automatically extract your information"
+      size="2xl"
+      showCloseButton={!isProcessing}
+      footer={
+        <div className="flex items-center justify-end gap-3 p-6">
           <button
             onClick={onClose}
             disabled={isProcessing}
@@ -1172,7 +994,171 @@ export default function CVUploadModal({
             )}
           </button>
         </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* File Upload Area */}
+        {!selectedFile ? (
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`
+                border-2 border-dashed rounded-xl p-12 text-center transition-all
+                ${isDragging
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
+              }
+              `}
+          >
+            <Upload
+              className={`w-16 h-16 mx-auto mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'
+                }`}
+            />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {isDragging ? 'Drop your CV here' : 'Drag & drop your CV'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              or click to browse from your computer
+            </p>
+
+            <label className="inline-block">
+              <input
+                type="file"
+                accept={ACCEPTED_FILE_TYPES.join(',')}
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
+              <span className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-block">
+                Choose File
+              </span>
+            </label>
+
+            <p className="text-xs text-gray-400 mt-4">
+              Supported formats: PDF, DOCX, DOC, TXT (Max 10MB)
+            </p>
+          </div>
+        ) : (
+          // Selected File Preview
+          <div className="border border-gray-200 rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <FileText className="w-8 h-8 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900">{selectedFile.name}</h4>
+                <p className="text-sm text-gray-500">
+                  {(selectedFile.size / 1024).toFixed(2)} KB
+                </p>
+              </div>
+              {!isProcessing && (
+                <button
+                  onClick={() => setSelectedFile(null)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              )}
+            </div>
+
+            {/* Processing Progress */}
+            {isProcessing && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Processing...</span>
+                  <span className="text-sm text-gray-500">{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LLM Option (Advanced) */}
+        <div className="border border-gray-200 rounded-xl p-4 hidden">
+          <div className="flex items-center gap-3 mb-3">
+            <input
+              type="checkbox"
+              id="use-llm"
+              checked={useLLM}
+              onChange={e => setUseLLM(e.target.checked)}
+              disabled={isProcessing}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="use-llm" className="font-medium text-gray-900">
+              Use AI Enhancement (Optional)
+            </label>
+          </div>
+          <p className="text-sm text-gray-500 mb-3">
+            Enable AI-powered parsing for better accuracy with complex CVs
+          </p>
+
+          {useLLM && (
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="llm-provider" className="block text-sm font-medium text-gray-700 mb-2">
+                  AI Provider
+                </label>
+                <select
+                  id="llm-provider"
+                  value={llmProvider}
+                  onChange={e => setLlmProvider(e.target.value as 'openai' | 'anthropic' | 'gemini')}
+                  disabled={isProcessing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="gemini">Google Gemini (Recommended)</option>
+                  <option value="openai">OpenAI GPT</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                </select>
+              </div>
+              <input
+                type="password"
+                placeholder={
+                  llmProvider === 'gemini'
+                    ? 'Google Gemini API Key'
+                    : llmProvider === 'openai'
+                      ? 'OpenAI API Key'
+                      : 'Anthropic API Key'
+                }
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                disabled={isProcessing}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-red-900">Error</h4>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Info Message */}
+        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-blue-900">Privacy First</h4>
+            <p className="text-sm text-blue-700 mt-1">
+              Your CV is processed securely and never stored on our servers.
+              {useLLM
+                ? ' AI processing uses your API key for enhanced privacy.'
+                : ' All parsing happens locally in your browser.'}
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

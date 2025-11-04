@@ -4,7 +4,10 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(dir /b \"C:\\portfolio-collection\\src\\app\")",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, Input } from '@/components/ui';
+import { Select, SelectOption } from '@/components/ui/Select';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { Portfolio } from '@/lib/types';
 import {
@@ -16,6 +17,9 @@ import React, { useMemo, useState } from 'react';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { PortfolioCard } from './PortfolioCard';
 import { getTimestampValue } from '@/lib/utils/formatters';
+import { useSkills } from '@/lib/hooks/useSkills';
+import { useSkillRequests } from '@/lib/hooks/useSkillCategoryRequests';
+import { useSkillCategories } from '@/lib/hooks/useSkillCategories';
 
 interface PortfolioDirectoryProps {
     portfolios: Portfolio[];
@@ -59,16 +63,43 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+    // Get skill data for mapping skillId to skill name
+    const { categories } = useSkillCategories();
+    const { skills } = useSkills(categories);
+    const { skillRequests } = useSkillRequests();
+    const allSkills = useMemo(() => [...skillRequests, ...skills].map(skill => ({
+        value: skill.id,
+        label: skill.name,
+    })), [skills, skillRequests]);
+
+    // Sort options for the Select component
+    const sortOptions: SelectOption[] = [
+        { value: 'updated-desc', label: 'Recently Updated' },
+        { value: 'updated-asc', label: 'Oldest First' },
+        { value: 'name-asc', label: 'Name A-Z' },
+        { value: 'name-desc', label: 'Name Z-A' },
+        { value: 'experience-desc', label: 'Most Experience' },
+        { value: 'experience-asc', label: 'Least Experience' },
+        { value: 'visits-desc', label: 'Most Visited' },
+        { value: 'visits-asc', label: 'Least Visited' },
+    ];
+
     // Extract unique values for filter options
     const filterOptions = useMemo(() => {
-        const skills = new Set<string>();
+        const skillNames = new Set<string>();
         const nationalities = new Set<string>();
         const designations = new Set<string>();
 
         portfolios.forEach(portfolio => {
             if (portfolio.technicalSkills) {
                 portfolio.technicalSkills.forEach(skillCategory => {
-                    skillCategory.skills.forEach(skill => skills.add(skill.skillId));
+                    skillCategory.skills.forEach(skill => {
+                        // Map skillId to skill name
+                        const skillData = allSkills.find(s => s.value === skill.skillId);
+                        if (skillData) {
+                            skillNames.add(skillData.label);
+                        }
+                    });
                 });
             }
             if (portfolio.nationality) nationalities.add(portfolio.nationality);
@@ -76,11 +107,11 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
         });
 
         return {
-            skills: Array.from(skills).sort(),
+            skills: Array.from(skillNames).sort(),
             nationalities: Array.from(nationalities).sort(),
             designations: Array.from(designations).sort()
         };
-    }, [portfolios]);
+    }, [portfolios, allSkills]);
 
     // Filter and sort portfolios
     const filteredAndSortedPortfolios = useMemo(() => {
@@ -93,9 +124,10 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     portfolio.designation.toLowerCase().includes(searchLower) ||
                     portfolio.summary?.toLowerCase().includes(searchLower) ||
                     portfolio.technicalSkills?.some(skillCategory =>
-                        skillCategory.skills.some(skill =>
-                            skill.skillId.toLowerCase().includes(searchLower)
-                        )
+                        skillCategory.skills.some(skill => {
+                            const skillData = allSkills.find(s => s.value === skill.skillId);
+                            return skillData?.label.toLowerCase().includes(searchLower);
+                        })
                     );
 
                 if (!matchesSearch) return false;
@@ -109,11 +141,15 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
 
             // Skills filter
             if (filters.skills.length > 0) {
-                const portfolioSkills = portfolio.technicalSkills?.flatMap(
-                    skillCategory => skillCategory.skills
-                ) || [];
-                const hasRequiredSkills = filters.skills.some(skill =>
-                    portfolioSkills.some(s => s.skillId === skill)
+                const portfolioSkillNames = portfolio.technicalSkills?.flatMap(
+                    skillCategory => skillCategory.skills.map(skill => {
+                        const skillData = allSkills.find(s => s.value === skill.skillId);
+                        return skillData?.label;
+                    })
+                ).filter(Boolean) || [];
+
+                const hasRequiredSkills = filters.skills.some(skillName =>
+                    portfolioSkillNames.includes(skillName)
                 );
                 if (!hasRequiredSkills) return false;
             }
@@ -164,7 +200,7 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
         });
 
         return filtered;
-    }, [portfolios, debouncedSearchTerm, filters, sortField, sortOrder]);
+    }, [portfolios, debouncedSearchTerm, filters, sortField, sortOrder, allSkills]);
 
     // Function overload signatures (no implementation)
     function handleFilterChange(
@@ -252,24 +288,20 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                     </div>
 
                     {/* Sort Controls */}
-                    <select
-                        value={`${sortField}-${sortOrder}`}
-                        onChange={(e) => {
-                            const [field, order] = e.target.value.split('-') as [SortField, SortOrder];
-                            setSortField(field);
-                            setSortOrder(order);
+                    <Select
+                        value={sortOptions.find(opt => opt.value === `${sortField}-${sortOrder}`)}
+                        onChange={(option) => {
+                            if (option) {
+                                const [field, order] = (option as SelectOption).value.split('-') as [SortField, SortOrder];
+                                setSortField(field);
+                                setSortOrder(order);
+                            }
                         }}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                    >
-                        <option value="updated-desc">Recently Updated</option>
-                        <option value="updated-asc">Oldest First</option>
-                        <option value="name-asc">Name A-Z</option>
-                        <option value="name-desc">Name Z-A</option>
-                        <option value="experience-desc">Most Experience</option>
-                        <option value="experience-asc">Least Experience</option>
-                        <option value="visits-desc">Most Visited</option>
-                        <option value="visits-asc">Least Visited</option>
-                    </select>
+                        options={sortOptions}
+                        searchable={false}
+                        clearable={false}
+                        className="w-52"
+                    />
                 </div>
             </div>
 
@@ -324,98 +356,98 @@ export const PortfolioDirectory: React.FC<PortfolioDirectoryProps> = ({
                 {showFilters && (
                     <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
                         {/* Experience Range */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
                                 Years of Experience
                             </label>
-                            <div className="flex items-center gap-4">
-                                <input
-                                    type="range"
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    type="number"
+                                    label="Minimum"
                                     min="0"
                                     max="50"
                                     value={filters.experienceRange.min}
-                                    onChange={(e) => handleFilterChange('experienceRange', {
-                                        ...filters.experienceRange,
-                                        min: parseInt(e.target.value)
-                                    })}
-                                    className="flex-1"
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 0;
+                                        handleFilterChange('experienceRange', {
+                                            ...filters.experienceRange,
+                                            min: Math.min(value, filters.experienceRange.max)
+                                        });
+                                    }}
                                 />
-                                <span className="text-sm text-gray-600 min-w-0">
-                                    {filters.experienceRange.min} - {filters.experienceRange.max} years
-                                </span>
-                                <input
-                                    type="range"
+                                <Input
+                                    type="number"
+                                    label="Maximum"
                                     min="0"
                                     max="50"
                                     value={filters.experienceRange.max}
-                                    onChange={(e) => handleFilterChange('experienceRange', {
-                                        ...filters.experienceRange,
-                                        max: parseInt(e.target.value)
-                                    })}
-                                    className="flex-1"
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 50;
+                                        handleFilterChange('experienceRange', {
+                                            ...filters.experienceRange,
+                                            max: Math.max(value, filters.experienceRange.min)
+                                        });
+                                    }}
                                 />
+                            </div>
+                            <div className="mt-2 text-xs text-gray-500 text-center">
+                                Filtering: {filters.experienceRange.min} - {filters.experienceRange.max} years
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {/* Skills Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Skills
-                                </label>
-                                <select
-                                    multiple
-                                    value={filters.skills}
-                                    onChange={(e) => handleFilterChange('skills',
-                                        Array.from(e.target.selectedOptions, option => option.value)
-                                    )}
-                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                                    size={4}
-                                >
-                                    {filterOptions.skills.map(skill => (
-                                        <option key={skill} value={skill}>{skill}</option>
-                                    ))}
-                                </select>
+                                <Select
+                                    label="Skills"
+                                    isMulti
+                                    value={filters.skills.map(skill => ({ value: skill, label: skill }))}
+                                    onChange={(selectedOptions) => {
+                                        const values = selectedOptions
+                                            ? (selectedOptions as SelectOption[]).map(opt => opt.value)
+                                            : [];
+                                        handleFilterChange('skills', values);
+                                    }}
+                                    options={filterOptions.skills.map(skill => ({ value: skill, label: skill }))}
+                                    placeholder="Select skills..."
+                                    clearable={true}
+                                />
                             </div>
 
                             {/* Nationality Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nationality
-                                </label>
-                                <select
-                                    multiple
-                                    value={filters.nationality}
-                                    onChange={(e) => handleFilterChange('nationality',
-                                        Array.from(e.target.selectedOptions, option => option.value)
-                                    )}
-                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                                    size={4}
-                                >
-                                    {filterOptions.nationalities.map(nationality => (
-                                        <option key={nationality} value={nationality}>{nationality}</option>
-                                    ))}
-                                </select>
+                                <Select
+                                    label="Nationality"
+                                    isMulti
+                                    value={filters.nationality.map(nat => ({ value: nat, label: nat }))}
+                                    onChange={(selectedOptions) => {
+                                        const values = selectedOptions
+                                            ? (selectedOptions as SelectOption[]).map(opt => opt.value)
+                                            : [];
+                                        handleFilterChange('nationality', values);
+                                    }}
+                                    options={filterOptions.nationalities.map(nat => ({ value: nat, label: nat }))}
+                                    placeholder="Select nationalities..."
+                                    clearable={true}
+                                />
                             </div>
 
                             {/* Designation Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Designation
-                                </label>
-                                <select
-                                    multiple
-                                    value={filters.designation}
-                                    onChange={(e) => handleFilterChange('designation',
-                                        Array.from(e.target.selectedOptions, option => option.value)
-                                    )}
-                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                                    size={4}
-                                >
-                                    {filterOptions.designations.map(designation => (
-                                        <option key={designation} value={designation}>{designation}</option>
-                                    ))}
-                                </select>
+                                <Select
+                                    label="Designation"
+                                    isMulti
+                                    value={filters.designation.map(des => ({ value: des, label: des }))}
+                                    onChange={(selectedOptions) => {
+                                        const values = selectedOptions
+                                            ? (selectedOptions as SelectOption[]).map(opt => opt.value)
+                                            : [];
+                                        handleFilterChange('designation', values);
+                                    }}
+                                    options={filterOptions.designations.map(des => ({ value: des, label: des }))}
+                                    placeholder="Select designations..."
+                                    clearable={true}
+                                />
                             </div>
                         </div>
                     </div>
