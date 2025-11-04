@@ -18,6 +18,25 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+    // Fix for pdfjs-dist and canvas in Next.js
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        canvas: false,
+        fs: false,
+        path: false,
+      };
+    }
+
+    // Handle pdfjs-dist worker files
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'pdfjs-dist/build/pdf.worker.entry': 'pdfjs-dist/build/pdf.worker.mjs',
+    };
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;

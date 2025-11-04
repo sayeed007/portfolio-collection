@@ -1,0 +1,337 @@
+Role
+
+Act as a senior full-stack engineer (TypeScript/Next.js/React) and product-minded architect. Your task is to design and implement a CV ingestion → field auto-fill feature for my portfolio builder app, plus suggest pragmatic improvements.
+
+Context (what exists today)
+
+App goal: show a portfolio/CV as a shareable web page (easy to share or embed on a company site).
+
+Current data entry is manual via a 4-step form wizard:
+
+Personal Info
+src/components/portfolio/MultiStepForm/Step1PersonalInfo.tsx
+
+Education
+src/components/portfolio/MultiStepForm/Step2Education.tsx
+
+Skill & Experiences
+src/components/portfolio/MultiStepForm/Step3SkillsExperience.tsx
+
+Projects
+src/components/portfolio/MultiStepForm/Step4Projects.tsx
+
+Main wrapper:
+src/components/portfolio/MultiStepForm/index.tsx
+
+Storage approach: ID-based entities (e.g., education, expertise, technology) referenced in form state and saved models. We will keep this approach.
+
+Goal (what we want)
+
+Let a user upload a CV (PDF/DOCX/TXT).
+
+Parse & extract structured data (personal info, education, skills, experiences, projects).
+
+Normalize & map to our ID-based entities (create missing entities if needed).
+
+Populate the 4 form steps with the extracted values so the user can review/edit.
+
+Keep it privacy-safe (client-first), resilient, and transparent (show “what was detected” with confidence scores).
+
+Non-Goals (for this iteration)
+
+No LinkedIn API integration (file-based ingestion only).
+
+No multi-language CVs beyond English (phase 1).
+
+No server-side OCR beyond simple image-in-PDF fallback (basic OCR is okay if you include it as an optional dependency).
+
+Technical constraints & preferences
+
+Frontend: Next.js (App Router), React, TypeScript.
+
+Keep parsing client-side where feasible. If server is needed (e.g., heavy parsing), propose a minimal Next.js API route.
+
+Prefer deterministic parsing first; use LLMs only where the structure is ambiguous (hybrid approach).
+
+Keep a clean separation:
+
+extractors/ (file → raw text/sections)
+
+llm/ (optional: text → JSON schema)
+
+normalizers/ (JSON → canonical schema + ID mapping)
+
+mappers/ (canonical schema → form state)
+
+What I want you to deliver
+
+Produce code, schemas, and UI changes with explanations. Specifically:
+
+1) Data contracts (TypeScript)
+
+Define a canonical schema for ingestion results (the shape the rest of the app can rely on). Include confidence on each field.
+
+// src/lib/cv/schema.ts
+export type IngestedCV = {
+  personal: {
+    fullName?: string
+    email?: string
+    phone?: string
+    location?: string
+    headline?: string
+    links?: { label: string; url: string }[]
+    confidence?: number
+  }
+  education: Array<{
+    institution: string
+    degree?: string
+    field?: string
+    startDate?: string // ISO YYYY-MM or YYYY
+    endDate?: string   // ISO
+    gradeOrGPA?: string
+    description?: string
+    confidence?: number
+  }>
+  experiences: Array<{
+    title: string
+    company: string
+    employmentType?: "full-time" | "part-time" | "contract" | "internship" | "freelance" | "other"
+    startDate?: string
+    endDate?: string | "present"
+    location?: string
+    achievements?: string[]
+    technologies?: string[]
+    confidence?: number
+  }>
+  skills: Array<{
+    name: string
+    level?: "beginner" | "intermediate" | "advanced" | "expert"
+    category?: "language" | "framework" | "tool" | "soft"
+    confidence?: number
+  }>
+  projects: Array<{
+    name: string
+    role?: string
+    startDate?: string
+    endDate?: string | "present"
+    summary?: string
+    responsibilities?: string[]
+    technologies?: string[]
+    links?: { label: string; url: string }[]
+    confidence?: number
+  }>
+  rawText?: string
+  meta?: { source: "pdf" | "docx" | "txt"; parser: string; version: string }
+}
+
+
+Also provide entity tables used by forms (ID-based):
+
+// src/lib/entities/types.ts
+export type EntityId = string
+
+export type Technology = { id: EntityId; slug: string; label: string }
+export type Expertise  = { id: EntityId; slug: string; label: string } // broader domains
+export type EducationInstitution = { id: EntityId; slug: string; label: string }
+
+2) Extraction strategy (hybrid)
+
+Step A: File → raw text/blocks
+
+PDF: try pdfjs-dist client-side for text; if text layer is poor, optionally fallback to lightweight OCR (Tesseract.js) behind a user toggle.
+
+DOCX: use docx or yarn add mammoth to get text.
+
+TXT: direct text.
+
+Output sections with simple heuristics (Education, Experience, Projects, Skills) using heading detection and regex.
+
+Step B: Raw text → structured JSON
+
+First pass: regex and rule-based parsers (dates, email, phone, URLs, headings, bullet points).
+
+Second pass (optional): LLM refinement that receives the raw section blocks and returns a strict JSON matching IngestedCV (no free text outside JSON). Provide the exact system/user prompts and function-call style schema to ensure validity.
+
+Step C: Normalization
+
+Standardize dates to ISO YYYY-MM when possible.
+
+Deduplicate skills/technologies by fuzzy matching (case-insensitive; strip symbols; common aliases e.g., “JS”, “JavaScript”).
+
+Provide a confidence score per item/field (0–1). If LLM is used, ask it to attach confidence. If heuristic, compute simply (e.g., presence of dates = +0.2, matched pattern = +0.3, etc.).
+
+3) ID mapping & entity creation
+
+Map education.institution → EducationInstitution IDs (create new if not found).
+
+Map experiences[].technologies[] and projects[].technologies[] → Technology IDs.
+
+Map higher-level domains like “Web Development”, “Data Engineering” → Expertise IDs (optional v1).
+
+Provide a small in-memory catalog and a slugify() utility. If not found, create a pending entity with a generated ID and mark isNew: true so the user can confirm.
+
+Expose mapping utilities:
+
+// src/lib/entities/map.ts
+export function mapTechnologies(names: string[]): { tech: Technology; confidence: number; isNew: boolean }[]
+export function mapInstitution(name: string): { inst: EducationInstitution; isNew: boolean }
+export function mapExpertise(names: string[]): { exp: Expertise; isNew: boolean }[]
+
+4) Form population flow
+
+New “Import CV” button in the wizard header.
+
+On upload → run extraction pipeline → get IngestedCV → transform into the current form state shape for each step.
+
+Pre-fill fields and show a diff/preview modal per step:
+
+Display extracted values + confidence.
+
+Allow “Accept”, “Accept partial”, or “Discard”.
+
+Add a “Detected entities” drawer listing newly created Technologies/Institutions with edit inline.
+
+5) UX details
+
+Show a progress bar: “Parsing file”, “Structuring data”, “Matching entities”, “Filling forms”.
+
+On low confidence (<0.5), flag fields with a warning icon.
+
+Preserve the original manual input—import should augment, not overwrite, unless user confirms.
+
+6) LLM prompt (only if needed)
+
+Give me:
+
+A system prompt and a user prompt that makes the model return only JSON matching IngestedCV. Include instructions to avoid hallucinating dates/companies, to return null when unsure, and to include per-field confidence.
+
+A zod schema and a runtime validator to reject non-conforming outputs and show errors to the user.
+
+7) Code I expect (files & snippets)
+
+src/lib/cv/readFile.ts — detect type, read as ArrayBuffer/Text, route to proper extractor.
+
+src/lib/cv/extract/pdf.ts — pdf → rawText/sections (+ optional OCR hook).
+
+src/lib/cv/extract/docx.ts — docx → rawText/sections.
+
+src/lib/cv/extract/txt.ts — txt → rawText/sections.
+
+src/lib/cv/heuristics.ts — regex/heading parsing, date/email/url extractors.
+
+src/lib/cv/normalize.ts — build IngestedCV with confidence.
+
+src/lib/entities/catalog.ts — seed sets for technologies/institutions; CRUD helpers; slugify.
+
+src/lib/entities/map.ts — mapping functions described above.
+
+src/lib/cv/toFormState.ts — convert IngestedCV → the exact shapes consumed by:
+
+Step1PersonalInfo.tsx
+
+Step2Education.tsx
+
+Step3SkillsExperience.tsx
+
+Step4Projects.tsx
+
+UI:
+
+src/components/portfolio/ImportCVButton.tsx
+
+src/components/portfolio/ImportPreviewModal.tsx (diff view + confidence)
+
+Minimal changes in MultiStepForm/index.tsx to plug the flow.
+
+8) Testing & acceptance criteria
+
+Provide unit tests for:
+
+date normalization,
+
+email/phone extraction,
+
+tech mapping (aliases, case, duplicates),
+
+schema validation (zod).
+
+Provide two fixture CVs (one PDF, one DOCX) in fixtures/ and an expected JSON per fixture.
+
+Acceptance:
+
+Uploading either fixture pre-fills ≥80% of fields correctly.
+
+New technologies/institutions show up in the Detected Entities drawer.
+
+No unhandled promise rejections; invalid JSON from LLM is caught and shown.
+
+9) Security & privacy
+
+Keep processing client-side by default. If you add a server route, explain why and ensure files are not persisted.
+
+Show a one-time privacy tooltip: “Your file is processed in your browser; nothing is uploaded unless you choose LLM refinement.”
+
+10) Stretch improvements (suggest & include if low effort)
+
+Simple “Paste CV text” textarea path (no file).
+
+Export the normalized JSON so users can reuse on other sites.
+
+Skill level auto-estimation heuristic (years on role + keywords).
+
+Example mapping (for clarity)
+
+Input (raw CV lines)
+“Software Engineer at SeedLink Innovation (Jan 2022 – Present). React, Next.js, TypeScript. Built multi-role service marketplace.”
+
+Expected normalized
+
+experiences[0]:
+
+title: Software Engineer
+
+company: SeedLink Innovation
+
+startDate: 2022-01
+
+endDate: "present"
+
+technologies: ["React", "Next.js", "TypeScript"] (mapped to Technology IDs)
+
+confidence: ~0.85
+
+What to return to me
+
+The complete TypeScript code and file scaffolding outlined above (you can condense where obvious).
+
+The LLM prompts + zod schema for validation (if you use LLM).
+
+Any minimal UI code to wire the “Import CV” flow and the preview/diff modal.
+
+A short README with setup notes and how to run the ingestion locally.
+
+#####################################################################################
+
+I am working on CV data ectraction using google gemini - entry point(src\components\portfolio\CVIngestion\CVUploadModal.tsx) and it successfully extracted the data I needed according to my pattern
+
+NOw issue is my form uses key value option - I have seperate list for Language, degree, Institution, skill category , skills but all I extract from cv is value, 
+
+- so we need to check either this value realed fields already created or not
+- if created then associate with id
+- if not then create(We have bulk create support) then associate with ids
+
+The forms are
+Personal Info
+src/components/portfolio/MultiStepForm/Step1PersonalInfo.tsx
+
+Education
+src/components/portfolio/MultiStepForm/Step2Education.tsx
+
+Skill & Experiences
+src/components/portfolio/MultiStepForm/Step3SkillsExperience.tsx
+
+Projects
+src/components/portfolio/MultiStepForm/Step4Projects.tsx
+
+Main wrapper:
+src/components/portfolio/MultiStepForm/index.tsx

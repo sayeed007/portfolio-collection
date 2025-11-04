@@ -97,6 +97,7 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
 
     // Add institution hook - fetch active and verified institutions
     const {
+        institutions: allInstitutions,
         getInstitutionsByFilter,
         loading: institutionsLoading,
         requestInstitution,
@@ -118,8 +119,7 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
             label: `${institution.name}${institution.shortName ? ` (${institution.shortName})` : ''}`,
             searchableText: `${institution.name} ${institution.shortName || ''} ${institution.location} ${institution.type}`.toLowerCase()
         }));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getInstitutionsByFilter]);
+    }, [allInstitutions, institutionRequests, getInstitutionsByFilter]); // Watch institutions array for real-time updates
 
     // Institution request form
     const {
@@ -145,6 +145,30 @@ export function EducationSection({ control, errors }: EducationSectionProps) {
         control,
         name: 'education',
     });
+
+    // Debug: Log degree options and form values
+    useEffect(() => {
+        if (educationFields.length > 0 && degreeOptions.length > 0) {
+            console.log('🎓 Available degree options:', degreeOptions.map(o => o.value));
+            console.log('🎓 Current degree values in form:', educationFields.map((f: any) => f.degree));
+            educationFields.forEach((field: any, index) => {
+                const match = degreeOptions.find(opt => opt.value === field.degree);
+                console.log(`🎓 Education ${index}: "${field.degree}" → ${match ? '✅ FOUND' : '❌ NOT FOUND'}`);
+            });
+        }
+    }, [educationFields, degreeOptions]);
+
+    // Debug: Log institution options and form values
+    useEffect(() => {
+        if (educationFields.length > 0 && institutionOptions.length > 0) {
+            console.log('🏫 Available institution options:', institutionOptions.map(o => o.value));
+            console.log('🏫 Current institution values in form:', educationFields.map((f: any) => f.institution));
+            educationFields.forEach((field: any, index) => {
+                const match = institutionOptions.find(opt => opt.value === field.institution);
+                console.log(`🏫 Education ${index}: "${field.institution}" → ${match ? '✅ FOUND' : '❌ NOT FOUND'}`);
+            });
+        }
+    }, [educationFields, institutionOptions]);
 
     // Handle expansion: collapse all initially, but expand newly added items
     useEffect(() => {

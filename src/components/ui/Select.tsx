@@ -185,7 +185,7 @@ export const Select = forwardRef<any, SelectProps>(({
     // Don't render on server to avoid hydration mismatch
     if (!isMounted) {
         return (
-            <div className={cn("space-y-1", className)}>
+            <div className={cn("space-y-1 w-full", className)}>
                 {label && (
                     <div className="relative">
                         <div className="w-full h-12 border border-gray-300 rounded-lg bg-gray-50 animate-pulse" />
@@ -205,7 +205,7 @@ export const Select = forwardRef<any, SelectProps>(({
     // If no label is provided, render simple select (similar to your Input component)
     if (!label) {
         return (
-            <div className={cn("space-y-1", className)}>
+            <div className={cn("space-y-1 w-full", className)}>
                 <ReactSelect
                     ref={ref}
                     inputId={id}
@@ -241,7 +241,7 @@ export const Select = forwardRef<any, SelectProps>(({
     }
 
     return (
-        <div className={cn("space-y-1", className)}>
+        <div className={cn("space-y-1 w-full", className)}>
             <div className="relative">
                 <ReactSelect
                     ref={ref}

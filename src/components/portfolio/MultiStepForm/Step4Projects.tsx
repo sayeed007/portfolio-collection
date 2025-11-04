@@ -57,13 +57,25 @@ export function Step4Projects() {
         },
     });
 
-    // Initialize form data from Redux only once
+    // Initialize form data from Redux
     useEffect(() => {
-        if (formData && !isInitialized) {
+        if (!formData) return;
+
+        const reduxProjects = formData.projects && formData.projects.length > 0
+            ? formData.projects
+            : null;
+
+        // Check if we need to update (either not initialized, or Redux has more projects)
+        const currentProjects = getValues('projects') || [];
+        const needsUpdate = !isInitialized ||
+            (reduxProjects && reduxProjects.length !== currentProjects.length) ||
+            (reduxProjects && JSON.stringify(reduxProjects) !== JSON.stringify(currentProjects));
+
+        if (needsUpdate) {
             isResettingRef.current = true;
             reset({
-                projects: formData.projects && formData.projects.length > 0
-                    ? deepCopyJSON(formData.projects)
+                projects: reduxProjects
+                    ? deepCopyJSON(reduxProjects)
                     : [{
                         name: '',
                         description: '',
@@ -78,7 +90,7 @@ export function Step4Projects() {
                 isResettingRef.current = false;
             }, 0);
         }
-    }, [formData, reset, isInitialized]);
+    }, [formData, reset, isInitialized, getValues]);
 
     const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
         control,

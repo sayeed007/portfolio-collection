@@ -38,6 +38,7 @@ import { Step2Education } from './Step2Education';
 import { Step3SkillsExperience } from './Step3SkillsExperience';
 import { Step4Projects } from './Step4Projects';
 import { Timestamp } from 'firebase/firestore';
+import { CVIngestionWrapper } from '../CVIngestion';
 
 interface MultiStepFormProps {
     portfolioId?: string;
@@ -340,15 +341,26 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur rounded-full border border-purple-200">
-                            {mode === 'edit' ? (
-                                <Edit3 className="w-4 h-4 text-purple-600 mr-2" />
-                            ) : (
-                                <Plus className="w-4 h-4 text-blue-600 mr-2" />
+                        <div className="flex items-center justify-center gap-4 mb-4">
+                            <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur rounded-full border border-purple-200">
+                                {mode === 'edit' ? (
+                                    <Edit3 className="w-4 h-4 text-purple-600 mr-2" />
+                                ) : (
+                                    <Plus className="w-4 h-4 text-blue-600 mr-2" />
+                                )}
+                                <span className="text-sm font-medium text-gray-700">
+                                    {mode === 'edit' ? 'Edit Portfolio' : 'Create Portfolio'}
+                                </span>
+                            </div>
+
+                            {/* CV Ingestion Feature - Only show in create mode and on step 1 */}
+                            {mode === 'create' && currentStep === 1 && (
+                                <CVIngestionWrapper
+                                    onComplete={() => {
+                                        toast.success('CV data loaded! Review and continue to next step.');
+                                    }}
+                                />
                             )}
-                            <span className="text-sm font-medium text-gray-700">
-                                {mode === 'edit' ? 'Edit Portfolio' : 'Create Portfolio'}
-                            </span>
                         </div>
 
                         <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
