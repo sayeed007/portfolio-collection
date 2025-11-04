@@ -4,43 +4,36 @@ import React from 'react';
 
 const BackgroundDecoration: React.FC = () => {
   return (
-    <>
-      <div className="fixed inset-0 overflow-visible pointer-events-none z-[10]">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-        <div className="absolute top-1/2 right-1/4 w-60 h-60 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-6000"></div>
-      </div>
-
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      <div className="gradient-bg" />
       <style jsx>{`
-        @keyframes blob {
+        .gradient-bg {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            -45deg,
+            rgba(238, 130, 238, 0.08),
+            rgba(147, 197, 253, 0.08),
+            rgba(251, 191, 36, 0.08),
+            rgba(167, 139, 250, 0.08)
+          );
+          background-size: 400% 400%;
+          animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
           0% {
-            transform: translate(0px, 0px) scale(1);
+            background-position: 0% 50%;
           }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
+          50% {
+            background-position: 100% 50%;
           }
           100% {
-            transform: translate(0px, 0px) scale(1);
+            background-position: 0% 50%;
           }
         }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animation-delay-6000 {
-          animation-delay: 6s;
-        }
       `}</style>
-    </>
+    </div>
   );
 };
 

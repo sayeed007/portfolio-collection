@@ -29,7 +29,7 @@ export default function CVUploadModal({
   const [error, setError] = useState<string | null>(null);
   const [useLLM, setUseLLM] = useState(true);
   const [llmProvider, setLlmProvider] = useState<'openai' | 'anthropic' | 'gemini'>('gemini');
-  const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+  const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_API_KEYCV);
 
   // Handle file selection
   const handleFileSelect = useCallback((file: File) => {
