@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 // src/app/(dashboard)/directory/page.tsx
 'use client';
 

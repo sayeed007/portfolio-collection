@@ -166,7 +166,6 @@ export function Step1PersonalInfo() {
                 setIsInitialized(true);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formData, normalizeFormData, reset, triggerInputComponentLogic]);
 
     // Watch form changes and update Redux (only after initialization)

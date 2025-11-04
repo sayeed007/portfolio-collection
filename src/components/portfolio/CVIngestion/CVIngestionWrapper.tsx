@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/lib/redux/store';
-import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
-import CVUploadModal from './CVUploadModal';
-import CVReviewModal from './CVReviewModal';
 import { CVIngestionResult, createEntityResolver } from '@/lib/cv-ingestion';
 import { DatabaseEntityResolver } from '@/lib/cv-ingestion/services/entity-resolver';
+import { updateFormData } from '@/lib/redux/slices/portfolioSlice';
+import { AppDispatch } from '@/lib/redux/store';
 import { Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import CVReviewModal from './CVReviewModal';
+import CVUploadModal from './CVUploadModal';
 
 interface CVIngestionWrapperProps {
   onComplete?: () => void;
@@ -122,7 +122,6 @@ export default function CVIngestionWrapper({ onComplete }: CVIngestionWrapperPro
           const updatedFormData = updateFormDataWithEntityIds(
             formData,
             creationResult,
-            ingestionResult.parsedCV
           );
           dispatch(updateFormData(updatedFormData));
         }
@@ -153,7 +152,6 @@ export default function CVIngestionWrapper({ onComplete }: CVIngestionWrapperPro
   const updateFormDataWithEntityIds = (
     formData: any,
     creationResult: any,
-    parsedCV: any
   ) => {
     const updated = { ...formData };
 

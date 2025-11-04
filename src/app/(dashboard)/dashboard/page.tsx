@@ -15,9 +15,19 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { usePortfolio } from "@/lib/hooks/usePortfolio";
 // import { createPortfolioHTML } from "@/lib/utils/pdf-generator";
 import { Award, Eye, FileText, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, isAdmin, loading: authLoading } = useAuth();
+    const router = useRouter();
+
+    // Redirect admin users to admin panel
+    useEffect(() => {
+        if (!authLoading && user && isAdmin) {
+            router.push('/admin');
+        }
+    }, [user, isAdmin, authLoading, router]);
     const {
         currentPortfolio: portfolio,
         loading,

@@ -5,15 +5,15 @@
  */
 
 import { extractTextFromFile } from '../extractors';
+import { NormalizationResult, normalizeParsedCV } from '../normalizers';
 import { DeterministicParser } from '../parsers/deterministic-parser';
 import { parseWithHybridApproach } from '../parsers/llm-parser';
-import { normalizeParsedCV, NormalizationResult } from '../normalizers';
-import { DatabaseEntityResolver } from './entity-resolver';
 import {
+  CVValidationResult,
   ParsedCV,
   ParserConfig,
-  CVValidationResult,
 } from '../types';
+import { DatabaseEntityResolver } from './entity-resolver';
 
 export interface CVIngestionOptions {
   file: File;
@@ -295,9 +295,11 @@ export function importParsedCV(json: string): ParsedCV {
 async function ingestCVViaAPI(
   file: File,
   config: ParserConfig,
-  entityResolver?: any
+  entityResolver: any
 ): Promise<CVIngestionResult> {
   try {
+    console.log(entityResolver);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('useLLM', config.useLLM ? 'true' : 'false');

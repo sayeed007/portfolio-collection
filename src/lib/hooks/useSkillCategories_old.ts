@@ -46,7 +46,6 @@ export const useSkillCategories = () => {
     if (skillCategoriesState.categories.length === 0) {
       fetchCategories();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

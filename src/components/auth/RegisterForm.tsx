@@ -19,7 +19,7 @@ export const RegisterForm: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-    const { user, register: signup, loginWithGoogle, loading, error, clearError } = useAuth();
+    const { user, register: signup, loginWithGoogle, loading, error, clearError, isAdmin } = useAuth();
     const { success, error: showError } = useToast();
     const router = useRouter();
 
@@ -35,12 +35,12 @@ export const RegisterForm: React.FC = () => {
 
     const password = watch('password', '');
 
-    // Redirect if user auth already exits
+    // Redirect if user auth already exits - admins go to admin panel, users go to dashboard
     useEffect(() => {
         if (user) {
-            router.push('/dashboard');
+            router.push(isAdmin ? '/admin' : '/dashboard');
         }
-    }, [user, router]);
+    }, [user, isAdmin, router]);
 
     // Show toast when error changes
     useEffect(() => {
@@ -50,12 +50,12 @@ export const RegisterForm: React.FC = () => {
         }
     }, [error, showError, clearError]);
 
-    // Redirect on successful auth
+    // Redirect on successful auth - admins go to admin panel, users go to dashboard
     useEffect(() => {
         if (isSuccess && user) {
-            router.push('/dashboard'); // Redirect to dashboard
+            router.push(isAdmin ? '/admin' : '/dashboard');
         }
-    }, [isSuccess, user, router]);
+    }, [isSuccess, user, isAdmin, router]);
 
     const onSubmit = async (data: RegisterFormData) => {
         try {

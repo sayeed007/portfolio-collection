@@ -5,18 +5,15 @@
  * Creates missing degrees, institutions, skills, and categories
  */
 
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  serverTimestamp,
-  writeBatch,
-  doc,
-  DocumentReference,
-} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  serverTimestamp,
+  where
+} from 'firebase/firestore';
 import { fuzzyMatch } from '../normalizers';
 
 export interface UnmappedEntities {
@@ -58,21 +55,11 @@ interface InstitutionData {
   isVerified: boolean;
 }
 
-interface SkillData {
-  name: string;
-  categoryId: string;
-}
-
-interface SkillCategoryData {
-  name: string;
-}
-
 /**
  * Main function to create unmapped entities
  */
 export async function createUnmappedEntities(
   unmappedEntities: UnmappedEntities,
-  userId?: string
 ): Promise<EntityCreationResult> {
   const result: EntityCreationResult = {
     degreeMap: new Map(),
@@ -107,10 +94,7 @@ export async function createUnmappedEntities(
 
     // 3. Create institutions (as requests for non-admin users)
     if (unmappedEntities.institutions.length > 0) {
-      const institutionResult = await createInstitutions(
-        unmappedEntities.institutions,
-        userId
-      );
+      const institutionResult = await createInstitutions(unmappedEntities.institutions);
       result.institutionMap = institutionResult.idMap;
       result.created.institutions = institutionResult.created;
       result.failed.push(...institutionResult.failed);
@@ -241,7 +225,6 @@ async function createDegrees(degreeNames: string[]): Promise<{
  */
 async function createInstitutions(
   institutionNames: string[],
-  userId?: string
 ): Promise<{
   idMap: Map<string, string>;
   created: number;

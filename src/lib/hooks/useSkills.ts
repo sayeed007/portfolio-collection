@@ -88,7 +88,6 @@ export const useSkills = (categories: SkillCategory[] = []) => {
         );
 
         return unsubscribe;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [categories.length]);
 
     const prefillSkills = async (availableCategories: SkillCategory[]) => {

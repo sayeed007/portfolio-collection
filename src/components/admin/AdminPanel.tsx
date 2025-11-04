@@ -1,22 +1,24 @@
 // src/components/admin/AdminPanel.tsx
 'use client';
 
-import { FolderPlus, GraduationCap, Languages, School, Settings } from 'lucide-react';
+import { FolderPlus, GraduationCap, Languages, School, Settings, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import BackgroundDecoration from '../common/BackgroundDecoration';
 import AdminDegreeManagement from './AdminDegreeManagement';
 import AdminInstitutionManagement from './AdminInstitutionManagement';
 import AdminLanguageManagement from './AdminLanguageManagement';
 import AdminSkillManagement from './AdminSkillManagement';
+import AdminUserManagement from './AdminUserManagement';
 import { Overview } from './Overview';
 
-type TabType = 'overview' | 'languages' | 'degrees' | 'institutions' | 'categories';
+type TabType = 'overview' | 'users' | 'languages' | 'degrees' | 'institutions' | 'categories';
 
 export const AdminPanel: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
 
     const tabs = [
         { id: 'overview' as TabType, label: 'Overview', icon: Settings },
+        { id: 'users' as TabType, label: 'Users', icon: Users },
         { id: 'languages' as TabType, label: 'Language', icon: Languages },
         { id: 'degrees' as TabType, label: 'Degrees', icon: GraduationCap },
         { id: 'institutions' as TabType, label: 'Institutions', icon: School },
@@ -25,6 +27,8 @@ export const AdminPanel: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
+            case 'users':
+                return <AdminUserManagement />;
             case 'languages':
                 return <AdminLanguageManagement />;
             case 'degrees':

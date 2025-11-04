@@ -16,6 +16,7 @@ const eslintConfig = [
     // Add your custom rules override here
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/exhaustive-deps": "off"
     },
   },
 ];

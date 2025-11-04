@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 export const LoginForm: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const { user, login, loginWithGoogle, loading, error, clearError } = useAuth();
+    const { user, login, loginWithGoogle, loading, error, clearError, isAdmin } = useAuth();
     const { success, error: showError } = useToast();
     const router = useRouter();
 
@@ -56,12 +56,12 @@ export const LoginForm: React.FC = () => {
         }
     }, [error, showError, clearError]);
 
-    // Redirect on successful auth
+    // Redirect on successful auth - admins go to admin panel, users go to dashboard
     useEffect(() => {
         if (user) {
-            router.push('/dashboard');
+            router.push(isAdmin ? '/admin' : '/dashboard');
         }
-    }, [user, router]);
+    }, [user, isAdmin, router]);
 
     const onSubmit = async (data: LoginFormData) => {
         try {

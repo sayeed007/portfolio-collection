@@ -153,7 +153,6 @@ export function MultiStepForm({ portfolioId, mode = 'create' }: MultiStepFormPro
         };
 
         loadPortfolioData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, portfolioId, dispatch, router, user?.uid]); // Removed getPortfolio and toast
 
     // Track unsaved changes - Fixed to check for meaningful data

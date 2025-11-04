@@ -386,7 +386,7 @@ Important instructions:
       const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
       return JSON.parse(jsonString);
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', content);
+      console.error('Failed to parse Gemini response:', content, parseError);
       throw new Error('Failed to parse Gemini response as JSON');
     }
   }
